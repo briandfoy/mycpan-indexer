@@ -39,7 +39,15 @@ use Distribution::Guess::BuildSystem;
 use Module::Extract::Namespaces;
 use Module::Extract::Version;
 
-Log::Log4perl->easy_init($DEBUG);
+Log::Log4perl->init( \ <<"CONF" );
+log4perl.rootLogger=DEBUG, Screen
+
+log4perl.appender.Screen=Log::Log4perl::Appender::Screen
+log4perl.appender.Screen.stderr=0
+
+log4perl.appender.Screen.layout=PatternLayout
+log4perl.appender.Screen.layout.ConversionPattern=[%p] %L %m%n
+CONF
 
 __PACKAGE__->run( @ARGV ) unless caller;
 
@@ -194,7 +202,7 @@ sub run_info
 	my( $self, $key ) = @_;
 	
 	DEBUG( "Getting run_info key [$key]\n" );
-	DEBUG( $self->{run_info}{$key} );
+	DEBUG( "Value for $key is " . $self->{run_info}{$key} );
 	$self->{run_info}{$key};
 	}
 
@@ -219,7 +227,7 @@ sub dist_info
 	my( $self, $key ) = @_;
 	
 	DEBUG( "Getting run_info key [$key]\n" );
-	DEBUG( $self->{run_info}{$key} );
+	DEBUG( "Value for $key is " . $self->{run_info}{$key} );
 	$self->{dist_info}{$key};
 	}
 	
@@ -338,18 +346,26 @@ sub run_build_file
 
 sub choose_build_file
 	{
-	my $self = shift;
+	require Distribution::Guess::BuildSystem;
+	my $guesser = Distribution::Guess::BuildSystem->new;
+
+	$_[0]->set_dist_info( 
+		'build_system_guess', 
+		$guesser->just_give_me_a_hash 
+		);
 	
-	my $file =  -e "Build.PL" ? "Build.PL" :
-		-e "Makefile.PL" ? "Makefile.PL" : undef;
+	my $hash = $guesser->build_files;
 		
+	my $file = $guesser->preferred_build_file;
+	DEBUG( "Build file is $file" );
+	
 	unless( defined $file )
 		{
-		ERROR( "Did not find Makefile.PL or Build.PL" );
+		ERROR( "Did not find a build file" );
 		return;
 		}
 
-	$self->set_dist_info( 'build_file', $file );
+	$_[0]->set_dist_info( 'build_file', $file );
 	
 	return 1;
 	}
