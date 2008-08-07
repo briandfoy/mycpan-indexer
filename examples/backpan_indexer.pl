@@ -60,7 +60,7 @@ INFO( "Run started - " . @dists . " dists to process" );
 my $count = 0;
 foreach my $dist ( @dists )
 	{
-	DEBUG( "Parent [$$] processing $dist\n" );
+	DEBUG( "[dist #$count] Parent [$$] processing $dist\n" );
 	chomp $dist;
 
 	if( my $pid = fork ) { waitpid $pid, 0 }
@@ -92,17 +92,29 @@ sub child_tasks
 		exit 255;
 		}
 
+	my $out_dir = $yml_error_dir;
+	
 	local $SIG{ALRM} = sub { die "alarm\n" };
-	alarm 15;
+	alarm( $config->alarm || 15 );
 	my $info = eval { MyCPAN::Indexer->run( $dist ) };
-	print "$@" unless defined $info;
+
+	unless( defined $info )
+		{
+		ERROR( "run failed: $@" );
+		return;
+		}
+	elsif( eval { $info->run_info( 'completed' ) } )
+		{
+		$outdir = $yml_dir;
+		}
+	else
+		{
+		ERROR( "$basename did not complete\n" ) 		
+		}
+		
 	alarm 0;
 			
-	ERROR( "$basename did not complete\n" ) 
-		unless $info->run_info( 'completed' );
-		
-	my $dir = $info->run_info( 'completed' ) ? $yml_dir : $yml_error_dir;
-	my $out_path = catfile( $dir, "$basename.yml" );
+	my $out_path = catfile( $out_dir, "$basename.yml" );
 	
 	open my($fh), ">", $out_path or die "Could not open $out_path: $!\n";
 	print $fh Dump( $info );

@@ -23,11 +23,6 @@ MyCPAN::Indexer - Index a Perl distribution
 
 =cut
 
-
-package MyCPAN::Indexer;
-use strict;
-use warnings;
-
 use Cwd;
 use Data::Dumper;
 use File::Basename;
@@ -78,7 +73,6 @@ sub run
 		$self->set_dist_info( 'dist_author', $author );
 		
 		$self->unpack_dist( $dist ) or next;
-		my $dist_dir = $self->dist_info( 'dist_dir' );
 
 		unless( my $found_dist_dir = $self->find_dist_dir )
 			{
@@ -87,11 +81,12 @@ sub run
 			next;
 			}
 		
+		my $dist_dir = $self->dist_info( 'dist_dir' );
 		DEBUG( "Dist dir is $dist_dir\n" );
 		
 		unless( $self->get_file_list )
 			{
-			ERROR( "Could not get file list from MANIFEST"
+			ERROR( "Could not get file list from MANIFEST" );
 			$self->set_run_info( 'fatal_error: Could not get file list' );
 			next;
 			}
@@ -100,7 +95,12 @@ sub run
 
 		$self->run_build_file;
 		
-		$self->get_blib_file_list or next;
+		unless( $self->get_blib_file_list )
+			{
+			ERROR( "Could not get file list from blib" );
+			$self->set_run_info( 'fatal_error: Could not get file list for blib' );
+			next;
+			}
 		
 		my @modules = grep /\.pm$/, @{  $self->dist_info( 'blib' ) };
 		DEBUG( "Modules are @modules\n" );
@@ -298,8 +298,15 @@ sub find_dist_dir
 	File::Find::find( $wanted, $_[0]->dist_info( "unpack_dir" ) );
 	
 	my( $first ) = $reporter->();
+	DEBUG( "Found manifest in $first" );
 	
-	my $dir = dirname( $first );
+	unless( $first )
+		{
+		DEBUG( "Didn't find MANIFEST anywhere!" );
+		return;
+		}
+		
+	my $dir = eval { dirname( $first ) };
 	DEBUG( "Found MANIFEST at $dir" );
 	
 	if( chdir $dir )
@@ -521,7 +528,7 @@ sub report_dist_info
 	print "\n";
 	}
 	
- 
+
 =head1 TO DO
 
 
