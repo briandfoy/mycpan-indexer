@@ -23,6 +23,7 @@ MyCPAN::Indexer - Index a Perl distribution
 
 =cut
 
+use Carp qw(croak);
 use Cwd;
 use Data::Dumper;
 use File::Basename;
@@ -36,6 +37,13 @@ use Module::Extract::Version;
 
 
 __PACKAGE__->run( @ARGV ) unless caller;
+
+=over 4
+
+=item run
+
+
+=cut
 
 sub run 
 	{
@@ -95,7 +103,12 @@ sub run
 
 		$self->run_build_file;
 		
-		$self->get_blib_file_list or next;
+		unless( $self->get_blib_file_list )
+			{
+			ERROR( "Could not get file list from blib" );
+			$self->set_run_info( 'fatal_error: Could not get file list for blib' );
+			next;
+			}
 		
 		my @modules = grep /\.pm$/, @{  $self->dist_info( 'blib' ) };
 		DEBUG( "Modules are @modules\n" );
@@ -122,8 +135,18 @@ sub run
 	$self;
 	}
 	
+=item examine( DISTPATH )
+
+Given a distribution, unpack it, look at it, and report the findings.
+It does everything except the looking right now, so it merely croaks.
+Most of this needs to move out of run and into this method.
+
+=cut
+
 sub examine
 	{
+	croak "Not yet implemented";
+	
 	my( $class, $dist ) = @_;
 	
 	my $self = bless {}, $class;
@@ -165,6 +188,13 @@ sub examine
 	
 	}
 
+=item set_dist( DISTPATH )
+
+Given a distribution path, record various data about it, such as its size,
+mtime, and so on.
+
+=cut
+
 sub set_dist 
 	{ 
 	my $self = shift;
@@ -182,9 +212,38 @@ sub set_dist
 	return 1;
 	}
 
+=item dist_file
+
+Return the name of the distribution file. Call set_dist first.
+
+=cut
+
 sub dist_file { $_[0]->{dist_file} }
+
+=item dist_size
+
+Return the name of the distribution file size . Call set_dist first.
+
+=cut
+
 sub dist_size { $_[0]->{dist_size} }
+
+=item dist_date
+
+Return the name of the distribution file date. Call set_dist first.
+
+=cut
+
 sub dist_date { $_[0]->{dist_date} }
+
+=item set_run_info( KEY, VALUE )
+
+Set something to record in the run info. This is for information
+related to the examination of the distribution, not the distribution
+itself. For instance, record the start time, pid, and so on.  See
+C<set_dist_info> to record run info.
+
+=cut
 
 sub set_run_info 
 	{ 
@@ -193,6 +252,12 @@ sub set_run_info
 	DEBUG( "Setting run_info key [$key] to [$value]\n" );
 	$self->{run_info}{$key} = $value;
 	}
+
+=item run_info( KEY )
+
+Fetch some run info.
+
+=cut
 
 sub run_info 
 	{ 
@@ -203,6 +268,12 @@ sub run_info
 	$self->{run_info}{$key};
 	}
 
+=item clear_dist_info
+
+Clear anything recorded about the distribution.
+
+=cut
+
 sub clear_dist_info 
 	{ 
 	my( $self, $key) = @_;
@@ -210,6 +281,13 @@ sub clear_dist_info
 	DEBUG( "Clearing dist_info\n" );
 	$self->{dist_info} = {};
 	}
+
+=item set_dist_info( KEY, VALUE )
+
+Set something to record about the distribution. This should only be information
+specific to the distribution. See C<set_run_info> to record run info.
+
+=cut
 
 sub set_dist_info 
 	{ 
@@ -219,6 +297,12 @@ sub set_dist_info
 	$self->{dist_info}{$key} = $value;
 	}
 	
+=item dist_info( KEY )
+
+Fetch some distribution info.
+
+=cut
+
 sub dist_info 
 	{ 
 	my( $self, $key ) = @_;
@@ -229,6 +313,20 @@ sub dist_info
 	$self->{dist_info}{$key};
 	}
 	
+=item unpack_dist( DISTPATH )
+
+Given a distribution path, this determines the archive type,
+unpacks it into a temporary directory, and records what it
+did.
+
+Sets these items in run_info: 
+
+Sets these items in dist_info:
+	unpack_dir
+	dist_archive_type
+
+=cut
+
 sub unpack_dist 
 	{ 	
 	require Archive::Extract;
@@ -274,6 +372,17 @@ sub unpack_dist
 	$extractor->extract_path;		
 	}
 
+=item find_dist_dir
+
+Looks at dist_info's unpack_dir and guesses where the module distribution
+is. This accounts for odd archiving people may have used, like putting all
+the good stuff in a subdirectory.
+
+Sets these items in dist_info:
+	dist_dir
+
+=cut
+
 sub find_dist_dir
 	{
 	DEBUG( "Cwd is " . $_[0]->dist_info( "unpack_dir" ) );
@@ -295,7 +404,13 @@ sub find_dist_dir
 	my( $first ) = $reporter->();
 	DEBUG( "Found manifest in $first" );
 	
-	my $dir = dirname( $first );
+	unless( $first )
+		{
+		DEBUG( "Didn't find MANIFEST anywhere!" );
+		return;
+		}
+		
+	my $dir = eval { dirname( $first ) };
 	DEBUG( "Found MANIFEST at $dir" );
 	
 	if( chdir $dir )
@@ -308,6 +423,15 @@ sub find_dist_dir
 	return;
 	}
 	
+=item get_file_list
+
+Returns as an array reference the list of files in MANIFEST.
+
+Sets these items in dist_info:
+	manifest
+
+=cut
+
 sub get_file_list
 	{
 	my $self = shift;
@@ -325,7 +449,19 @@ sub get_file_list
 	my $manifest = [ sort keys %{ ExtUtils::Manifest::manifind() } ];
 	
 	$self->set_dist_info( 'manifest', $manifest );
+	
+	$manifest;
 	}
+
+=item get_blib_file_list
+
+Returns as an array reference the list of files in blib. You need to call
+something like C<run_build_file> first.
+
+Sets these items in dist_info:
+	blib
+
+=cut
 
 sub get_blib_file_list
 	{
@@ -347,32 +483,52 @@ sub get_blib_file_list
 	$self->set_dist_info( 'blib', $blib );
 	}
 	
+=item parse_meta_files
+
+Parses the META.yml and returns the YAML object.
+
+Sets these items in dist_info:
+	META.yml
+
+=cut
+
 sub parse_meta_files
 	{
-	my $self = shift;
-	
 	if( -e 'META.yml'  )
 		{
 		require YAML::Syck;
 		my $yaml = YAML::Syck::LoadFile( 'META.yml' );
-		$self->set_dist_info( 'META.yml', $yaml );
+		$_[0]->set_dist_info( 'META.yml', $yaml );
+		return $yaml;	
 		}
 
+	return;
+	}
+
+=item run_build_file
+
+This method is one stop shopping for calls to C<choose_build_file>,
+C<setup_build>, C<run_build>.
+
+=cut
+
+sub run_build_file
+	{	
+	$_[0]->choose_build_file;
+	$_[0]->setup_build;
+	$_[0]->run_build;
+	
 	return 1;	
 	}
 
-sub run_build_file
-	{
-	my $self = shift;
-	
-	$self->choose_build_file;
-	
-	$self->setup_build;
-	
-	$self->run_build;
-	
-	return 1;	
-	}
+=item choose_build_file
+
+Guess what the build file for the distribution is, using C<Distribution::Guess::BuildSystem>.
+
+Sets these items in dist_info:
+	build_file
+
+=cut
 
 sub choose_build_file
 	{
@@ -400,27 +556,50 @@ sub choose_build_file
 	return 1;
 	}
 
+=item setup_build
+
+Runs the build setup file (Build.PL, Makefile.PL) to prepare for the
+build. You need to run C<choose_build_file> first.
+
+Sets these items in dist_info:
+	build_file_output
+
+=cut
+
 sub setup_build
-	{
-	my $self = shift;
-	
-	my $file = $self->dist_info( 'build_file' );
+	{	
+	my $file = $_[0]->dist_info( 'build_file' );
 	
 	my $command = "$^X $file";
 	
-	$self->run_something( $command, 'build_file_output' );	
+	$_[0]->run_something( $command, 'build_file_output' );	
 	}
 	
+=item run_build
+
+Run the build file (Build.PL, Makefile). Run C<setup_build> first.
+
+Sets these items in dist_info:
+	build_output
+
+=cut
+
 sub run_build
 	{
-	my $self = shift;
-
-	my $file = $self->dist_info( 'build_file' );
+	my $file = $_[0]->dist_info( 'build_file' );
 
 	my $command = $file eq 'Build.PL' ? "$^X ./Build" : "make";
 			
-	$self->run_something( $command, 'build_output' );
+	$_[0]->run_something( $command, 'build_output' );
 	}
+
+=item run_something( COMMAND, KEY )
+
+Run the shell command and record the output in the dist_info for KEY. This
+merges the outputs into stdout and closes stdin by redirecting /dev/null into
+COMMAND.
+
+=cut
 
 sub run_something
 	{
@@ -448,6 +627,11 @@ sub run_something
 	}
 
 	}
+
+=item get_module_info
+
+
+=cut
 
 sub get_module_info
 	{
@@ -484,15 +668,19 @@ sub get_module_info
 	$hash;
 	}
 	
+=item cleanup
+
+Removes the unpack_dir.
+
+=cut
+
 sub cleanup
 	{
-	my $self = shift;
-	
 	return 1;
 
 	File::Path::rmtree(
 		[
-		$self->run_info( 'unpack_dir' )
+		$_[0]->run_info( 'unpack_dir' )
 		],
 		0, 0
 		);
@@ -500,14 +688,20 @@ sub cleanup
 	return 1;
 	}
 
+=item report_dist_info
+
+Write a nice report. This isn't anything useful yet. From your program,
+take the object and dump it in some way.
+
+=cut
+
 sub report_dist_info
 	{
 	no warnings 'uninitialized';
-	my $self = shift;
 	
 	#print $self->dist_info( 'dist' ), "\n\t";
 	
-	my $module_hash = $self->dist_info( 'module_versions' );
+	my $module_hash = $_[0]->dist_info( 'module_versions' );
 	
 	while( my( $k, $v ) = each %$module_hash )
 		{
@@ -517,9 +711,15 @@ sub report_dist_info
 	print "\n";
 	}
 	
+=back
 
 =head1 TO DO
 
+=over 4
+
+=item If build fails, have a fallback method to find the modules
+
+=back
 
 =head1 SEE ALSO
 
