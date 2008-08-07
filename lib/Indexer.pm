@@ -80,11 +80,21 @@ sub run
 		$self->unpack_dist( $dist ) or next;
 		my $dist_dir = $self->dist_info( 'dist_dir' );
 
+		unless( my $found_dist_dir = $self->find_dist_dir )
+			{
+			ERROR( "Did not find distro directory!" );
+			$self->set_run_info( 'fatal_error: Could not find distro directory' );
+			next;
+			}
+		
 		DEBUG( "Dist dir is $dist_dir\n" );
-		chdir( $self->dist_info( 'dist_dir' ) )
-			or do { ERROR( "Could not change to $dist_dir! $!" ); next DIST };
-
-		$self->get_file_list or next;
+		
+		unless( $self->get_file_list )
+			{
+			ERROR( "Could not get file list from MANIFEST"
+			$self->set_run_info( 'fatal_error: Could not get file list' );
+			next;
+			}
 		
 		$self->parse_meta_files;
 
@@ -102,8 +112,6 @@ sub run
 			my $hash = $self->get_module_info( $file );
 			push @file_info, $hash;
 			}
-
-		DEBUG( "I'm after the foreach" );
 		
 		$self->set_dist_info( 'file_info', [ @file_info ] );
 
@@ -268,11 +276,42 @@ sub unpack_dist
 	my $rc = $extractor->extract( to => $unpack_dir );
 	DEBUG( "Archive::Extract returns [$rc]" );
 
-	$self->set_dist_info( 'dist_dir', $extractor->extract_path );
-
 	$extractor->extract_path;		
 	}
 
+sub find_dist_dir
+	{
+	DEBUG( "Cwd is " . $_[0]->dist_info( "unpack_dir" ) );
+	
+	if( -e 'MANIFEST' )
+		{
+		$_[0]->set_dist_info( $_[0]->dist_info( "unpack_dir" ) );
+		return 1;
+		}
+
+	require File::Find::Closures;
+	require File::Find;
+
+	DEBUG( "Did not find MANIFEST at top level" );
+	my( $wanted, $reporter ) = File::Find::Closures::find_by_name( 'MANIFEST' );
+	
+	File::Find::find( $wanted, $_[0]->dist_info( "unpack_dir" ) );
+	
+	my( $first ) = $reporter->();
+	
+	my $dir = dirname( $first );
+	DEBUG( "Found MANIFEST at $dir" );
+	
+	if( chdir $dir )
+		{
+		DEBUG "Changed to $dir";
+		$_[0]->set_dist_info( 'dist_dir', $dir );
+		return 1;
+		}
+	exit;	
+	return;
+	}
+	
 sub get_file_list
 	{
 	my $self = shift;
@@ -395,7 +434,11 @@ sub run_something
 	{
 	require IPC::Open2;
 	DEBUG( "Running $command" );
-	my $pid = IPC::Open2::open2( my $read, my $write, "$command 2>&1" );
+	my $pid = IPC::Open2::open2( 
+		my $read, 
+		my $write, 
+		"$command 2>&1 < /dev/null" 
+		);
 	
 	close $write;
 	

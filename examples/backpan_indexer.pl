@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
+no warnings 'uninitialized';
 
 use ConfigReader::Simple;
 use Data::Dumper;
@@ -36,8 +37,13 @@ my $errors = 0;
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # Figure out what to index
 my @dists = do {
-	if( @ARGV ) { @ARGV }
-	else {
+	if( @ARGV ) 
+		{
+		DEBUG( "Taking dists from command line" );
+		@ARGV 
+		}
+	else 
+		{
 		my( $wanted, $reporter ) = find_by_regex( qr/\.(t?gz|zip)$/ );
 		
 		find( $wanted, $Config->backpan_dir );
@@ -54,7 +60,7 @@ INFO( "Run started - " . @dists . " dists to process" );
 my $count = 0;
 foreach my $dist ( @dists )
 	{
-	#DEBUG( "Parent [$$] processing $dist\n" );
+	DEBUG( "Parent [$$] processing $dist\n" );
 	chomp $dist;
 
 	if( my $pid = fork ) { waitpid $pid, 0 }
@@ -106,6 +112,8 @@ sub child_tasks
 	
 sub check_for_previous_result
 	{
+#	return 0 if Log::Log4perl->get_logger->isDebugEnabled;
+	
 	my $dist = shift;
 
 	( my $basename = basename( $dist ) ) =~ s/\.(tgz|tar\.gz|zip)$//;
@@ -113,9 +121,9 @@ sub check_for_previous_result
 	my $yml_path       = catfile( $yml_dir,       "$basename.yml" );
 	my $yml_error_path = catfile( $yml_error_dir, "$basename.yml" );
 	
-	if( -e $yml_path || -e $yml_error_path )
+	if( my @path = grep -e, ( $yml_path, $yml_error_path ) )
 		{
-		#INFO( "Found run output for $basename. Skipping...\n" );
+		DEBUG( "Found run output for $basename in $path[0]. Skipping...\n" );
 		return;
 		}
 		

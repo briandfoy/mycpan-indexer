@@ -1,4 +1,4 @@
-log4perl.rootLogger=INFO, Screen
+log4perl.rootLogger=DEBUG, Screen
 
 log4perl.appender.Screen=Log::Log4perl::Appender::Screen
 log4perl.appender.Screen.stderr=0
