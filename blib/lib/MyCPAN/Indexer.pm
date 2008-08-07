@@ -39,7 +39,6 @@ use Distribution::Guess::BuildSystem;
 use Module::Extract::Namespaces;
 use Module::Extract::Version;
 
-Log::Log4perl->easy_init($DEBUG);
 
 __PACKAGE__->run( @ARGV ) unless caller;
 
@@ -94,6 +93,7 @@ sub run
 		$self->get_blib_file_list or next;
 		
 		my @modules = grep /\.pm$/, @{  $self->dist_info( 'blib' ) };
+		DEBUG( "Modules are @modules\n" );
 		
 		my @file_info = ();
 		foreach my $file ( @modules )
@@ -103,6 +103,8 @@ sub run
 			push @file_info, $hash;
 			}
 
+		DEBUG( "I'm after the foreach" );
+		
 		$self->set_dist_info( 'file_info', [ @file_info ] );
 
 		INFO( "Finished processing $dist\n" );
@@ -194,7 +196,7 @@ sub run_info
 	my( $self, $key ) = @_;
 	
 	DEBUG( "Getting run_info key [$key]\n" );
-	DEBUG( $self->{run_info}{$key} );
+	DEBUG( "Value for $key is " . $self->{run_info}{$key} );
 	$self->{run_info}{$key};
 	}
 
@@ -210,7 +212,7 @@ sub set_dist_info
 	{ 
 	my( $self, $key, $value ) = @_;
 	
-	DEBUG( "Setting run_info key [$key] to [$value]\n" );
+	DEBUG( "Setting dist_info key [$key] to [$value]\n" );
 	$self->{dist_info}{$key} = $value;
 	}
 	
@@ -218,8 +220,9 @@ sub dist_info
 	{ 
 	my( $self, $key ) = @_;
 	
-	DEBUG( "Getting run_info key [$key]\n" );
-	DEBUG( $self->{run_info}{$key} );
+	#print STDERR Dumper( $self );
+	DEBUG( "Getting dist_info key [$key]\n" );
+	DEBUG( "Value for $key is " . $self->{dist_info}{$key} );
 	$self->{dist_info}{$key};
 	}
 	
@@ -338,18 +341,26 @@ sub run_build_file
 
 sub choose_build_file
 	{
-	my $self = shift;
-	
-	my $file =  -e "Build.PL" ? "Build.PL" :
-		-e "Makefile.PL" ? "Makefile.PL" : undef;
-		
+	require Distribution::Guess::BuildSystem;
+	my $guesser = Distribution::Guess::BuildSystem->new(
+		dist_dir => $_[0]->dist_info( 'dist_dir' )
+		);
+
+	$_[0]->set_dist_info( 
+		'build_system_guess', 
+		$guesser->just_give_me_a_hash 
+		);
+			
+	my $file = eval { $guesser->preferred_build_file };
+	DEBUG( "Build file is $file" );
+	DEBUG( "At is $@" ) if $@;
 	unless( defined $file )
 		{
-		ERROR( "Did not find Makefile.PL or Build.PL" );
+		ERROR( "Did not find a build file" );
 		return;
 		}
 
-	$self->set_dist_info( 'build_file', $file );
+	$_[0]->set_dist_info( 'build_file', $file );
 	
 	return 1;
 	}

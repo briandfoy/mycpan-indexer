@@ -14,7 +14,7 @@ use YAML;
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # The Set up
-Log::Log4perl->easy_init($DEBUG);
+Log::Log4perl->init( 'backpan_indexer.log4perl' );
 
 my $Config = ConfigReader::Simple->new( 'backpan_indexer.config',
 	[ qw(temp_dir backpan_dir report_dir) ]
@@ -22,12 +22,6 @@ my $Config = ConfigReader::Simple->new( 'backpan_indexer.config',
 die "Could not read config!\n" unless ref $Config;
 
 chdir $Config->temp_dir;
-
-my( $wanted, $reporter ) = find_by_regex( qr/\.(t?gz|zip)$/ );
-
-find( $wanted, $Config->backpan_dir );
-
-my $count = 0;
 
 $ENV{AUTOMATED_TESTING}++;
 
@@ -39,23 +33,39 @@ mkdir $yml_error_dir, 0755 unless -d $yml_error_dir;
 
 my $errors = 0;
 
-my @dists = $reporter->();
-
-DEBUG( "Dists to process are\n\t", join "\n\t", @dists, "\n" );
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# Figure out what to index
+my @dists = do {
+	if( @ARGV ) { @ARGV }
+	else {
+		my( $wanted, $reporter ) = find_by_regex( qr/\.(t?gz|zip)$/ );
+		
+		find( $wanted, $Config->backpan_dir );
+		$reporter->();
+		}
+	};
+	
+#DEBUG( "Dists to process are\n\t", join "\n\t", @dists, "\n" );
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # The meat of the issue
+INFO( "Run started - " . @dists . " dists to process" );
+
+my $count = 0;
 foreach my $dist ( @dists )
 	{
-	DEBUG( "Parent [$$] processing $dist\n" );
+	#DEBUG( "Parent [$$] processing $dist\n" );
 	chomp $dist;
 
 	if( my $pid = fork ) { waitpid $pid, 0 }
-	else       { child_tasks( $dist ); exit }
+	else                 { child_tasks( $dist ); exit }
 
-	last;
+	$count++;
 	}
-    
+ 
+INFO( "Run ended - $count dists processed" );
+
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
@@ -66,7 +76,7 @@ sub child_tasks
 	my $basename = check_for_previous_result( $dist );
 	return unless $basename;
 	
-	INFO( "Child [$$] processing $dist\n" );
+	DEBUG( "Child [$$] processing $dist\n" );
 		
 	require MyCPAN::Indexer;
 	
@@ -79,14 +89,13 @@ sub child_tasks
 	local $SIG{ALRM} = sub { die "alarm\n" };
 	alarm 15;
 	my $info = eval { MyCPAN::Indexer->run( $dist ) };
+	print "$@" unless defined $info;
 	alarm 0;
-	
-	
-	my $completed = $info->{run_info}{completed};
-	
-	ERROR( "$basename did not complete\n" ) unless $completed;
+			
+	ERROR( "$basename did not complete\n" ) 
+		unless $info->run_info( 'completed' );
 		
-	my $dir = $completed ? $yml_dir : $yml_error_dir;
+	my $dir = $info->run_info( 'completed' ) ? $yml_dir : $yml_error_dir;
 	my $out_path = catfile( $dir, "$basename.yml" );
 	
 	open my($fh), ">", $out_path or die "Could not open $out_path: $!\n";
@@ -106,7 +115,7 @@ sub check_for_previous_result
 	
 	if( -e $yml_path || -e $yml_error_path )
 		{
-		INFO( "Found run output for $basename. Skipping...\n" );
+		#INFO( "Found run output for $basename. Skipping...\n" );
 		return;
 		}
 		

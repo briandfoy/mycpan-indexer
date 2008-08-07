@@ -39,15 +39,6 @@ use Distribution::Guess::BuildSystem;
 use Module::Extract::Namespaces;
 use Module::Extract::Version;
 
-Log::Log4perl->init( \ <<"CONF" );
-log4perl.rootLogger=DEBUG, Screen
-
-log4perl.appender.Screen=Log::Log4perl::Appender::Screen
-log4perl.appender.Screen.stderr=0
-
-log4perl.appender.Screen.layout=PatternLayout
-log4perl.appender.Screen.layout.ConversionPattern=[%p] %L %m%n
-CONF
 
 __PACKAGE__->run( @ARGV ) unless caller;
 
@@ -102,6 +93,7 @@ sub run
 		$self->get_blib_file_list or next;
 		
 		my @modules = grep /\.pm$/, @{  $self->dist_info( 'blib' ) };
+		DEBUG( "Modules are @modules\n" );
 		
 		my @file_info = ();
 		foreach my $file ( @modules )
@@ -111,6 +103,8 @@ sub run
 			push @file_info, $hash;
 			}
 
+		DEBUG( "I'm after the foreach" );
+		
 		$self->set_dist_info( 'file_info', [ @file_info ] );
 
 		INFO( "Finished processing $dist\n" );
@@ -218,7 +212,7 @@ sub set_dist_info
 	{ 
 	my( $self, $key, $value ) = @_;
 	
-	DEBUG( "Setting run_info key [$key] to [$value]\n" );
+	DEBUG( "Setting dist_info key [$key] to [$value]\n" );
 	$self->{dist_info}{$key} = $value;
 	}
 	
@@ -226,8 +220,9 @@ sub dist_info
 	{ 
 	my( $self, $key ) = @_;
 	
-	DEBUG( "Getting run_info key [$key]\n" );
-	DEBUG( "Value for $key is " . $self->{run_info}{$key} );
+	#print STDERR Dumper( $self );
+	DEBUG( "Getting dist_info key [$key]\n" );
+	DEBUG( "Value for $key is " . $self->{dist_info}{$key} );
 	$self->{dist_info}{$key};
 	}
 	
@@ -347,18 +342,18 @@ sub run_build_file
 sub choose_build_file
 	{
 	require Distribution::Guess::BuildSystem;
-	my $guesser = Distribution::Guess::BuildSystem->new;
+	my $guesser = Distribution::Guess::BuildSystem->new(
+		dist_dir => $_[0]->dist_info( 'dist_dir' )
+		);
 
 	$_[0]->set_dist_info( 
 		'build_system_guess', 
 		$guesser->just_give_me_a_hash 
 		);
-	
-	my $hash = $guesser->build_files;
-		
-	my $file = $guesser->preferred_build_file;
+			
+	my $file = eval { $guesser->preferred_build_file };
 	DEBUG( "Build file is $file" );
-	
+	DEBUG( "At is $@" ) if $@;
 	unless( defined $file )
 		{
 		ERROR( "Did not find a build file" );
@@ -440,7 +435,7 @@ sub get_module_info
 	$hash->{version} = Module::Extract::VERSION->parse_version_safely( $file );
 	
 	# packages
-	my @packages = Module::Extract::Namespaces->from_file( $file );
+	my @packages      = Module::Extract::Namespaces->from_file( $file );
 	my $first_package = Module::Extract::Namespaces->from_file( $file );
 	
 	$hash->{packages} = [ @packages ];
