@@ -95,7 +95,7 @@ sub child_tasks
 	my $out_dir = $yml_error_dir;
 	
 	local $SIG{ALRM} = sub { die "alarm\n" };
-	alarm( $config->alarm || 15 );
+	alarm( $Config->alarm || 15 );
 	my $info = eval { MyCPAN::Indexer->run( $dist ) };
 
 	unless( defined $info )
@@ -105,7 +105,7 @@ sub child_tasks
 		}
 	elsif( eval { $info->run_info( 'completed' ) } )
 		{
-		$outdir = $yml_dir;
+		$out_dir = $yml_dir;
 		}
 	else
 		{

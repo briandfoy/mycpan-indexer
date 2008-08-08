@@ -51,14 +51,19 @@ sub run
 	
 	my $self = bless { dist_info => {} }, $class;
 		
-	$self->set_run_info( 'root_working_dir', cwd() );
-	$self->set_run_info( 'run_start_time', time );
-	$self->set_run_info( 'completed', 0 );
-	$self->set_run_info( 'pid', $$ );
-	$self->set_run_info( 'ppid', getppid );
+	$self->setup_run_info;
 	
 	my $count = 0;
 	
+	my @methods = (
+		[ 'unpack_dist',        "Could not unpack distribtion!"    ],
+		[ 'find_dist_dir',      "Did not find distro directory!"   ],
+		[ 'get_file_list',      'Could not get file list'          ],
+		[ 'parse_meta_files',   "Could not parse META.yml!"        ],
+		[ 'run_build_file',     "Could not run build file!"        ],
+		[ 'get_blib_file_list', 'Could not get file list for blib' ],
+		);
+			
 	DIST: foreach my $dist ( @_ )
 		{
 		DEBUG( "Dist is $dist\n" );
@@ -69,47 +74,23 @@ sub run
 			next;
 			}
 			
-		$self->clear_dist_info;
-		
 		INFO( "Processing $dist\n" );
-		
-		$self->set_dist_info( 'dist', $dist );
-		$self->set_dist_info( 'dist_basename', basename($dist) );
-		$self->set_dist_info( 'dist_mtime', (stat($dist))[9] );
-		
-		my( undef, undef, $author ) = $dist =~ m|/([A-Z])/\1([A-Z])/(\1\2[A-Z]+)/|;
-		$self->set_dist_info( 'dist_author', $author );
-		
-		$self->unpack_dist( $dist ) or next;
 
-		unless( my $found_dist_dir = $self->find_dist_dir )
+		$self->clear_dist_info;
+		$self->setup_dist_info( $dist );
+		
+		foreach my $tuple ( @methods )
 			{
-			ERROR( "Did not find distro directory!" );
-			$self->set_run_info( 'fatal_error: Could not find distro directory' );
-			next;
+			my( $method, $error ) = @$tuple;
+			
+			unless( $self->$method() )
+				{
+				ERROR( $error );
+				$self->set_run_info( 'fatal_error', $error );
+				next DIST;
+				}
 			}
-		
-		my $dist_dir = $self->dist_info( 'dist_dir' );
-		DEBUG( "Dist dir is $dist_dir\n" );
-		
-		unless( $self->get_file_list )
-			{
-			ERROR( "Could not get file list from MANIFEST" );
-			$self->set_run_info( 'fatal_error: Could not get file list' );
-			next;
-			}
-		
-		$self->parse_meta_files;
-
-		$self->run_build_file;
-		
-		unless( $self->get_blib_file_list )
-			{
-			ERROR( "Could not get file list from blib" );
-			$self->set_run_info( 'fatal_error: Could not get file list for blib' );
-			next;
-			}
-		
+							
 		my @modules = grep /\.pm$/, @{  $self->dist_info( 'blib' ) };
 		DEBUG( "Modules are @modules\n" );
 		
@@ -124,12 +105,13 @@ sub run
 		$self->set_dist_info( 'file_info', [ @file_info ] );
 
 		INFO( "Finished processing $dist\n" );
-		DEBUG( Dumper( $self ) );
 		
 		#$self->report_dist_info;
 
 		$self->set_run_info( 'completed', 1 );
 		$self->set_run_info( 'run_end_time', time );
+
+		DEBUG( Dumper( $self ) );
 		}
 		
 	$self;
@@ -188,60 +170,47 @@ sub examine
 	
 	}
 
-=item set_dist( DISTPATH )
+=item clear_run_info
+
+Clear anything recorded about the run.
+
+=cut
+
+sub clear_run_info 
+	{ 
+	DEBUG( "Clearing run_info\n" );
+	$_[0]->{run_info} = {};
+	}
+
+=item setup_run_info( DISTPATH )
 
 Given a distribution path, record various data about it, such as its size,
 mtime, and so on.
 
+Sets these items in dist_info:
+	dist_file
+	dist_size
+	dist_basename
+	dist_basename
+	dist_author
+
 =cut
 
-sub set_dist 
+sub setup_run_info 
 	{ 
-	my $self = shift;
-	my $dist = shift;
-	
-	if( @_ )
-		{
-		DEBUG( "Setting dist [$dist]\n" );
-		$self->{dist_file} = $dist;
-		$self->{dist_size} = -s $dist;
-		$self->{dist_date} = (stat $dist)[9];
-		DEBUG( "dist size [$self->{dist_size}] dist date [$self->{dist_date}]\n" );
-		}
+	$_[0]->set_run_info( 'root_working_dir', cwd()   );
+	$_[0]->set_run_info( 'run_start_time',   time    );
+	$_[0]->set_run_info( 'completed',        0       );
+	$_[0]->set_run_info( 'pid',              $$      );
+	$_[0]->set_run_info( 'ppid',             getppid );
 		
 	return 1;
 	}
 
-=item dist_file
-
-Return the name of the distribution file. Call set_dist first.
-
-=cut
-
-sub dist_file { $_[0]->{dist_file} }
-
-=item dist_size
-
-Return the name of the distribution file size . Call set_dist first.
-
-=cut
-
-sub dist_size { $_[0]->{dist_size} }
-
-=item dist_date
-
-Return the name of the distribution file date. Call set_dist first.
-
-=cut
-
-sub dist_date { $_[0]->{dist_date} }
-
 =item set_run_info( KEY, VALUE )
 
-Set something to record in the run info. This is for information
-related to the examination of the distribution, not the distribution
-itself. For instance, record the start time, pid, and so on.  See
-C<set_dist_info> to record run info.
+Set something to record about the run. This should only be information
+specific to the run. See C<set_dist_info> to record dist info.
 
 =cut
 
@@ -263,8 +232,7 @@ sub run_info
 	{ 
 	my( $self, $key ) = @_;
 	
-	DEBUG( "Getting run_info key [$key]\n" );
-	DEBUG( "Value for $key is " . $self->{run_info}{$key} );
+	DEBUG( "Run info for $key is " . $self->{run_info}{$key} );
 	$self->{run_info}{$key};
 	}
 
@@ -276,10 +244,42 @@ Clear anything recorded about the distribution.
 
 sub clear_dist_info 
 	{ 
-	my( $self, $key) = @_;
-	
 	DEBUG( "Clearing dist_info\n" );
-	$self->{dist_info} = {};
+	$_[0]->{dist_info} = {};
+	}
+
+=item setup_dist_info( DISTPATH )
+
+Given a distribution path, record various data about it, such as its size,
+mtime, and so on.
+
+Sets these items in dist_info:
+	dist_file
+	dist_size
+	dist_basename
+	dist_basename
+	dist_author
+
+=cut
+
+sub setup_dist_info 
+	{ 
+	my( $self, $dist ) = @_;
+
+	DEBUG( "Setting dist [$dist]\n" );
+	$self->set_dist_info( 'dist_file',     $dist            );
+	$self->set_dist_info( 'dist_size',     -s $dist         );
+	$self->set_dist_info( 'dist_basename', basename($dist)  );
+	$self->set_dist_info( 'dist_date',    (stat($dist))[9]  );
+	DEBUG( "dist size " . $self->dist_info( 'dist_size' ) . 
+		" dist date " . $self->dist_info( 'dist_date' ) 
+		);
+
+	my( undef, undef, $author ) = $dist =~ m|/([A-Z])/\1([A-Z])/(\1\2[A-Z]+)/|;
+	$self->set_dist_info( 'dist_author', $author );
+	DEBUG( "dist author [$author]" );
+		
+	return 1;
 	}
 
 =item set_dist_info( KEY, VALUE )
@@ -308,8 +308,7 @@ sub dist_info
 	my( $self, $key ) = @_;
 	
 	#print STDERR Dumper( $self );
-	DEBUG( "Getting dist_info key [$key]\n" );
-	DEBUG( "Value for $key is " . $self->{dist_info}{$key} );
+	DEBUG( "dist info for $key is " . $self->{dist_info}{$key} );
 	$self->{dist_info}{$key};
 	}
 	
@@ -333,7 +332,8 @@ sub unpack_dist
 	require File::Temp;
 
 	my $self = shift;
-	my $dist = shift;
+	my $dist = $self->dist_info( 'dist_file' );
+	DEBUG( "Unpacking dist $dist" );
 	
 	( my $prefix = __PACKAGE__ ) =~ s/::/-/g;
 	
