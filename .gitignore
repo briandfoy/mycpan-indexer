@@ -2,3 +2,4 @@ blib
 *.old
 *.bak
 pm_to_blib
+examples/backpan_indexer.log

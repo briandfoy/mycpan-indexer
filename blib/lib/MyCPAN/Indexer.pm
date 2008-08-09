@@ -45,25 +45,14 @@ __PACKAGE__->run( @ARGV ) unless caller;
 
 =cut
 
-sub run 
+sub run
 	{
 	my $class = shift;
-	
+
 	my $self = bless { dist_info => {} }, $class;
-		
+
 	$self->setup_run_info;
-	
-	my $count = 0;
-	
-	my @methods = (
-		[ 'unpack_dist',        "Could not unpack distribtion!"    ],
-		[ 'find_dist_dir',      "Did not find distro directory!"   ],
-		[ 'get_file_list',      'Could not get file list'          ],
-		[ 'parse_meta_files',   "Could not parse META.yml!"        ],
-		[ 'run_build_file',     "Could not run build file!"        ],
-		[ 'get_blib_file_list', 'Could not get file list for blib' ],
-		);
-			
+
 	DIST: foreach my $dist ( @_ )
 		{
 		DEBUG( "Dist is $dist\n" );
@@ -73,51 +62,25 @@ sub run
 			ERROR( "Could not find [$dist]" );
 			next;
 			}
-			
+
 		INFO( "Processing $dist\n" );
 
 		$self->clear_dist_info;
 		$self->setup_dist_info( $dist );
-		
-		foreach my $tuple ( @methods )
-			{
-			my( $method, $error ) = @$tuple;
-			
-			unless( $self->$method() )
-				{
-				ERROR( $error );
-				$self->set_run_info( 'fatal_error', $error );
-				next DIST;
-				}
-			}
-							
-		my @modules = grep /\.pm$/, @{  $self->dist_info( 'blib' ) };
-		DEBUG( "Modules are @modules\n" );
-		
-		my @file_info = ();
-		foreach my $file ( @modules )
-			{
-			DEBUG( "Processing module $file\n" );
-			my $hash = $self->get_module_info( $file );
-			push @file_info, $hash;
-			}
-		
-		$self->set_dist_info( 'file_info', [ @file_info ] );
 
-		INFO( "Finished processing $dist\n" );
-		
-		#$self->report_dist_info;
+		$self->examine_dist or next DIST;
 
 		$self->set_run_info( 'completed', 1 );
 		$self->set_run_info( 'run_end_time', time );
 
+		INFO( "Finished processing $dist\n" );
 		DEBUG( Dumper( $self ) );
 		}
-		
+
 	$self;
 	}
-	
-=item examine( DISTPATH )
+
+=item examine_dist
 
 Given a distribution, unpack it, look at it, and report the findings.
 It does everything except the looking right now, so it merely croaks.
@@ -125,50 +88,52 @@ Most of this needs to move out of run and into this method.
 
 =cut
 
-sub examine
+{
+my @methods = (
+	#    method                error message                  fatal
+	[ 'unpack_dist',        "Could not unpack distribtion!",     1 ],
+	[ 'find_dist_dir',      "Did not find distro directory!",    1 ],
+	[ 'get_file_list',      'Could not get file list',           1 ],
+	[ 'parse_meta_files',   "Could not parse META.yml!",         0 ],
+	[ 'run_build_file',     "Could not run build file!",         1 ],
+	[ 'get_blib_file_list', 'Could not get file list for blib',  1 ],
+	);
+
+sub examine_dist
 	{
-	croak "Not yet implemented";
-	
-	my( $class, $dist ) = @_;
-	
-	my $self = bless {}, $class;
-	
-	ERROR( "Could not find dist file [$dist]" )
-		unless -e $dist;
-	
-	$self->set_dist( $dist );
-	
-	$self->unpack_dist( $dist );
-	
-	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-	# from here things get dangerous because we have to run some code
-=pod
+	my $self = shift;
 
-	get_file_list
-	
-	if get_yaml
-		filter file_list based on no_index, private
-	
-	get file mod time
-	
-	foreach file
-		find $VERSION line not in POD
-		
-		wrap version in safe package
-	
-			run and capture version string
-	
-			record pm, version, dist
-=cut
+	foreach my $tuple ( @methods )
+		{
+		my( $method, $error, $die_on_error ) = @$tuple;
 
-	# things aren't so dangerous anymore
-	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-	
-	#$self->cleanup;
-	
-	$self->report_findings;
-	
+		unless( $self->$method() )
+			{
+			ERROR( $error );
+			if( $die_on_error ) # only if failure is fatal
+				{
+				$self->set_run_info( 'fatal_error', $error );
+				return;
+				}
+			}
+		}
+
+	my @modules = grep /\.pm$/, @{  $self->dist_info( 'blib' ) };
+	DEBUG( "Modules are @modules\n" );
+
+	my @file_info = ();
+	foreach my $file ( @modules )
+		{
+		DEBUG( "Processing module $file\n" );
+		my $hash = $self->get_module_info( $file );
+		push @file_info, $hash;
+		}
+
+	$self->set_dist_info( 'file_info', [ @file_info ] );
+
+	return 1;
 	}
+}
 
 =item clear_run_info
 
@@ -176,8 +141,8 @@ Clear anything recorded about the run.
 
 =cut
 
-sub clear_run_info 
-	{ 
+sub clear_run_info
+	{
 	DEBUG( "Clearing run_info\n" );
 	$_[0]->{run_info} = {};
 	}
@@ -196,14 +161,14 @@ Sets these items in dist_info:
 
 =cut
 
-sub setup_run_info 
-	{ 
+sub setup_run_info
+	{
 	$_[0]->set_run_info( 'root_working_dir', cwd()   );
 	$_[0]->set_run_info( 'run_start_time',   time    );
 	$_[0]->set_run_info( 'completed',        0       );
 	$_[0]->set_run_info( 'pid',              $$      );
 	$_[0]->set_run_info( 'ppid',             getppid );
-		
+
 	return 1;
 	}
 
@@ -214,10 +179,10 @@ specific to the run. See C<set_dist_info> to record dist info.
 
 =cut
 
-sub set_run_info 
-	{ 
+sub set_run_info
+	{
 	my( $self, $key, $value ) = @_;
-	
+
 	DEBUG( "Setting run_info key [$key] to [$value]\n" );
 	$self->{run_info}{$key} = $value;
 	}
@@ -228,10 +193,10 @@ Fetch some run info.
 
 =cut
 
-sub run_info 
-	{ 
+sub run_info
+	{
 	my( $self, $key ) = @_;
-	
+
 	DEBUG( "Run info for $key is " . $self->{run_info}{$key} );
 	$self->{run_info}{$key};
 	}
@@ -242,8 +207,8 @@ Clear anything recorded about the distribution.
 
 =cut
 
-sub clear_dist_info 
-	{ 
+sub clear_dist_info
+	{
 	DEBUG( "Clearing dist_info\n" );
 	$_[0]->{dist_info} = {};
 	}
@@ -262,8 +227,8 @@ Sets these items in dist_info:
 
 =cut
 
-sub setup_dist_info 
-	{ 
+sub setup_dist_info
+	{
 	my( $self, $dist ) = @_;
 
 	DEBUG( "Setting dist [$dist]\n" );
@@ -271,14 +236,14 @@ sub setup_dist_info
 	$self->set_dist_info( 'dist_size',     -s $dist         );
 	$self->set_dist_info( 'dist_basename', basename($dist)  );
 	$self->set_dist_info( 'dist_date',    (stat($dist))[9]  );
-	DEBUG( "dist size " . $self->dist_info( 'dist_size' ) . 
-		" dist date " . $self->dist_info( 'dist_date' ) 
+	DEBUG( "dist size " . $self->dist_info( 'dist_size' ) .
+		" dist date " . $self->dist_info( 'dist_date' )
 		);
 
 	my( undef, undef, $author ) = $dist =~ m|/([A-Z])/\1([A-Z])/(\1\2[A-Z]+)/|;
 	$self->set_dist_info( 'dist_author', $author );
 	DEBUG( "dist author [$author]" );
-		
+
 	return 1;
 	}
 
@@ -289,36 +254,36 @@ specific to the distribution. See C<set_run_info> to record run info.
 
 =cut
 
-sub set_dist_info 
-	{ 
+sub set_dist_info
+	{
 	my( $self, $key, $value ) = @_;
-	
+
 	DEBUG( "Setting dist_info key [$key] to [$value]\n" );
 	$self->{dist_info}{$key} = $value;
 	}
-	
+
 =item dist_info( KEY )
 
 Fetch some distribution info.
 
 =cut
 
-sub dist_info 
-	{ 
+sub dist_info
+	{
 	my( $self, $key ) = @_;
-	
+
 	#print STDERR Dumper( $self );
 	DEBUG( "dist info for $key is " . $self->{dist_info}{$key} );
 	$self->{dist_info}{$key};
 	}
-	
+
 =item unpack_dist( DISTPATH )
 
 Given a distribution path, this determines the archive type,
 unpacks it into a temporary directory, and records what it
 did.
 
-Sets these items in run_info: 
+Sets these items in run_info:
 
 Sets these items in dist_info:
 	unpack_dir
@@ -326,50 +291,50 @@ Sets these items in dist_info:
 
 =cut
 
-sub unpack_dist 
-	{ 	
+sub unpack_dist
+	{
 	require Archive::Extract;
 	require File::Temp;
 
 	my $self = shift;
 	my $dist = $self->dist_info( 'dist_file' );
 	DEBUG( "Unpacking dist $dist" );
-	
+
 	( my $prefix = __PACKAGE__ ) =~ s/::/-/g;
-	
+
 	DEBUG( "Preparing temp dir in pid [$$]\n" );
 	my $unpack_dir = eval { File::Temp::tempdir(
 		$prefix . "-$$.XXXX",
 		DIR     => $self->run_info( 'root_working_dir' ),
 		CLEANUP => 1,
-		) }; 
+		) };
 
 	if( $@ )
 		{
 		DEBUG( "Temp dir errorfor pid [$$] [$@]" );
 		exit;
 		}
-		
+
 	DEBUG( "Unpacking into directory [$unpack_dir]" );
 
 	$self->set_dist_info( 'unpack_dir', $unpack_dir );
-	
-	my $extractor = eval { 
-		Archive::Extract->new( archive => $dist ) 
+
+	my $extractor = eval {
+		Archive::Extract->new( archive => $dist )
 		};
 	if( defined $@ and $@ )
 		{
 		ERROR( "Could not unpack [$dist]: $@" );
-		$self->set_dist_info( 'dist_archive_type', 'unknown' );		
+		$self->set_dist_info( 'dist_archive_type', 'unknown' );
 		return;
 		}
-		
+
 	$self->set_dist_info( 'dist_archive_type', $extractor->type );
-	
+
 	my $rc = $extractor->extract( to => $unpack_dir );
 	DEBUG( "Archive::Extract returns [$rc]" );
 
-	$extractor->extract_path;		
+	$extractor->extract_path;
 	}
 
 =item find_dist_dir
@@ -386,7 +351,7 @@ Sets these items in dist_info:
 sub find_dist_dir
 	{
 	DEBUG( "Cwd is " . $_[0]->dist_info( "unpack_dir" ) );
-	
+
 	if( -e 'MANIFEST' )
 		{
 		$_[0]->set_dist_info( $_[0]->dist_info( "unpack_dir" ) );
@@ -398,31 +363,31 @@ sub find_dist_dir
 
 	DEBUG( "Did not find MANIFEST at top level" );
 	my( $wanted, $reporter ) = File::Find::Closures::find_by_name( 'MANIFEST' );
-	
+
 	File::Find::find( $wanted, $_[0]->dist_info( "unpack_dir" ) );
-	
+
 	my( $first ) = $reporter->();
 	DEBUG( "Found manifest in $first" );
-	
+
 	unless( $first )
 		{
 		DEBUG( "Didn't find MANIFEST anywhere!" );
 		return;
 		}
-		
+
 	my $dir = eval { dirname( $first ) };
 	DEBUG( "Found MANIFEST at $dir" );
-	
+
 	if( chdir $dir )
 		{
 		DEBUG "Changed to $dir";
 		$_[0]->set_dist_info( 'dist_dir', $dir );
 		return 1;
 		}
-	exit;	
+	exit;
 	return;
 	}
-	
+
 =item get_file_list
 
 Returns as an array reference the list of files in MANIFEST.
@@ -435,7 +400,7 @@ Sets these items in dist_info:
 sub get_file_list
 	{
 	my $self = shift;
-	
+
 	unless( -e 'Makefile.PL' or -e 'Build.PL' )
 		{
 		ERROR( "No Makefile.PL or Build.PL" );
@@ -443,13 +408,13 @@ sub get_file_list
 
 		return;
 		}
-	
+
 	require ExtUtils::Manifest;
-	
+
 	my $manifest = [ sort keys %{ ExtUtils::Manifest::manifind() } ];
-	
+
 	$self->set_dist_info( 'manifest', $manifest );
-	
+
 	$manifest;
 	}
 
@@ -476,13 +441,13 @@ sub get_blib_file_list
 		}
 
 	require ExtUtils::Manifest;
-	
-	my $blib = [ grep { m|^blib/| and ! m|.exists$| } 
+
+	my $blib = [ grep { m|^blib/| and ! m|.exists$| }
 		sort keys %{ ExtUtils::Manifest::manifind() } ];
-	
+
 	$self->set_dist_info( 'blib', $blib );
 	}
-	
+
 =item parse_meta_files
 
 Parses the META.yml and returns the YAML object.
@@ -499,7 +464,7 @@ sub parse_meta_files
 		require YAML::Syck;
 		my $yaml = YAML::Syck::LoadFile( 'META.yml' );
 		$_[0]->set_dist_info( 'META.yml', $yaml );
-		return $yaml;	
+		return $yaml;
 		}
 
 	return;
@@ -513,12 +478,12 @@ C<setup_build>, C<run_build>.
 =cut
 
 sub run_build_file
-	{	
+	{
 	$_[0]->choose_build_file;
 	$_[0]->setup_build;
 	$_[0]->run_build;
-	
-	return 1;	
+
+	return 1;
 	}
 
 =item choose_build_file
@@ -537,11 +502,11 @@ sub choose_build_file
 		dist_dir => $_[0]->dist_info( 'dist_dir' )
 		);
 
-	$_[0]->set_dist_info( 
-		'build_system_guess', 
-		$guesser->just_give_me_a_hash 
+	$_[0]->set_dist_info(
+		'build_system_guess',
+		$guesser->just_give_me_a_hash
 		);
-			
+
 	my $file = eval { $guesser->preferred_build_file };
 	DEBUG( "Build file is $file" );
 	DEBUG( "At is $@" ) if $@;
@@ -552,7 +517,7 @@ sub choose_build_file
 		}
 
 	$_[0]->set_dist_info( 'build_file', $file );
-	
+
 	return 1;
 	}
 
@@ -567,14 +532,14 @@ Sets these items in dist_info:
 =cut
 
 sub setup_build
-	{	
+	{
 	my $file = $_[0]->dist_info( 'build_file' );
-	
+
 	my $command = "$^X $file";
-	
-	$_[0]->run_something( $command, 'build_file_output' );	
+
+	$_[0]->run_something( $command, 'build_file_output' );
 	}
-	
+
 =item run_build
 
 Run the build file (Build.PL, Makefile). Run C<setup_build> first.
@@ -589,7 +554,7 @@ sub run_build
 	my $file = $_[0]->dist_info( 'build_file' );
 
 	my $command = $file eq 'Build.PL' ? "$^X ./Build" : "make";
-			
+
 	$_[0]->run_something( $command, 'build_output' );
 	}
 
@@ -605,24 +570,24 @@ sub run_something
 	{
 	my $self = shift;
 	my( $command, $info_key ) = @_;
-	
+
 	{
 	require IPC::Open2;
 	DEBUG( "Running $command" );
-	my $pid = IPC::Open2::open2( 
-		my $read, 
-		my $write, 
-		"$command 2>&1 < /dev/null" 
+	my $pid = IPC::Open2::open2(
+		my $read,
+		my $write,
+		"$command 2>&1 < /dev/null"
 		);
-	
+
 	close $write;
-	
-	{ 
-	local $/; 
-	my $output = <$read>; 
+
+	{
+	local $/;
+	my $output = <$read>;
 	$self->set_dist_info( $info_key, $output );
 	}
-		
+
 	waitpid $pid, 0;
 	}
 
@@ -637,37 +602,37 @@ sub get_module_info
 	{
 	my( $self, $file ) = @_;
 	DEBUG( "get_module_info called with [$file]\n" );
-		
+
 	# get file name as key
 	my $hash = { name => $file };
-	
+
 	# file digest
 	{
 	my $context = MD5->new;
 	$context->add( $file );
 	$hash->{md5} = $context->hexdigest;
 	}
-	
+
 	# mtime
 	$hash->{mtime} = ( stat $file )[9];
-	
+
 	# file size
 	$hash->{bytesize} = -s _;
-	
+
 	# version
 	$hash->{version} = Module::Extract::VERSION->parse_version_safely( $file );
-	
+
 	# packages
 	my @packages      = Module::Extract::Namespaces->from_file( $file );
 	my $first_package = Module::Extract::Namespaces->from_file( $file );
-	
+
 	$hash->{packages} = [ @packages ];
 
 	$hash->{primary_package} = $first_package;
 
 	$hash;
 	}
-	
+
 =item cleanup
 
 Removes the unpack_dir.
@@ -684,7 +649,7 @@ sub cleanup
 		],
 		0, 0
 		);
-		
+
 	return 1;
 	}
 
@@ -698,19 +663,19 @@ take the object and dump it in some way.
 sub report_dist_info
 	{
 	no warnings 'uninitialized';
-	
+
 	#print $self->dist_info( 'dist' ), "\n\t";
-	
+
 	my $module_hash = $_[0]->dist_info( 'module_versions' );
-	
+
 	while( my( $k, $v ) = each %$module_hash )
 		{
 		print "$k => $v\n\t";
 		}
-	
+
 	print "\n";
 	}
-	
+
 =back
 
 =head1 TO DO

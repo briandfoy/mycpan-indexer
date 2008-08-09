@@ -1,7 +1,13 @@
-log4perl.rootLogger=DEBUG, Screen
+log4perl.rootLogger=INFO, Screen, File
 
-log4perl.appender.Screen=Log::Log4perl::Appender::Screen
-log4perl.appender.Screen.stderr=0
-
-log4perl.appender.Screen.layout=PatternLayout
+log4perl.appender.Screen            = Log::Log4perl::Appender::Screen
+log4perl.appender.Screen.stderr     = 0
+log4perl.appender.Screen.layout     = PatternLayout
 log4perl.appender.Screen.layout.ConversionPattern=[%p] %L %m%n
+
+log4perl.appender.File           = Log::Log4perl::Appender::File
+log4perl.appender.File.autoflush = 1
+log4perl.appender.File.filename  = backpan_indexer.log
+log4perl.appender.File.mode      = append
+log4perl.appender.File.layout     = PatternLayout
+log4perl.appender.File.layout.ConversionPattern=[%p] %L %m%n
