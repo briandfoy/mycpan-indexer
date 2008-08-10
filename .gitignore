@@ -3,3 +3,4 @@ blib
 *.bak
 pm_to_blib
 examples/backpan_indexer.log
+.DS_Store
