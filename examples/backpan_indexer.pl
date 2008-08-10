@@ -15,7 +15,7 @@ use YAML;
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # The Set up
-Log::Log4perl->init( 'backpan_indexer.log4perl' );
+Log::Log4perl->init_and_watch( 'backpan_indexer.log4perl', 30 );
 
 my $Config = ConfigReader::Simple->new( 'backpan_indexer.config',
 	[ qw(temp_dir backpan_dir report_dir) ]

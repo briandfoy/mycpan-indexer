@@ -1,9 +1,16 @@
-log4perl.rootLogger=INFO, Screen, File
+# trace debug info warn error fatal
+log4perl.rootLogger=INFO, Screen
 
 log4perl.appender.Screen            = Log::Log4perl::Appender::ScreenColoredLevels::UsingMyColors
 log4perl.appender.Screen.stderr     = 0
 log4perl.appender.Screen.layout     = PatternLayout
 log4perl.appender.Screen.layout.ConversionPattern=[%p] %L %m%n
+log4perl.appender.Screen.color.debug = yellow
+log4perl.appender.Screen.color.trace = red on_yellow
+log4perl.appender.Screen.color.error = magenta 
+log4perl.appender.Screen.color.warn  = cyan
+log4perl.appender.Screen.color.info  = green
+log4perl.appender.Screen.color.fatal = red on_magenta
 
 log4perl.appender.File           = Log::Log4perl::Appender::File
 log4perl.appender.File.autoflush = 1

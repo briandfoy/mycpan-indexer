@@ -6,7 +6,7 @@ use strict;
 use warnings;
 no warnings;
 
-use subs qw();
+use subs qw(get_caller_info);
 use vars qw($VERSION);
 
 $VERSION = '0.10_02';
@@ -74,7 +74,7 @@ sub run
 		$self->set_run_info( 'run_end_time', time );
 
 		INFO( "Finished processing $dist\n" );
-		DEBUG( Dumper( $self ) );
+		DEBUG( sub { Dumper( $self ) } );
 		}
 
 	$self;
@@ -95,8 +95,7 @@ my @methods = (
 	[ 'find_dist_dir',      "Did not find distro directory!",    1 ],
 	[ 'get_file_list',      'Could not get file list',           1 ],
 	[ 'parse_meta_files',   "Could not parse META.yml!",         0 ],
-	[ 'run_build_file',     "Could not run build file!",         1 ],
-	[ 'get_blib_file_list', 'Could not get file list for blib',  1 ],
+	[ 'find_modules',       "Could not find modules!",           1 ],
 	);
 
 sub examine_dist
@@ -112,17 +111,15 @@ sub examine_dist
 			ERROR( $error );
 			if( $die_on_error ) # only if failure is fatal
 				{
+				ERROR( "Stopping: $error" );
 				$self->set_run_info( 'fatal_error', $error );
 				return;
 				}
 			}
 		}
 
-	my @modules = grep /\.pm$/, @{  $self->dist_info( 'blib' ) };
-	DEBUG( "Modules are @modules\n" );
-
 	my @file_info = ();
-	foreach my $file ( @modules )
+	foreach my $file ( @{ $self->dist_info( 'modules' ) } )
 		{
 		DEBUG( "Processing module $file\n" );
 		my $hash = $self->get_module_info( $file );
@@ -270,6 +267,8 @@ Fetch some distribution info.
 
 sub dist_info
 	{
+	TRACE( sub { get_caller_info } );
+
 	my( $self, $key ) = @_;
 
 	#print STDERR Dumper( $self );
@@ -293,6 +292,8 @@ Sets these items in dist_info:
 
 sub unpack_dist
 	{
+	TRACE( sub { get_caller_info } );
+
 	require Archive::Extract;
 	require File::Temp;
 
@@ -350,6 +351,8 @@ Sets these items in dist_info:
 
 sub find_dist_dir
 	{
+	TRACE( sub { get_caller_info } );
+
 	DEBUG( "Cwd is " . $_[0]->dist_info( "unpack_dir" ) );
 
 	if( -e 'MANIFEST' )
@@ -399,12 +402,10 @@ Sets these items in dist_info:
 
 sub get_file_list
 	{
-	my $self = shift;
-
 	unless( -e 'Makefile.PL' or -e 'Build.PL' )
 		{
 		ERROR( "No Makefile.PL or Build.PL" );
-		$self->set_dist_info( 'manifest', [] );
+		$_[0]->set_dist_info( 'manifest', [] );
 
 		return;
 		}
@@ -413,7 +414,7 @@ sub get_file_list
 
 	my $manifest = [ sort keys %{ ExtUtils::Manifest::manifind() } ];
 
-	$self->set_dist_info( 'manifest', $manifest );
+	$_[0]->set_dist_info( 'manifest', $manifest );
 
 	$manifest;
 	}
@@ -430,12 +431,12 @@ Sets these items in dist_info:
 
 sub get_blib_file_list
 	{
-	my $self = shift;
+	TRACE( sub { get_caller_info } );
 
 	unless( -d 'blib/lib' )
 		{
 		ERROR( "No blib/lib found!" );
-		$self->set_dist_info( 'blib', [] );
+		$_[0]->set_dist_info( 'blib', [] );
 
 		return;
 		}
@@ -445,9 +446,56 @@ sub get_blib_file_list
 	my $blib = [ grep { m|^blib/| and ! m|.exists$| }
 		sort keys %{ ExtUtils::Manifest::manifind() } ];
 
-	$self->set_dist_info( 'blib', $blib );
+	$_[0]->set_dist_info( 'blib', $blib );
 	}
 
+=item look_in_lib
+
+=cut
+
+sub look_in_lib
+	{
+	TRACE( sub { get_caller_info } );
+
+	require File::Find::Closures;
+	require File::Find;
+	
+	my( $wanted, $reporter ) = File::Find::Closures::find_by_regex( qr/\.pm\z/ );
+	File::Find::find( $wanted, 'lib' );
+	
+	my @modules = $reporter->();
+	unless( @modules )
+		{
+		DEBUG( "Did not find any modules in lib" );
+		return;
+		}
+	
+	$_[0]->set_dist_info( 'modules', [ @modules ] );
+	
+	return 1;
+	}
+	
+=item look_in_cwd
+
+=cut
+
+sub look_in_cwd
+	{
+	TRACE( sub { get_caller_info } );
+	
+	my @modules = glob( "*.pm" );
+
+	unless( @modules )
+		{
+		DEBUG( "Did not find any modules in cwd" );
+		return;
+		}
+
+	$_[0]->set_dist_info( 'modules', [ @modules ] );
+	
+	return 1;
+	}
+	
 =item parse_meta_files
 
 Parses the META.yml and returns the YAML object.
@@ -459,6 +507,8 @@ Sets these items in dist_info:
 
 sub parse_meta_files
 	{
+	TRACE( sub { get_caller_info } );
+
 	if( -e 'META.yml'  )
 		{
 		require YAML::Syck;
@@ -470,6 +520,31 @@ sub parse_meta_files
 	return;
 	}
 
+=item find_modules
+
+=cut
+
+sub find_modules
+	{
+	TRACE( sub { get_caller_info } );
+
+	my @methods = (
+		[ 'run_build_file', "Got from running build file"  ],
+		[ 'look_in_lib',    "Guessed from looking in lib/" ],
+		[ 'look_in_cwd',    "Guessed from looking in cwd"  ],
+	);
+	
+	foreach my $tuple ( @methods )
+		{
+		my( $method, $message ) = @$tuple;
+		next unless $_[0]->$method();
+		DEBUG( $message );
+		return 1;
+		}
+		
+	return;
+	}
+	
 =item run_build_file
 
 This method is one stop shopping for calls to C<choose_build_file>,
@@ -479,10 +554,19 @@ C<setup_build>, C<run_build>.
 
 sub run_build_file
 	{
-	$_[0]->choose_build_file;
-	$_[0]->setup_build;
-	$_[0]->run_build;
+	TRACE( sub { get_caller_info } );
 
+	foreach my $method ( qw( 
+		choose_build_file setup_build run_build get_blib_file_list ) )
+		{
+		$_[0]->$method() or return;
+		}
+		
+	my @modules = grep /\.pm$/, @{ $_[0]->dist_info( 'blib' ) };
+	DEBUG( "Modules are @modules\n" );
+
+	$_[0]->set_dist_info( 'modules', [ @modules ] );
+	
 	return 1;
 	}
 
@@ -497,6 +581,8 @@ Sets these items in dist_info:
 
 sub choose_build_file
 	{
+	TRACE( sub { get_caller_info } );
+
 	require Distribution::Guess::BuildSystem;
 	my $guesser = Distribution::Guess::BuildSystem->new(
 		dist_dir => $_[0]->dist_info( 'dist_dir' )
@@ -533,6 +619,8 @@ Sets these items in dist_info:
 
 sub setup_build
 	{
+	TRACE( sub { get_caller_info } );
+
 	my $file = $_[0]->dist_info( 'build_file' );
 
 	my $command = "$^X $file";
@@ -551,6 +639,8 @@ Sets these items in dist_info:
 
 sub run_build
 	{
+	TRACE( sub { get_caller_info } );
+
 	my $file = $_[0]->dist_info( 'build_file' );
 
 	my $command = $file eq 'Build.PL' ? "$^X ./Build" : "make";
@@ -676,6 +766,24 @@ sub report_dist_info
 	print "\n";
 	}
 
+=item get_caller_info
+
+=cut
+
+sub get_caller_info
+	{
+	require File::Basename;
+	
+	my(
+		$package, $filename, $line, $subroutine, $hasargs,
+		$wantarray, $evaltext, $is_require, $hints, $bitmask
+		) = caller(4);
+	
+	$filename = File::Basename::basename( $filename );
+	
+	return join " : ", $package, $filename, $line, $subroutine;
+	}
+	
 =back
 
 =head1 TO DO
