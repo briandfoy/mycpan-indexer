@@ -18,7 +18,7 @@ use YAML;
 Log::Log4perl->init_and_watch( 'backpan_indexer.log4perl', 30 );
 
 my $Config = ConfigReader::Simple->new( 'backpan_indexer.config',
-	[ qw(temp_dir backpan_dir report_dir) ]
+	[ qw(temp_dir backpan_dir report_dir alarm copy_bad_dists retry_errors) ]
 	);
 die "Could not read config!\n" unless ref $Config;
 
@@ -29,6 +29,19 @@ $ENV{AUTOMATED_TESTING}++;
 my $yml_dir       = catfile( $Config->report_dir, "meta"        );
 my $yml_error_dir = catfile( $Config->report_dir, "meta-errors" );
 
+print Dumper( $Config );
+
+print "Value of rtry is ", $Config->retry_errors , "\n";
+print "Value of copy_bad_dists is ", $Config->copy_bad_dists , "\n";
+
+if( $Config->retry_errors )
+	{
+	my $glob = catfile( $yml_error_dir, "*.yml" );
+	$glob =~ s/ /\\ /g;
+
+	unlink glob( $glob );
+	}
+	
 mkdir $yml_dir,       0755 unless -d $yml_dir;
 mkdir $yml_error_dir, 0755 unless -d $yml_error_dir;
 
@@ -109,7 +122,23 @@ sub child_tasks
 		}
 	else
 		{
-		ERROR( "$basename did not complete\n" ) 		
+		ERROR( "$basename did not complete\n" );
+		if( my $bad_dist_dir = $Config->copy_bad_dists )
+			{
+			my $dist_file = $info->dist_info( 'dist_file' );
+			my $basename  = $info->dist_info( 'dist_basename' );
+			my $new_name  = File::Spec->catfile( $bad_dist_dir, $basename );
+			
+			unless( -e $new_name )
+				{
+				DEBUG( "Copying bad dist" );
+				open my($in), "<", $dist_file;
+				open my($out), ">", $new_name;
+				while( <$in> ) { print { $out } $_ }
+				close $in;
+				close $out;
+				}
+			}	
 		}
 		
 	alarm 0;
@@ -123,17 +152,15 @@ sub child_tasks
 	}
 	
 sub check_for_previous_result
-	{
-#	return 0 if Log::Log4perl->get_logger->isDebugEnabled;
-	
+	{	
 	my $dist = shift;
-
+	
 	( my $basename = basename( $dist ) ) =~ s/\.(tgz|tar\.gz|zip)$//;
 	
 	my $yml_path       = catfile( $yml_dir,       "$basename.yml" );
 	my $yml_error_path = catfile( $yml_error_dir, "$basename.yml" );
 	
-	if( my @path = grep -e, ( $yml_path, $yml_error_path ) )
+	if( my @path = grep { -e } ( $yml_path, $yml_error_path ) )
 		{
 		DEBUG( "Found run output for $basename in $path[0]. Skipping...\n" );
 		return;

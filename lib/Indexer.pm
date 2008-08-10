@@ -66,7 +66,7 @@ sub run
 		INFO( "Processing $dist\n" );
 
 		$self->clear_dist_info;
-		$self->setup_dist_info( $dist );
+		$self->setup_dist_info( $dist ) or next DIST;
 
 		$self->examine_dist or next DIST;
 
@@ -241,6 +241,13 @@ sub setup_dist_info
 	$self->set_dist_info( 'dist_author', $author );
 	DEBUG( "dist author [$author]" );
 
+	unless( $self->dist_info( 'dist_size' ) )
+		{
+		ERROR( "Dist size was 0!" );
+		$self->set_run_info( 'fatal_error', "Dist size was 0!" );
+		return;
+		}
+		
 	return 1;
 	}
 
@@ -355,7 +362,7 @@ sub find_dist_dir
 
 	DEBUG( "Cwd is " . $_[0]->dist_info( "unpack_dir" ) );
 
-	if( -e 'MANIFEST' )
+	if( grep { -e } qw( MANIFEST Makfile.PL Build.PL ) )
 		{
 		$_[0]->set_dist_info( $_[0]->dist_info( "unpack_dir" ) );
 		return 1;
