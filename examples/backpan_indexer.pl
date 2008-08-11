@@ -29,8 +29,6 @@ $ENV{AUTOMATED_TESTING}++;
 my $yml_dir       = catfile( $Config->report_dir, "meta"        );
 my $yml_error_dir = catfile( $Config->report_dir, "meta-errors" );
 
-print Dumper( $Config );
-
 print "Value of rtry is ", $Config->retry_errors , "\n";
 print "Value of copy_bad_dists is ", $Config->copy_bad_dists , "\n";
 

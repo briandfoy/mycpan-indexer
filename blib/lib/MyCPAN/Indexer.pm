@@ -330,6 +330,10 @@ sub unpack_dist
 	my $extractor = eval {
 		Archive::Extract->new( archive => $dist )
 		};
+	$extractor = eval {
+		Archive::Extract->new( archive => $dist, type => 'tgz' )
+		} unless $extractor;
+		
 	if( defined $@ and $@ )
 		{
 		ERROR( "Could not unpack [$dist]: $@" );
@@ -362,7 +366,9 @@ sub find_dist_dir
 
 	DEBUG( "Cwd is " . $_[0]->dist_info( "unpack_dir" ) );
 
-	if( grep { -e } qw( MANIFEST Makfile.PL Build.PL ) )
+	my @files = qw( MANIFEST Makefile.PL Build.PL META.yml );
+	
+	if( grep { -e } @files )
 		{
 		$_[0]->set_dist_info( $_[0]->dist_info( "unpack_dir" ) );
 		return 1;
@@ -371,27 +377,28 @@ sub find_dist_dir
 	require File::Find::Closures;
 	require File::Find;
 
-	DEBUG( "Did not find MANIFEST at top level" );
-	my( $wanted, $reporter ) = File::Find::Closures::find_by_name( 'MANIFEST' );
+	DEBUG( "Did not find dist directory at top level" );
+	my( $wanted, $reporter ) = 
+		File::Find::Closures::find_by_directory_contains( @files );
 
 	File::Find::find( $wanted, $_[0]->dist_info( "unpack_dir" ) );
 
+	my @found = $reporter->();
+	DEBUG( "Found files @found" );
+	
 	my( $first ) = $reporter->();
-	DEBUG( "Found manifest in $first" );
-
+	DEBUG( "Found dist file at $first" );
+	print "Waiting for STDIN..."; <STDIN>;
 	unless( $first )
 		{
-		DEBUG( "Didn't find MANIFEST anywhere!" );
+		DEBUG( "Didn't find anything that looks like a module directory!" );
 		return;
 		}
 
-	my $dir = eval { dirname( $first ) };
-	DEBUG( "Found MANIFEST at $dir" );
-
-	if( chdir $dir )
+	if( chdir $first )
 		{
-		DEBUG "Changed to $dir";
-		$_[0]->set_dist_info( 'dist_dir', $dir );
+		DEBUG "Changed to $first";
+		$_[0]->set_dist_info( 'dist_dir', $first );
 		return 1;
 		}
 	exit;
@@ -409,6 +416,9 @@ Sets these items in dist_info:
 
 sub get_file_list
 	{
+	TRACE( sub { get_caller_info } );
+	DEBUG( "Cwd is " . cwd() );
+	
 	unless( -e 'Makefile.PL' or -e 'Build.PL' )
 		{
 		ERROR( "No Makefile.PL or Build.PL" );
