@@ -292,9 +292,9 @@ did.
 Sets these items in run_info:
 
 Sets these items in dist_info:
-	unpack_dir
 	dist_archive_type
-
+	dist_extract_path
+	
 =cut
 
 sub unpack_dist
@@ -302,11 +302,61 @@ sub unpack_dist
 	TRACE( sub { get_caller_info } );
 
 	require Archive::Extract;
-	require File::Temp;
 
 	my $self = shift;
 	my $dist = $self->dist_info( 'dist_file' );
 	DEBUG( "Unpacking dist $dist" );
+	
+	return unless $self->get_unpack_dir;
+
+	my $extractor = eval {
+		Archive::Extract->new( archive => $dist )
+		};
+		
+	if( $extractor->type eq 'gz' )
+		{
+		ERROR( "Dist claims to be a gz, so try .tgz instead" );
+	
+		$extractor = eval {
+			Archive::Extract->new( archive => $dist, type => 'tgz' )
+			};
+		}
+
+	unless( $extractor )
+		{
+		ERROR( "Still could not unpack $dist [$@]" );
+		$self->set_dist_info( 'dist_archive_type', 'unknown' );
+		return;	
+		}
+		
+	$self->set_dist_info( 'dist_archive_type', $extractor->type );
+
+	my $rc = $extractor->extract( to => $self->dist_info( 'unpack_dir' ) );
+
+	DEBUG( "Archive::Extract returns [$rc]" );
+	return unless( $rc );
+
+	$self->set_dist_info( 'dist_extract_path', $extractor->extract_path );
+
+	1;
+	}
+
+=item get_unpack_dir
+
+Get a directory where you can unpack the archive. 
+
+Sets these items in dist_info:
+	unpack_dir
+
+=cut
+
+sub get_unpack_dir
+	{
+	TRACE( sub { get_caller_info } );
+
+	require File::Temp;
+	
+	my $self = shift;
 
 	( my $prefix = __PACKAGE__ ) =~ s/::/-/g;
 
@@ -319,36 +369,18 @@ sub unpack_dist
 
 	if( $@ )
 		{
-		DEBUG( "Temp dir errorfor pid [$$] [$@]" );
-		exit;
+		DEBUG( "Temp dir error for pid [$$] [$@]" );
+		return;
 		}
+	
+	$self->set_dist_info( 'unpack_dir', $unpack_dir );
+
 
 	DEBUG( "Unpacking into directory [$unpack_dir]" );
 
-	$self->set_dist_info( 'unpack_dir', $unpack_dir );
-
-	my $extractor = eval {
-		Archive::Extract->new( archive => $dist )
-		};
-	$extractor = eval {
-		Archive::Extract->new( archive => $dist, type => 'tgz' )
-		} unless $extractor;
-		
-	if( defined $@ and $@ )
-		{
-		ERROR( "Could not unpack [$dist]: $@" );
-		$self->set_dist_info( 'dist_archive_type', 'unknown' );
-		return;
-		}
-
-	$self->set_dist_info( 'dist_archive_type', $extractor->type );
-
-	my $rc = $extractor->extract( to => $unpack_dir );
-	DEBUG( "Archive::Extract returns [$rc]" );
-
-	$extractor->extract_path;
+	1;
 	}
-
+	
 =item find_dist_dir
 
 Looks at dist_info's unpack_dir and guesses where the module distribution
