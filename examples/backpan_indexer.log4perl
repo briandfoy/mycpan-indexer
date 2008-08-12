@@ -1,5 +1,5 @@
 # trace debug info warn error fatal
-log4perl.rootLogger=DEBUG, Screen
+log4perl.rootLogger=INFO, Screen
 
 log4perl.appender.Screen            = Log::Log4perl::Appender::ScreenColoredLevels::UsingMyColors
 log4perl.appender.Screen.stderr     = 0
@@ -17,4 +17,4 @@ log4perl.appender.File.autoflush = 1
 log4perl.appender.File.filename  = backpan_indexer.log
 log4perl.appender.File.mode      = append
 log4perl.appender.File.layout     = PatternLayout
-log4perl.appender.File.layout.ConversionPattern=[%p] %L %m%n
+log4perl.appender.File.layout.ConversionPattern=[%p] %F{1}:%L %m%n

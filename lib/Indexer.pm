@@ -27,14 +27,8 @@ use Carp qw(croak);
 use Cwd;
 use Data::Dumper;
 use File::Basename;
-use MD5;
 use File::Path;
 use Log::Log4perl qw(:easy);
-
-use Distribution::Guess::BuildSystem;
-use Module::Extract::Namespaces;
-use Module::Extract::Version;
-
 
 __PACKAGE__->run( @ARGV ) unless caller;
 
@@ -47,9 +41,9 @@ __PACKAGE__->run( @ARGV ) unless caller;
 
 sub run
 	{
-	my $class = shift;
+	TRACE( sub { get_caller_info } );
 
-	my $self = bless { dist_info => {} }, $class;
+	my $self = bless { dist_info => {} }, $_[0];
 
 	$self->setup_run_info;
 
@@ -100,33 +94,33 @@ my @methods = (
 
 sub examine_dist
 	{
-	my $self = shift;
+	TRACE( sub { get_caller_info } );
 
 	foreach my $tuple ( @methods )
 		{
 		my( $method, $error, $die_on_error ) = @$tuple;
 
-		unless( $self->$method() )
+		unless( $_[0]->$method() )
 			{
 			ERROR( $error );
 			if( $die_on_error ) # only if failure is fatal
 				{
 				ERROR( "Stopping: $error" );
-				$self->set_run_info( 'fatal_error', $error );
+				$_[0]->set_run_info( 'fatal_error', $error );
 				return;
 				}
 			}
 		}
 
 	my @file_info = ();
-	foreach my $file ( @{ $self->dist_info( 'modules' ) } )
+	foreach my $file ( @{ $_[0]->dist_info( 'modules' ) } )
 		{
-		DEBUG( "Processing module $file\n" );
-		my $hash = $self->get_module_info( $file );
+		DEBUG( "Processing module $file" );
+		my $hash = $_[0]->get_module_info( $file );
 		push @file_info, $hash;
 		}
 
-	$self->set_dist_info( 'file_info', [ @file_info ] );
+	$_[0]->set_dist_info( 'file_info', [ @file_info ] );
 
 	return 1;
 	}
@@ -140,6 +134,7 @@ Clear anything recorded about the run.
 
 sub clear_run_info
 	{
+	TRACE( sub { get_caller_info } );
 	DEBUG( "Clearing run_info\n" );
 	$_[0]->{run_info} = {};
 	}
@@ -160,6 +155,8 @@ Sets these items in dist_info:
 
 sub setup_run_info
 	{
+	TRACE( sub { get_caller_info } );
+
 	$_[0]->set_run_info( 'root_working_dir', cwd()   );
 	$_[0]->set_run_info( 'run_start_time',   time    );
 	$_[0]->set_run_info( 'completed',        0       );
@@ -178,6 +175,8 @@ specific to the run. See C<set_dist_info> to record dist info.
 
 sub set_run_info
 	{
+	TRACE( sub { get_caller_info } );
+
 	my( $self, $key, $value ) = @_;
 
 	DEBUG( "Setting run_info key [$key] to [$value]\n" );
@@ -192,6 +191,8 @@ Fetch some run info.
 
 sub run_info
 	{
+	TRACE( sub { get_caller_info } );
+
 	my( $self, $key ) = @_;
 
 	DEBUG( "Run info for $key is " . $self->{run_info}{$key} );
@@ -206,6 +207,7 @@ Clear anything recorded about the distribution.
 
 sub clear_dist_info
 	{
+	TRACE( sub { get_caller_info } );
 	DEBUG( "Clearing dist_info\n" );
 	$_[0]->{dist_info} = {};
 	}
@@ -226,6 +228,8 @@ Sets these items in dist_info:
 
 sub setup_dist_info
 	{
+	TRACE( sub { get_caller_info } );
+
 	my( $self, $dist ) = @_;
 
 	DEBUG( "Setting dist [$dist]\n" );
@@ -260,6 +264,8 @@ specific to the distribution. See C<set_run_info> to record run info.
 
 sub set_dist_info
 	{
+	TRACE( sub { get_caller_info } );
+
 	my( $self, $key, $value ) = @_;
 
 	DEBUG( "Setting dist_info key [$key] to [$value]\n" );
@@ -420,7 +426,7 @@ sub find_dist_dir
 	
 	my( $first ) = $reporter->();
 	DEBUG( "Found dist file at $first" );
-	print "Waiting for STDIN..."; <STDIN>;
+
 	unless( $first )
 		{
 		DEBUG( "Didn't find anything that looks like a module directory!" );
@@ -449,6 +455,7 @@ Sets these items in dist_info:
 sub get_file_list
 	{
 	TRACE( sub { get_caller_info } );
+
 	DEBUG( "Cwd is " . cwd() );
 	
 	unless( -e 'Makefile.PL' or -e 'Build.PL' )
@@ -463,11 +470,51 @@ sub get_file_list
 
 	my $manifest = [ sort keys %{ ExtUtils::Manifest::manifind() } ];
 
-	$_[0]->set_dist_info( 'manifest', $manifest );
+	my @file_info = map { 
+		DEBUG( "Getting file info for $_" );
+		$_[0]->get_file_info( $_ ) 
+		} @$manifest;
 
+	$_[0]->set_dist_info( 'manifest', $manifest );
+	$_[0]->set_dist_info( 'manifest_file_info', [ @file_info ] );
+	
 	$manifest;
 	}
 
+=item get_file_info( FILE )
+
+Collect various meta-information about a file and store it in a
+hash. Returns the hash reference.
+
+=cut
+
+sub get_file_info
+	{
+	TRACE( sub { get_caller_info } );
+
+	require MD5;
+	
+	my( $self, $file ) = @_;
+	
+	# get file name as key
+	my $hash = { name => $file };
+
+	# file digest
+	{
+	my $context = MD5->new;
+	$context->add( $file );
+	$hash->{md5} = $context->hexdigest;
+	}
+
+	# mtime
+	$hash->{mtime} = ( stat $file )[9];
+
+	# file size
+	$hash->{bytesize} = -s _;
+	
+	$hash;
+	}
+	
 =item get_blib_file_list
 
 Returns as an array reference the list of files in blib. You need to call
@@ -581,7 +628,7 @@ sub find_modules
 		[ 'run_build_file', "Got from running build file"  ],
 		[ 'look_in_lib',    "Guessed from looking in lib/" ],
 		[ 'look_in_cwd',    "Guessed from looking in cwd"  ],
-	);
+		);
 	
 	foreach my $tuple ( @methods )
 		{
@@ -633,6 +680,7 @@ sub choose_build_file
 	TRACE( sub { get_caller_info } );
 
 	require Distribution::Guess::BuildSystem;
+
 	my $guesser = Distribution::Guess::BuildSystem->new(
 		dist_dir => $_[0]->dist_info( 'dist_dir' )
 		);
@@ -707,8 +755,9 @@ COMMAND.
 
 sub run_something
 	{
-	my $self = shift;
-	my( $command, $info_key ) = @_;
+	TRACE( sub { get_caller_info } );
+
+	my( $self, $command, $info_key ) = @_;
 
 	{
 	require IPC::Open2;
@@ -732,32 +781,26 @@ sub run_something
 
 	}
 
-=item get_module_info
+=item get_module_info( FILE )
 
+Collect meta informantion and package information about a module 
+file. It starts by calling C<get_file_info>, then adds more to 
+the hash, including the version and package information.
 
 =cut
 
 sub get_module_info
 	{
+	TRACE( sub { get_caller_info } );
+
+	require Module::Extract::VERSION;
+	require Module::Extract::Namespaces;
+	
 	my( $self, $file ) = @_;
 	DEBUG( "get_module_info called with [$file]\n" );
 
-	# get file name as key
-	my $hash = { name => $file };
-
-	# file digest
-	{
-	my $context = MD5->new;
-	$context->add( $file );
-	$hash->{md5} = $context->hexdigest;
-	}
-
-	# mtime
-	$hash->{mtime} = ( stat $file )[9];
-
-	# file size
-	$hash->{bytesize} = -s _;
-
+	my $hash = $self->get_file_info( $file );
+	
 	# version
 	$hash->{version} = Module::Extract::VERSION->parse_version_safely( $file );
 
@@ -774,12 +817,15 @@ sub get_module_info
 
 =item cleanup
 
-Removes the unpack_dir.
+Removes the unpack_dir. You probably don't need this if C<File::Temp>
+cleans up its own files.
 
 =cut
 
 sub cleanup
 	{
+	TRACE( sub { get_caller_info } );
+
 	return 1;
 
 	File::Path::rmtree(
@@ -801,9 +847,9 @@ take the object and dump it in some way.
 
 sub report_dist_info
 	{
-	no warnings 'uninitialized';
+	TRACE( sub { get_caller_info } );
 
-	#print $self->dist_info( 'dist' ), "\n\t";
+	no warnings 'uninitialized';
 
 	my $module_hash = $_[0]->dist_info( 'module_versions' );
 
@@ -816,6 +862,10 @@ sub report_dist_info
 	}
 
 =item get_caller_info
+
+This method is mostly for the TRACE method in Log4perl. It figures out
+which information to report in the log message, acconting for all the
+levels or magic in between.
 
 =cut
 
