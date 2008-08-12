@@ -122,7 +122,7 @@ sub examine_dist
 		push @file_info, $hash;
 		}
 
-	$_[0]->set_dist_info( 'file_info', [ @file_info ] );
+	$_[0]->set_dist_info( 'module_info', [ @file_info ] );
 
 	return 1;
 	}
@@ -891,7 +891,9 @@ sub get_caller_info
 
 =over 4
 
-=item If build fails, have a fallback method to find the modules
+=item Count the lines in the files
+
+=item Code stats? Lines of code, lines of pod, lines of comments
 
 =back
 
@@ -900,13 +902,9 @@ sub get_caller_info
 
 =head1 SOURCE AVAILABILITY
 
-This source is part of a SourceForge project which always has the
-latest sources in CVS, as well as all of the previous releases.
-
-	http://sourceforge.net/projects/brian-d-foy/
-
-If, for some reason, I disappear from the world, one of the other
-members of the project can shepherd this module appropriately.
+I have this code in a Git repository, which I haven't made available
+in a convenient, public way yet. If you want to clone the Git repo,
+ask me and we'll work out something.
 
 =head1 AUTHOR
 
