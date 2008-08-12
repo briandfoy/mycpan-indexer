@@ -43,7 +43,9 @@ sub run
 	{
 	TRACE( sub { get_caller_info } );
 
-	my $self = bless { dist_info => {} }, $_[0];
+	my $class = shift;
+	
+	my $self = bless { dist_info => {} }, $class;
 
 	$self->setup_run_info;
 
