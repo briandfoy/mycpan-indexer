@@ -174,11 +174,22 @@ sub setup_run_info
 	{
 	TRACE( sub { get_caller_info } );
 
+	require Config;
+	
 	$_[0]->set_run_info( 'root_working_dir', cwd()   );
 	$_[0]->set_run_info( 'run_start_time',   time    );
 	$_[0]->set_run_info( 'completed',        0       );
 	$_[0]->set_run_info( 'pid',              $$      );
 	$_[0]->set_run_info( 'ppid',             getppid );
+
+	$_[0]->set_run_info( 'indexer',          ref $_[0] );
+	$_[0]->set_run_info( 'indexer_versions', $_[0]->VERSION );
+
+	$_[0]->set_run_info( 'perl_version',     $] );
+	$_[0]->set_run_info( 'perl_path',        $^X );
+	$_[0]->set_run_info( 'perl_config',      \%Config::Config );
+	
+	$_[0]->set_run_info( 'operating_system', $^O );
 
 	return 1;
 	}
