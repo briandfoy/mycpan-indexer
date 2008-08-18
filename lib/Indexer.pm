@@ -92,6 +92,7 @@ my @methods = (
 	[ 'get_file_list',      'Could not get file list',           1 ],
 	[ 'parse_meta_files',   "Could not parse META.yml!",         0 ],
 	[ 'find_modules',       "Could not find modules!",           1 ],
+	[ 'find_tests',         "Could not find tests!",             0 ],
 	);
 
 sub examine_dist
@@ -114,6 +115,7 @@ sub examine_dist
 			}
 		}
 
+	{
 	my @file_info = ();
 	foreach my $file ( @{ $_[0]->dist_info( 'modules' ) } )
 		{
@@ -123,6 +125,19 @@ sub examine_dist
 		}
 
 	$_[0]->set_dist_info( 'module_info', [ @file_info ] );
+	}
+	
+	{
+	my @file_info = ();
+	foreach my $file ( @{ $_[0]->dist_info( 'tests' ) } )
+		{
+		DEBUG( "Processing test $file" );
+		my $hash = $_[0]->get_test_info( $file );
+		push @file_info, $hash;
+		}
+
+	$_[0]->set_dist_info( 'test_info', [ @file_info ] );
+	}
 
 	return 1;
 	}
@@ -620,6 +635,10 @@ sub parse_meta_files
 
 =item find_modules
 
+Find the module files. First, look in C<blib/>. IF there are no files in 
+C<blib/>, look in C<lib/>. IF there are still none, look in the currnet
+working directory.
+
 =cut
 
 sub find_modules
@@ -641,6 +660,33 @@ sub find_modules
 		}
 		
 	return;
+	}
+
+=item find_tests
+
+Find the test files. Look for C<test.pl> or C<.t> files under C<t/>.
+
+=cut
+
+sub find_tests
+	{
+	TRACE( sub { get_caller_info } );
+
+	require File::Find::Closures;
+	require File::Find;
+	
+	my @tests;
+	
+	push @tests, 'test.pl' if -e 'test.pl';
+	
+	my( $wanted, $reporter ) = File::Find::Closures::find_by_regex( qr/\.t$/ );
+	File::Find::find( $wanted, "t" );
+	
+	push @tests, $reporter->();
+	
+	$_[0]->set_dist_info( 'tests', [ @tests ] );
+	
+	return scalar @tests;
 	}
 	
 =item run_build_file
@@ -797,6 +843,7 @@ sub get_module_info
 
 	require Module::Extract::VERSION;
 	require Module::Extract::Namespaces;
+	require Module::Extract::Use;
 	
 	my( $self, $file ) = @_;
 	DEBUG( "get_module_info called with [$file]\n" );
@@ -811,12 +858,38 @@ sub get_module_info
 	my $first_package = Module::Extract::Namespaces->from_file( $file );
 
 	$hash->{packages} = [ @packages ];
-
 	$hash->{primary_package} = $first_package;
 
+	my @uses = Module::Extract::Use->get_modules( $file );
+	$hash->{uses} = [ @uses ];
+	
 	$hash;
 	}
 
+=item get_test_info( FILE )
+
+Collect meta informantion and package information about a test 
+file. It starts by calling C<get_file_info>, then adds more to 
+the hash, including the version and package information.
+
+=cut
+
+sub get_test_info
+	{
+	TRACE( sub { get_caller_info } );
+
+	require Module::Extract::Use;
+	
+	my( $self, $file ) = @_;
+	DEBUG( "get_module_info called with [$file]\n" );
+
+	my $hash = $self->get_file_info( $file );
+
+	my @uses = Module::Extract::Use->get_modules( $file );
+	$hash->{uses} = [ @uses ];
+	
+	$hash;
+	}
 =item cleanup
 
 Removes the unpack_dir. You probably don't need this if C<File::Temp>
