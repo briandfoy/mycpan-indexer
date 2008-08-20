@@ -16,7 +16,7 @@
 #     MAN3PODS => { lib/Indexer.pm=>q[$(INST_MAN3DIR)/MyCPAN::Indexer.3] }
 #     NAME => q[MyCPAN::Indexer]
 #     PM => { lib/Indexer.pm=>q[$(INST_LIBDIR)/Indexer.pm] }
-#     PREREQ_PM => { Test::More=>q[0], Module::Extract::Namespaces=>q[0], Archive::Extract=>q[0], YAML::Syck=>q[0], MD5=>q[0], Module::Extract::Version=>q[0], Distribution::Guess::BuildSystem=>q[0], Log::Log4perl=>q[0] }
+#     PREREQ_PM => { Test::More=>q[0], Probe::Perl=>q[0], Module::Extract::Namespaces=>q[0], Archive::Extract=>q[0], YAML::Syck=>q[0], Module::Extract::Version=>q[0], MD5=>q[0], Log::Log4perl=>q[0], Distribution::Guess::BuildSystem=>q[0] }
 #     VERSION_FROM => q[lib/Indexer.pm]
 #     clean => { FILES=>q[MyCPAN-Indexer-*] }
 
@@ -487,6 +487,7 @@ metafile : create_distdir
 	$(NOECHO) $(ECHO) '    MD5:                           0' >> META_new.yml
 	$(NOECHO) $(ECHO) '    Module::Extract::Namespaces:   0' >> META_new.yml
 	$(NOECHO) $(ECHO) '    Module::Extract::Version:      0' >> META_new.yml
+	$(NOECHO) $(ECHO) '    Probe::Perl:                   0' >> META_new.yml
 	$(NOECHO) $(ECHO) '    Test::More:                    0' >> META_new.yml
 	$(NOECHO) $(ECHO) '    YAML::Syck:                    0' >> META_new.yml
 	$(NOECHO) $(ECHO) 'meta-spec:' >> META_new.yml
@@ -793,6 +794,7 @@ ppd :
 	$(NOECHO) $(ECHO) '        <DEPENDENCY NAME="MD5" VERSION="0,0,0,0" />' >> $(DISTNAME).ppd
 	$(NOECHO) $(ECHO) '        <DEPENDENCY NAME="Module-Extract-Namespaces" VERSION="0,0,0,0" />' >> $(DISTNAME).ppd
 	$(NOECHO) $(ECHO) '        <DEPENDENCY NAME="Module-Extract-Version" VERSION="0,0,0,0" />' >> $(DISTNAME).ppd
+	$(NOECHO) $(ECHO) '        <DEPENDENCY NAME="Probe-Perl" VERSION="0,0,0,0" />' >> $(DISTNAME).ppd
 	$(NOECHO) $(ECHO) '        <DEPENDENCY NAME="Test-More" VERSION="0,0,0,0" />' >> $(DISTNAME).ppd
 	$(NOECHO) $(ECHO) '        <DEPENDENCY NAME="YAML-Syck" VERSION="0,0,0,0" />' >> $(DISTNAME).ppd
 	$(NOECHO) $(ECHO) '        <OS NAME="$(OSNAME)" />' >> $(DISTNAME).ppd

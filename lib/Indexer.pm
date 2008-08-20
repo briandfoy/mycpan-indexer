@@ -29,6 +29,8 @@ use Data::Dumper;
 use File::Basename;
 use File::Path;
 use Log::Log4perl qw(:easy);
+use MD5;
+use Probe::Perl;
 
 __PACKAGE__->run( @ARGV ) unless caller;
 
@@ -176,6 +178,8 @@ sub setup_run_info
 
 	require Config;
 	
+	my $perl = Probe::Perl->new;
+	
 	$_[0]->set_run_info( 'root_working_dir', cwd()   );
 	$_[0]->set_run_info( 'run_start_time',   time    );
 	$_[0]->set_run_info( 'completed',        0       );
@@ -185,11 +189,12 @@ sub setup_run_info
 	$_[0]->set_run_info( 'indexer',          ref $_[0] );
 	$_[0]->set_run_info( 'indexer_versions', $_[0]->VERSION );
 
-	$_[0]->set_run_info( 'perl_version',     $] );
-	$_[0]->set_run_info( 'perl_path',        $^X );
+	$_[0]->set_run_info( 'perl_version',     $perl->perl_version );
+	$_[0]->set_run_info( 'perl_path',        $perl->find_perl_interpreter );
 	$_[0]->set_run_info( 'perl_config',      \%Config::Config );
 	
 	$_[0]->set_run_info( 'operating_system', $^O );
+	$_[0]->set_run_info( 'operating_system_type', $perl->os_type );
 
 	return 1;
 	}
@@ -261,10 +266,11 @@ sub setup_dist_info
 	my( $self, $dist ) = @_;
 
 	DEBUG( "Setting dist [$dist]\n" );
-	$self->set_dist_info( 'dist_file',     $dist            );
-	$self->set_dist_info( 'dist_size',     -s $dist         );
-	$self->set_dist_info( 'dist_basename', basename($dist)  );
-	$self->set_dist_info( 'dist_date',    (stat($dist))[9]  );
+	$self->set_dist_info( 'dist_file',     $dist                   );
+	$self->set_dist_info( 'dist_size',     -s $dist                );
+	$self->set_dist_info( 'dist_basename', basename($dist)         );
+	$self->set_dist_info( 'dist_date',    (stat($dist))[9]         );
+	$self->set_dist_info( 'dist_md5',     $self->get_md5( $dist )  );
 	DEBUG( "dist size " . $self->dist_info( 'dist_size' ) .
 		" dist date " . $self->dist_info( 'dist_date' )
 		);
@@ -519,8 +525,6 @@ hash. Returns the hash reference.
 sub get_file_info
 	{
 	TRACE( sub { get_caller_info } );
-
-	require MD5;
 	
 	my( $self, $file ) = @_;
 	
@@ -528,11 +532,7 @@ sub get_file_info
 	my $hash = { name => $file };
 
 	# file digest
-	{
-	my $context = MD5->new;
-	$context->add( $file );
-	$hash->{md5} = $context->hexdigest;
-	}
+	$hash->{md5} = $self->get_md5( $file );
 
 	# mtime
 	$hash->{mtime} = ( stat $file )[9];
@@ -901,6 +901,7 @@ sub get_test_info
 	
 	$hash;
 	}
+
 =item cleanup
 
 Removes the unpack_dir. You probably don't need this if C<File::Temp>
@@ -967,6 +968,17 @@ sub get_caller_info
 	$filename = File::Basename::basename( $filename );
 	
 	return join " : ", $package, $filename, $line, $subroutine;
+	}
+	
+=item get_md5
+
+=cut
+
+sub get_md5
+	{
+	my $context = MD5->new;
+	$context->add( $_[1] );
+	$context->hexdigest;
 	}
 	
 =back

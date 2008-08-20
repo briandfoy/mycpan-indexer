@@ -13,13 +13,14 @@ WriteMakefile(
 	'AUTHOR'       => 'brian d foy <bdfoy@cpan.org>',
 	
 	'PREREQ_PM'    => { 
-		'Test::More'                       => '0',
-		'Log::Log4perl'                    => '0',
+		'Archive::Extract'                 => '0',
 		'Distribution::Guess::BuildSystem' => '0',
+		'Log::Log4perl'                    => '0',
+		'MD5'                              => '0',
 		'Module::Extract::Namespaces'      => '0',
 		'Module::Extract::Version'         => '0',		
-		'Archive::Extract'                 => '0',
-		'MD5'                              => '0',
+		'Probe::Perl'                      => '0',
+		'Test::More'                       => '0',
 		'YAML::Syck'                       => '0',
 		},
 

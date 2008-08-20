@@ -29,6 +29,7 @@ use Data::Dumper;
 use File::Basename;
 use File::Path;
 use Log::Log4perl qw(:easy);
+use Probe::Perl;
 
 __PACKAGE__->run( @ARGV ) unless caller;
 
@@ -176,6 +177,8 @@ sub setup_run_info
 
 	require Config;
 	
+	my $perl = Probe::Perl->new;
+	
 	$_[0]->set_run_info( 'root_working_dir', cwd()   );
 	$_[0]->set_run_info( 'run_start_time',   time    );
 	$_[0]->set_run_info( 'completed',        0       );
@@ -185,11 +188,12 @@ sub setup_run_info
 	$_[0]->set_run_info( 'indexer',          ref $_[0] );
 	$_[0]->set_run_info( 'indexer_versions', $_[0]->VERSION );
 
-	$_[0]->set_run_info( 'perl_version',     $] );
-	$_[0]->set_run_info( 'perl_path',        $^X );
+	$_[0]->set_run_info( 'perl_version',     $perl->perl_version );
+	$_[0]->set_run_info( 'perl_path',        $perl->find_perl_interpreter );
 	$_[0]->set_run_info( 'perl_config',      \%Config::Config );
 	
 	$_[0]->set_run_info( 'operating_system', $^O );
+	$_[0]->set_run_info( 'operating_system_type', $perl->os_type );
 
 	return 1;
 	}
@@ -901,6 +905,7 @@ sub get_test_info
 	
 	$hash;
 	}
+
 =item cleanup
 
 Removes the unpack_dir. You probably don't need this if C<File::Temp>
