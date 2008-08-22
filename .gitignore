@@ -6,3 +6,4 @@ examples/backpan_indexer.log
 .DS_Store
 MyCPAN*
 cover_db
+blib

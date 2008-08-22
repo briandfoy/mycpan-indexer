@@ -23,7 +23,7 @@ my $UUID = do {
 	};
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-# The Set up
+# The set up
 my $run_dir = dirname( $0 );
 
 Log::Log4perl->init_and_watch( 
@@ -35,7 +35,8 @@ my $conf    = catfile( $run_dir, 'backpan_indexer.config' );
 DEBUG( "Run dir is $run_dir; Conf file is $conf" );
 
 my $Config = ConfigReader::Simple->new( $conf,
-	[ qw(temp_dir backpan_dir report_dir alarm copy_bad_dists retry_errors) ]
+	[ qw(temp_dir backpan_dir report_dir alarm 
+		copy_bad_dists retry_errors indexer_class) ]
 	);
 FATAL "Could not read config!\n" unless ref $Config;
 
@@ -112,7 +113,9 @@ sub child_tasks
 	
 	DEBUG( "Child [$$] processing $dist\n" );
 		
-	require MyCPAN::Indexer;
+	my $indexer = $Config->indexer_class || 'MyCPAN::Indexer';
+	
+	eval "require $Indexer" or die;
 	
 	unless( chdir $Config->temp_dir )
 		{
@@ -124,7 +127,7 @@ sub child_tasks
 	
 	local $SIG{ALRM} = sub { die "alarm\n" };
 	alarm( $Config->alarm || 15 );
-	my $info = eval { MyCPAN::Indexer->run( $dist ) };
+	my $info = eval { $Indexer->run( $dist ) };
 
 	unless( defined $info )
 		{
