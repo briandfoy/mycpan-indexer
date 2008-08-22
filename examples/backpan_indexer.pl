@@ -3,6 +3,7 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
+use blib;
 use ConfigReader::Simple;
 use Data::Dumper;
 use Data::UUID;
@@ -21,6 +22,10 @@ my $UUID = do {
 	my $uuid = $ug->create;
 	$ug->to_string( $uuid );
 	};
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# Minutely control the environment
+foreach my $key ( keys %ENV ) { delete $ENV{$key} }
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # The set up
@@ -86,6 +91,7 @@ my @dists = do {
 # The meat of the issue
 INFO( "Run started - " . @dists . " dists to process" );
 
+my $start = time;
 my $count = 0;
 foreach my $dist ( @dists )
 	{
@@ -97,9 +103,11 @@ foreach my $dist ( @dists )
 
 	$count++;
 	}
+my $end = time;
+my $diff = $end - $start;
  
 INFO( "Run ended - $count dists processed" );
-
+INFO( 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
@@ -113,7 +121,7 @@ sub child_tasks
 	
 	DEBUG( "Child [$$] processing $dist\n" );
 		
-	my $indexer = $Config->indexer_class || 'MyCPAN::Indexer';
+	my $Indexer = $Config->indexer_class || 'MyCPAN::Indexer';
 	
 	eval "require $Indexer" or die;
 	

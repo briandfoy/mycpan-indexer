@@ -47,7 +47,7 @@ sub run
 
 	my $class = shift;
 	
-	my $self = bless { dist_info => {} }, $class;
+	my $self = bless {}, $class;
 
 	$self->setup_run_info;
 
