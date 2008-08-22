@@ -107,7 +107,7 @@ my $end = time;
 my $diff = $end - $start;
  
 INFO( "Run ended - $count dists processed" );
-INFO( 
+INFO( "Total time: $diff seconds" );
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
