@@ -18,9 +18,13 @@ WriteMakefile(
 		'Log::Log4perl'                    => '0',
 		'MD5'                              => '0',
 		'Module::Extract::Namespaces'      => '0',
-		'Module::Extract::Version'         => '0',		
+		'Module::Extract::VERSION'         => '0',		
 		'Probe::Perl'                      => '0',
 		'Test::More'                       => '0',
+		'Test::Output'                     => '0',
+		'File::Find::Closures'             => '0',
+		'Module::Extract::Use'             => '0',
+		
 		'YAML::Syck'                       => '0',
 		},
 
