@@ -2,8 +2,16 @@
 use File::Spec::Functions qw(catfile);
 use Test::Output;
 
+use vars qw( @scripts );
+
 BEGIN {
-	@scripts = map { catfile( 'examples', $_ ) } qw( backpan_indexer.pl );
+	open my($fh), "<", "MANIFEST";
+	
+	@scripts = 
+		map  { catfile( split m|/| ) }
+		grep { /\.pl$/ } 
+		map  { chomp; $_ } 
+		<$fh>;
 	}
 
 use Test::More tests => 2 * scalar @scripts;
