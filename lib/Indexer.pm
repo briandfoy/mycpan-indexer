@@ -29,7 +29,6 @@ use Data::Dumper;
 use File::Basename;
 use File::Path;
 use Log::Log4perl qw(:easy);
-use MD5;
 use Probe::Perl;
 
 __PACKAGE__->run( @ARGV ) unless caller;
@@ -540,6 +539,12 @@ sub get_file_info
 	# file size
 	$hash->{bytesize} = -s _;
 	
+	# file magic
+	$hash->{file_mime_type} = $self->file_magic( $file );
+	
+	# line count signature
+	$hash->{line_count} = $self->count_lines( $file );
+	
 	$hash;
 	}
 	
@@ -902,6 +907,68 @@ sub get_test_info
 	$hash;
 	}
 
+=item count_lines( FILE )
+
+=cut
+
+sub count_lines
+	{
+	TRACE( sub { get_caller_info } );
+
+	my( $self, $file ) = @_;
+
+	my $class = 'SourceCode::LineCounter::Perl';
+	
+	eval { eval "require $class" } or return;
+	
+	$self->set_run_info( 'line_counter_class', $class );
+	$self->set_run_info( 'line_counter_version', $class->VERSION ); 
+	
+	DEBUG( "Counting lines in $file" );
+	ERROR( "File [$file] does not exist" ) unless -e $file;
+	
+	my $counter = $class->new;
+	$counter->count( $file );
+	
+	my $hash = {
+		map { $_ => $counter->$_() }
+		qw( total code comment documentation blank )
+		};
+		
+	return $hash;
+	}
+
+=item file_magic( FILE )
+
+Guesses and returns the MIME type for the file. 
+
+=cut
+
+sub file_magic
+	{
+	TRACE( sub { get_caller_info } );
+	
+	my( $self, $file ) = @_;
+
+	my $class = "File::MMagic";
+	
+	eval { eval "require $class" } or return;
+
+	$self->set_run_info( 'file_magic_class',   $class );
+	$self->set_run_info( 'file_magic_version', $class->VERSION ); 
+	
+	$class->new->checktype_filename( $file );
+	}
+	
+=back
+
+=head2 Utility functions
+
+These functions aren't related to examining a distribution
+directly.
+
+=over 4
+
 =item cleanup
 
 Removes the unpack_dir. You probably don't need this if C<File::Temp>
@@ -976,6 +1043,8 @@ sub get_caller_info
 
 sub get_md5
 	{
+	require MD5;
+	
 	my $context = MD5->new;
 	$context->add( $_[1] );
 	$context->hexdigest;
