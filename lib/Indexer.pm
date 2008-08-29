@@ -503,7 +503,7 @@ sub get_file_list
 
 	my $manifest = [ sort keys %{ ExtUtils::Manifest::manifind() } ];
 	DEBUG( "manifest is [ ", join( "|", @$manifest ), " ]" );
-	$_[0]->set_dist_info( 'manifest', $manifest );
+	$_[0]->set_dist_info( 'manifest', [ @$manifest ] );
 
 	my @file_info = map { 
 		DEBUG( "Getting file info for $_" );
