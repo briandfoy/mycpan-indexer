@@ -11,7 +11,7 @@ use File::Basename;
 use File::Find;
 use File::Find::Closures qw(find_by_regex);
 use File::Spec::Functions qw(catfile);
-
+use Parallel::ForkManager;
 use Log::Log4perl qw(:easy);
 use YAML;
 
@@ -91,17 +91,20 @@ my @dists = do {
 # The meat of the issue
 INFO( "Run started - " . @dists . " dists to process" );
 
+my $forker = Parallel::ForkManager->new( $Config->parallel_jobs || 1 );
+
 my $start = time;
 my $count = 0;
 foreach my $dist ( @dists )
 	{
-	DEBUG( "[dist #$count] Parent [$$] processing $dist" );
-	chomp $dist;
-
-	if( my $pid = fork ) { waitpid $pid, 0 }
-	else                 { child_tasks( $dist ); exit }
-
 	$count++;
+	my $parent = $$;
+	my $pid = $forker->start and next; 
+
+	DEBUG( "[dist #$count] Parent [$parent] processing $dist" );
+	child_tasks( $dist );
+
+	$forker->finish;
 	}
 my $end = time;
 my $diff = $end - $start;
@@ -207,6 +210,9 @@ sub add_run_info
 		foreach ( $Config->directives );
 	
 	$info->set_run_info( 'uuid', $UUID ); 
+
+	$info->set_run_info( 'child_pid',  $$ ); 
+	$info->set_run_info( 'parent_pid', getppid ); 
 
 	$info->set_run_info( 'ENV', \%ENV ); 
 	
