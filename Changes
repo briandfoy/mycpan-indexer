@@ -1,3 +1,9 @@
 0.10_02 - Fri Aug 15 15:52:32 2008
 	* Initial release of my BackPAN Indexer
 
+0.11_01 - Fri Aug 29 10:26:47 2008
+	* Added parallelism. You can now index things in parallel. In
+	the backpan_indexer.pl config, add a directive for parallel_jobs
+	* Adds more run info for operating system, perl version,
+	and so on
+
