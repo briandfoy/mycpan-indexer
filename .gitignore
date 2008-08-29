@@ -7,3 +7,5 @@ examples/backpan_indexer.log
 MyCPAN*
 cover_db
 blib
+*.log
+Makefile
