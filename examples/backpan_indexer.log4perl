@@ -1,5 +1,5 @@
 # trace debug info warn error fatal
-log4perl.rootLogger=DEBUG, Screen, File
+log4perl.rootLogger=INFO, Screen, File
 
 log4perl.appender.Screen            = Log::Log4perl::Appender::ScreenColoredLevels::UsingMyColors
 log4perl.appender.Screen.stderr     = 0
