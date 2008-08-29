@@ -9,3 +9,4 @@ cover_db
 blib
 *.log
 Makefile
+examples/backpan_indexer.config
