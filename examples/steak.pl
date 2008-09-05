@@ -23,19 +23,9 @@ my $Vars = {
 
 $Vars->{Left} = $Vars->{Total};
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-use Parallel::ForkManager;
+get_forker( $Vars );
 
-my $forker = Parallel::ForkManager->new( $Vars->{Threads} );
-$forker->run_on_finish( sub { 
-	my $pid = shift;
-	
-	my( $index ) = grep { $Vars->{PID}[$_] == $pid } 0 .. $#{ $Vars->{PID} };
-	
-	splice( @{ $Vars->{PID} }, $index, 1 );
-	splice( @{ $Vars->{recent} }, $index, 1 );
-	}
-	);
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
 my $steak = sub {
 	return unless $Vars->{Left};
@@ -45,7 +35,7 @@ my $steak = sub {
 
 	my $sleep_time = int rand 5;
 	
-	if( my $pid = $forker->start )
+	if( my $pid = $Vars->{forker}->start )
 		{ #parent
 		unshift @{ $Vars->{PID} }, $pid;
 		unshift @{ $Vars->{recent} }, "$pid: Sleeping for $sleep_time seconds";
@@ -66,19 +56,18 @@ my $steak = sub {
 	else
 		{ # child
 		$Vars->{child_task}( $sleep_time );
-		$forker->finish;
+		$Vars->{forker}->finish;
 		}
 
 	1;
 	};
-	
+
+$Vars->{repeat_callback} = $steak;
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 require 'tk.pl';
 
-do_tk_stuff(
-	$Vars,
-	$steak,
-	);
+do_tk_stuff( $Vars );
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 BEGIN {
@@ -117,3 +106,22 @@ sub elapsed
 	sprintf "%dd %02dh %02dm %02ds", @v;
 	}
 }
+
+sub get_forker
+	{
+	my $Vars = shift;
+	
+	require Parallel::ForkManager;
+
+	$Vars->{forker} = Parallel::ForkManager->new( $Vars->{Threads} );
+	$Vars->{forker}->run_on_finish( sub { 
+		my $pid = shift;
+		
+		my( $index ) = grep { $Vars->{PID}[$_] == $pid } 0 .. $#{ $Vars->{PID} };
+		
+		splice( @{ $Vars->{PID} }, $index, 1 );
+		splice( @{ $Vars->{recent} }, $index, 1 );
+		}
+		);	
+
+	}

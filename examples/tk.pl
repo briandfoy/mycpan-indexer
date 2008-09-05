@@ -4,7 +4,7 @@ use warnings;
 
 sub do_tk_stuff 
 	{
-	my( $Vars, $the_steak ) = @_;
+	my( $Vars ) = @_;
 	
 	use Tk;
 
@@ -101,7 +101,7 @@ sub do_tk_stuff
 				
 				
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-	$mw->repeat( 1_000, sub { $the_steak->(); } );
+	$mw->repeat( 1_000, $Vars->{repeat_callback} );
 
 	MainLoop;
 	}
