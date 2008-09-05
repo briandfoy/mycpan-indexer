@@ -23,8 +23,8 @@ my $Vars = {
 
 $Vars->{Left} = $Vars->{Total};
 
-get_forker( $Vars );
-get_steak( $Vars );
+make_forker( $Vars );
+make_repeat_callback( $Vars );
 	
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 require 'tk.pl';
@@ -69,7 +69,7 @@ sub elapsed
 	}
 }
 
-sub get_forker
+sub make_forker
 	{
 	my $Vars = shift;
 	
@@ -88,7 +88,7 @@ sub get_forker
 
 	}
 	
-sub get_steak
+sub make_repeat_callback
 	{
 	my $Vars = shift;
 	
