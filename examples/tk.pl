@@ -4,10 +4,26 @@ use warnings;
 use Tk;
 use Parallel::ForkManager;
 
-
+BEGIN {
+	no warnings 'redefine';
+	
+	package Parallel::ForkManager;
+	
+	sub finish { my ($s, $x)=@_;
+	  if ( $s->{in_child} ) {
+		CORE::exit ($x || 0);
+	  }
+	  if ($s->{max_proc} == 0) { # max_proc == 0
+		$s->on_finish($$, $x ,$s->{processes}->{$$}, 0, 0);
+		delete $s->{processes}->{$$};
+	  }
+	  return 0;
+	}
+}
     
 my $Vars = { 
-	Total    => 100,
+	Threads  => 5,
+	Total    => 3000,
 	Started  => scalar localtime,
 	_started => time,
 	UUID     => 'asdfasfgadsfgadfgdfsg',
@@ -16,33 +32,56 @@ my $Vars = {
 	errors   => [ qw() ],
 	};
 
-my $forker = Parallel::ForkManager->new( 5 );
+$Vars->{Left} = $Vars->{Total};
+
+my $forker = Parallel::ForkManager->new( $Vars->{Threads} );
+$forker->run_on_finish( sub { print "Finished $_[0]\n" } );
 
 my $mw = do_tk_stuff( $Vars );
-$mw->repeat( 500, \ &the_steak );
+$mw->repeat( 250, \ &the_steak );
 
 MainLoop;
 
-
+sub child_task
+	{
+	sleep shift;
+	print "$$: Processing...\n"; 
+	}
+	
 sub the_steak
 	{
-	sleep int( rand );
+	return unless $Vars->{Left};
 	
 	$Vars->{_elapsed} = time - $Vars->{_started};
 	$Vars->{Elapsed} = elapsed( $Vars->{_elapsed} );
-	unshift @{ $Vars->{PID} }, int rand 7000;
-	unshift @{ $Vars->{recent} }, int rand 65535;
 
-	$Vars->{Done}++;
-	$Vars->{Left} = $Vars->{Total} - $Vars->{Done};
+	my $sleep_time = int rand 7;
 	
-	$Vars->{Rate} = sprintf "%.2f / sec ", 
-		eval { $Vars->{Done} / $Vars->{_elapsed} };
-	
-	if( int(rand(100)) % 20 == 0 )
-		{
-		unshift @{ $Vars->{errors} }, $Vars->{recent}[0];
+	if( my $pid = $forker->start )
+		{ #parent
+		#print "In parent\n";
+		unshift @{ $Vars->{PID} }, $pid;
+		unshift @{ $Vars->{recent} }, "$pid: Sleeping for $sleep_time seconds";
+		
+		$Vars->{Done}++;
+		$Vars->{Left} = $Vars->{Total} - $Vars->{Done};
+		
+		$Vars->{Rate} = sprintf "%.2f / sec ", 
+			eval { $Vars->{Done} / $Vars->{_elapsed} };
+		
+		if( int(rand(100)) % 20 == 0 )
+			{
+			unshift @{ $Vars->{errors} }, $Vars->{recent}[0];
+			}
+		
 		}
+	else
+		{ # child
+		child_task( $sleep_time );
+		$forker->finish;
+		}
+
+	1;
 	}
 
 BEGIN {
@@ -68,7 +107,8 @@ sub elapsed
 sub do_tk_stuff 
 	{
 	my $mw = MainWindow->new;
-	
+	$mw->geometry('400x300');	
+
 	$mw->resizable( 0, 0 );
 	$mw->title( 'BackPAN Indexer 1.00' );
 	my $menubar = _menubar( $mw );
@@ -119,7 +159,7 @@ sub do_tk_stuff
 	$count_frame->Listbox(
 		-height => 5,
 		-width  => 3,
-		-listvariable  => [ 1 .. 5 ],
+		-listvariable  => [ 1 .. $Vars->{Threads} ],
 		)->pack( -side => 'bottom');
 		
 	my $pid_frame  = _make_frame( $jobs, 'left' );
