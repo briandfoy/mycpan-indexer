@@ -1,25 +1,8 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
-
-sub child_task
-	{
-#	print "$$: Processing... sleeping $_[0]\n";
-	sleep shift;
-	}
    
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-
-my @dists = reverse ( 1 .. 50 );
-
-my $Vars = { 
-	Threads    => 5,
-	queue      => \ @dists,
-	UUID       => 'asdfasfgadsfgadfgdfsg',
-	child_task => sub { &child_task },
-	};
-
-setup_vars( $Vars );
 
 sub setup_vars
 	{
@@ -36,17 +19,12 @@ sub setup_vars
 	make_forker( $Vars );
 	make_repeat_callback( $Vars );
 	}
-	
-	
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-require 'tk.pl';
-
-do_tk_stuff( $Vars );
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 BEGIN {
 	no warnings 'redefine';
-	
+	use Parallel::ForkManager;
+
 	package Parallel::ForkManager;
 	
 	sub finish { my ($s, $x)=@_;
@@ -85,8 +63,6 @@ sub make_forker
 	{
 	my $Vars = shift;
 	
-	require Parallel::ForkManager;
-
 	$Vars->{forker} = Parallel::ForkManager->new( $Vars->{Threads} );
 	$Vars->{forker}->run_on_finish( sub { 
 		my $pid = shift;
@@ -142,3 +118,5 @@ sub make_repeat_callback
 		1;
 		};
 	}
+
+1;

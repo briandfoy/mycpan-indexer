@@ -15,6 +15,9 @@ use Parallel::ForkManager;
 use Log::Log4perl qw(:easy);
 use YAML;
 
+require 'tk.pl';
+require 'steak.pl';
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # Choose something to uniquely identify this run
 my $UUID = do { 
@@ -25,7 +28,14 @@ my $UUID = do {
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # Minutely control the environment
-foreach my $key ( keys %ENV ) { delete $ENV{$key} }
+my %pass_through = map { $_, 1 } qw(DISPLAY);
+
+foreach my $key ( keys %ENV ) 
+	{ 
+	delete $ENV{$key} unless exists $pass_through{$key} 
+	}
+
+$ENV{AUTOMATED_TESTING}++;
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # The set up
@@ -47,7 +57,6 @@ FATAL "Could not read config!\n" unless ref $Config;
 
 chdir $Config->temp_dir;
 
-$ENV{AUTOMATED_TESTING}++;
 
 my $yml_dir       = catfile( $Config->report_dir, "meta"        );
 my $yml_error_dir = catfile( $Config->report_dir, "meta-errors" );
@@ -91,26 +100,19 @@ my @dists = do {
 # The meat of the issue
 INFO( "Run started - " . @dists . " dists to process" );
 
-my $forker = Parallel::ForkManager->new( $Config->parallel_jobs || 1 );
+use lib qw(.);
 
-my $start = time;
-my $count = 0;
-foreach my $dist ( @dists )
-	{
-	$count++;
-	my $parent = $$;
-	my $pid = $forker->start and next; 
+my $Vars = { 
+	Threads    => 5,
+	queue      => \ @dists,
+	UUID       => $UUID,
+	child_task => sub { &child_tasks },
+	};
 
-	DEBUG( "[dist #$count] Parent [$parent] processing $dist" );
-	child_tasks( $dist );
-
-	$forker->finish;
-	}
-my $end = time;
-my $diff = $end - $start;
+setup_vars( $Vars );
  
-INFO( "Run ended - $count dists processed" );
-INFO( "Total time: $diff seconds" );
+
+do_tk_stuff( $Vars );
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
