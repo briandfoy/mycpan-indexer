@@ -10,7 +10,7 @@ sub child_task
    
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 my $Vars = { 
-	Threads  => 5,
+	Threads  =>  5,
 	Total    => 50,
 	Started  => scalar localtime,
 	_started => time,
@@ -18,6 +18,7 @@ my $Vars = {
 	recent   => [ qw() ],
 	PID      => [ qw() ],
 	errors   => [ qw() ],
+	child_task => sub { &child_task },
 	};
 
 $Vars->{Left} = $Vars->{Total};
@@ -28,7 +29,6 @@ use Parallel::ForkManager;
 my $forker = Parallel::ForkManager->new( $Vars->{Threads} );
 $forker->run_on_finish( sub { 
 	my $pid = shift;
-#	print "Finishing $pid\n";
 	
 	my( $index ) = grep { $Vars->{PID}[$_] == $pid } 0 .. $#{ $Vars->{PID} };
 	
@@ -47,7 +47,6 @@ my $steak = sub {
 	
 	if( my $pid = $forker->start )
 		{ #parent
-		#print "In parent\n";
 		unshift @{ $Vars->{PID} }, $pid;
 		unshift @{ $Vars->{recent} }, "$pid: Sleeping for $sleep_time seconds";
 		
@@ -66,8 +65,7 @@ my $steak = sub {
 		}
 	else
 		{ # child
-	#	print join ", ", @{ $Vars->{PID} }, "\n";
-		child_task( $sleep_time );
+		$Vars->{child_task}( $sleep_time );
 		$forker->finish;
 		}
 
