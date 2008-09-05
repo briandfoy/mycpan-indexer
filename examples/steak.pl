@@ -18,7 +18,6 @@ my $Vars = {
 	UUID       => 'asdfasfgadsfgadfgdfsg',
 	child_task => sub { &child_task },
 	};
-print Dumper( $Vars ); use Data::Dumper;
 
 setup_vars( $Vars );
 
