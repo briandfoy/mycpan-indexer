@@ -24,46 +24,8 @@ my $Vars = {
 $Vars->{Left} = $Vars->{Total};
 
 get_forker( $Vars );
-
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-
-my $steak = sub {
-	return unless $Vars->{Left};
+get_steak( $Vars );
 	
-	$Vars->{_elapsed} = time - $Vars->{_started};
-	$Vars->{Elapsed} = elapsed( $Vars->{_elapsed} );
-
-	my $sleep_time = int rand 5;
-	
-	if( my $pid = $Vars->{forker}->start )
-		{ #parent
-		unshift @{ $Vars->{PID} }, $pid;
-		unshift @{ $Vars->{recent} }, "$pid: Sleeping for $sleep_time seconds";
-		
-		$Vars->{Done}++;
-		$Vars->{Left} = $Vars->{Total} - $Vars->{Done};
-		
-		$Vars->{Rate} = sprintf "%.2f / sec ", 
-			eval { $Vars->{Done} / $Vars->{_elapsed} };
-		
-		if( int(rand(100)) % 20 == 0 )
-			{
-			unshift @{ $Vars->{errors} }, $Vars->{recent}[0];
-			$Vars->{Errors}++;
-			}
-		
-		}
-	else
-		{ # child
-		$Vars->{child_task}( $sleep_time );
-		$Vars->{forker}->finish;
-		}
-
-	1;
-	};
-
-$Vars->{repeat_callback} = $steak;
-
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 require 'tk.pl';
 
@@ -124,4 +86,44 @@ sub get_forker
 		}
 		);	
 
+	}
+	
+sub get_steak
+	{
+	my $Vars = shift;
+	
+	$Vars->{repeat_callback} = sub {
+		return unless $Vars->{Left};
+		
+		$Vars->{_elapsed} = time - $Vars->{_started};
+		$Vars->{Elapsed} = elapsed( $Vars->{_elapsed} );
+	
+		my $sleep_time = int rand 5;
+		
+		if( my $pid = $Vars->{forker}->start )
+			{ #parent
+			unshift @{ $Vars->{PID} }, $pid;
+			unshift @{ $Vars->{recent} }, "$pid: Sleeping for $sleep_time seconds";
+			
+			$Vars->{Done}++;
+			$Vars->{Left} = $Vars->{Total} - $Vars->{Done};
+			
+			$Vars->{Rate} = sprintf "%.2f / sec ", 
+				eval { $Vars->{Done} / $Vars->{_elapsed} };
+			
+			if( int(rand(100)) % 20 == 0 )
+				{
+				unshift @{ $Vars->{errors} }, $Vars->{recent}[0];
+				$Vars->{Errors}++;
+				}
+			
+			}
+		else
+			{ # child
+			$Vars->{child_task}( $sleep_time );
+			$Vars->{forker}->finish;
+			}
+	
+		1;
+		};
 	}
