@@ -9,22 +9,35 @@ sub child_task
 	}
    
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+
+my @dists = reverse ( 1 .. 50 );
+
 my $Vars = { 
-	Threads  =>  5,
-	Total    => 50,
-	Started  => scalar localtime,
-	_started => time,
-	UUID     => 'asdfasfgadsfgadfgdfsg',
-	recent   => [ qw() ],
-	PID      => [ qw() ],
-	errors   => [ qw() ],
+	Threads    => 5,
+	queue      => \ @dists,
+	UUID       => 'asdfasfgadsfgadfgdfsg',
 	child_task => sub { &child_task },
 	};
+print Dumper( $Vars ); use Data::Dumper;
 
-$Vars->{Left} = $Vars->{Total};
+setup_vars( $Vars );
 
-make_forker( $Vars );
-make_repeat_callback( $Vars );
+sub setup_vars
+	{
+	my $Vars = shift;
+	
+	$Vars->{queue_cursor} = 0;
+	$Vars->{$_} = [ qw() ] foreach ( qw( recent PID errors ) );
+	$Vars->{Total} = scalar @{ $Vars->{queue} };
+	$Vars->{Left} = $Vars->{Total};
+	
+	$Vars->{_started} = time;
+	$Vars->{Started}  = scalar localtime;
+
+	make_forker( $Vars );
+	make_repeat_callback( $Vars );
+	}
+	
 	
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 require 'tk.pl';
@@ -102,8 +115,11 @@ sub make_repeat_callback
 		
 		if( my $pid = $Vars->{forker}->start )
 			{ #parent
+			my $item = ${ $Vars->{queue} }[ $Vars->{queue_cursor}++ ];
+			
 			unshift @{ $Vars->{PID} }, $pid;
-			unshift @{ $Vars->{recent} }, "$pid: Sleeping for $sleep_time seconds";
+			unshift @{ $Vars->{recent} }, 
+				"$pid: Item [$item] Sleeping for $sleep_time seconds";
 			
 			$Vars->{Done}++;
 			$Vars->{Left} = $Vars->{Total} - $Vars->{Done};
