@@ -1,111 +1,13 @@
+#!/usr/bin/perl
 use strict;
 use warnings;
 
-use Tk;
-use Parallel::ForkManager;
-
-BEGIN {
-	no warnings 'redefine';
-	
-	package Parallel::ForkManager;
-	
-	sub finish { my ($s, $x)=@_;
-	  if ( $s->{in_child} ) {
-		CORE::exit ($x || 0);
-	  }
-	  if ($s->{max_proc} == 0) { # max_proc == 0
-		$s->on_finish($$, $x ,$s->{processes}->{$$}, 0, 0);
-		delete $s->{processes}->{$$};
-	  }
-	  return 0;
-	}
-}
-    
-my $Vars = { 
-	Threads  => 5,
-	Total    => 3000,
-	Started  => scalar localtime,
-	_started => time,
-	UUID     => 'asdfasfgadsfgadfgdfsg',
-	recent   => [ qw() ],
-	PID      => [ qw() ],
-	errors   => [ qw() ],
-	};
-
-$Vars->{Left} = $Vars->{Total};
-
-my $forker = Parallel::ForkManager->new( $Vars->{Threads} );
-$forker->run_on_finish( sub { print "Finished $_[0]\n" } );
-
-my $mw = do_tk_stuff( $Vars );
-$mw->repeat( 250, \ &the_steak );
-
-MainLoop;
-
-sub child_task
-	{
-	sleep shift;
-	print "$$: Processing...\n"; 
-	}
-	
-sub the_steak
-	{
-	return unless $Vars->{Left};
-	
-	$Vars->{_elapsed} = time - $Vars->{_started};
-	$Vars->{Elapsed} = elapsed( $Vars->{_elapsed} );
-
-	my $sleep_time = int rand 7;
-	
-	if( my $pid = $forker->start )
-		{ #parent
-		#print "In parent\n";
-		unshift @{ $Vars->{PID} }, $pid;
-		unshift @{ $Vars->{recent} }, "$pid: Sleeping for $sleep_time seconds";
-		
-		$Vars->{Done}++;
-		$Vars->{Left} = $Vars->{Total} - $Vars->{Done};
-		
-		$Vars->{Rate} = sprintf "%.2f / sec ", 
-			eval { $Vars->{Done} / $Vars->{_elapsed} };
-		
-		if( int(rand(100)) % 20 == 0 )
-			{
-			unshift @{ $Vars->{errors} }, $Vars->{recent}[0];
-			}
-		
-		}
-	else
-		{ # child
-		child_task( $sleep_time );
-		$forker->finish;
-		}
-
-	1;
-	}
-
-BEGIN {
-my %hash = ( days => 864000, hours => 3600, minutes => 60 );
-
-sub elapsed
-	{
-	my $seconds = shift;
-	
-	my @v;
-	foreach my $key ( qw(days hours minutes) )
-		{
-		push @v, int( $seconds / $hash{$key} );
-		$seconds -= $v[-1] * $hash{$key}
-		}
-		
-	push @v, $seconds;
-	
-	sprintf "%dd %02dh %02dm %02ds", @v;
-	}
-}
-
 sub do_tk_stuff 
 	{
+	my( $Vars, $the_steak ) = @_;
+	
+	use Tk;
+
 	my $mw = MainWindow->new;
 	$mw->geometry('400x300');	
 
@@ -117,8 +19,6 @@ sub do_tk_stuff
 		$mw->Frame->pack( -anchor => 'w', -expand => 1, -fill => 'x' );
 		} 1 .. 4;
 	
-	
-	
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 	my $tracker = _make_frame( $top, 'left' );
 	
@@ -127,7 +27,11 @@ sub do_tk_stuff
 		{
 		my $frame = $tracker_left->Frame->pack( -side => 'top' );
 		$frame->Label( -text => $label, -width => 6 )->pack( -side => 'left' );
-		$frame->Entry( -width => 6, -textvariable => \ $Vars->{$label}, -relief => 'flat' )->pack( -side => 'right' );
+		$frame->Entry( 
+			-width => 6, 
+			-textvariable => \ $Vars->{$label}, 
+			-relief => 'flat' 
+			)->pack( -side => 'right' );
 		}
 	
 	my $tracker_right        = $tracker->Frame->pack( -anchor => 'w', -side => 'left'  );
@@ -135,7 +39,10 @@ sub do_tk_stuff
 		{
 		my $frame = $tracker_right->Frame->pack( -side => 'top' );
 		$frame->Label( -text => $label, -width => 6 )->pack( -side => 'left' );
-		$frame->Entry( -textvariable => \ $Vars->{$label}, -relief => 'flat' )->pack( -side => 'right' );
+		$frame->Entry( 
+			-textvariable => \ $Vars->{$label}, 
+			-relief => 'flat' 
+			)->pack( -side => 'right' );
 		}
 	
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
@@ -194,7 +101,9 @@ sub do_tk_stuff
 				
 				
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-	return $mw;
+	$mw->repeat( 1_000, sub { $the_steak->(); } );
+
+	MainLoop;
 	}
 	
 
@@ -243,3 +152,5 @@ sub _menu
 		 
 	return $menu;
 	};
+	
+1;
