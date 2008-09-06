@@ -28,7 +28,7 @@ my $UUID = do {
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # Minutely control the environment
-my %pass_through = map { $_, 1 } qw(DISPLAY);
+my %pass_through = map { $_, 1 } qw( DISPLAY USER HOME PWD );
 
 foreach my $key ( keys %ENV ) 
 	{ 
@@ -124,7 +124,7 @@ sub child_tasks
 	my $basename = check_for_previous_result( $dist );
 	return unless $basename;
 	
-	DEBUG( "Child [$$] processing $dist\n" );
+	INFO( "Child [$$] processing $dist\n" );
 		
 	my $Indexer = $Config->indexer_class || 'MyCPAN::Indexer';
 	

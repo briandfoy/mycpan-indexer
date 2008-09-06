@@ -9,12 +9,12 @@ sub setup_vars
 	my $Vars = shift;
 	
 	$Vars->{queue_cursor} = 0;
-	$Vars->{$_} = [ qw() ] foreach ( qw( recent PID errors ) );
-	$Vars->{Total} = scalar @{ $Vars->{queue} };
-	$Vars->{Left} = $Vars->{Total};
+	$Vars->{$_}           = [ qw() ] foreach ( qw( recent PID errors ) );
+	$Vars->{Total}        = scalar @{ $Vars->{queue} };
+	$Vars->{Left}         = $Vars->{Total};
 	
-	$Vars->{_started} = time;
-	$Vars->{Started}  = scalar localtime;
+	$Vars->{_started}     = time;
+	$Vars->{Started}      = scalar localtime;
 
 	make_forker( $Vars );
 	make_repeat_callback( $Vars );
@@ -86,15 +86,13 @@ sub make_repeat_callback
 		$Vars->{_elapsed} = time - $Vars->{_started};
 		$Vars->{Elapsed} = elapsed( $Vars->{_elapsed} );
 	
-		my $sleep_time = int rand 5;
-		
+		my $item = ${ $Vars->{queue} }[ $Vars->{queue_cursor}++ ];
+				
 		if( my $pid = $Vars->{forker}->start )
 			{ #parent
-			my $item = ${ $Vars->{queue} }[ $Vars->{queue_cursor}++ ];
 			
 			unshift @{ $Vars->{PID} }, $pid;
-			unshift @{ $Vars->{recent} }, 
-				"$pid: Item [$item] Sleeping for $sleep_time seconds";
+			unshift @{ $Vars->{recent} }, $item;
 			
 			$Vars->{Done}++;
 			$Vars->{Left} = $Vars->{Total} - $Vars->{Done};
@@ -102,16 +100,10 @@ sub make_repeat_callback
 			$Vars->{Rate} = sprintf "%.2f / sec ", 
 				eval { $Vars->{Done} / $Vars->{_elapsed} };
 			
-			if( int(rand(100)) % 20 == 0 )
-				{
-				unshift @{ $Vars->{errors} }, $Vars->{recent}[0];
-				$Vars->{Errors}++;
-				}
-			
 			}
 		else
 			{ # child
-			$Vars->{child_task}( $sleep_time );
+			$Vars->{child_task}( $item );
 			$Vars->{forker}->finish;
 			}
 	
