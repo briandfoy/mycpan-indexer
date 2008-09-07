@@ -3,7 +3,7 @@ use ExtUtils::MakeMaker;
 
 require 5.006;
 
-eval "use Test::Manifest 1.14";
+eval "use Test::Manifest 1.21";
 
 WriteMakefile(
 	'NAME'	       => 'MyCPAN::Indexer',
@@ -15,6 +15,7 @@ WriteMakefile(
 	'PREREQ_PM'    => { 
 		'Archive::Extract'                 => '0',
 		'Distribution::Guess::BuildSystem' => '0',
+		'File::Find'                       => '0',
 		'File::Find::Closures'             => '0',
 		'Log::Log4perl'                    => '0',
 		'MD5'                              => '0',
@@ -28,11 +29,17 @@ WriteMakefile(
 		},
 
 	'PM'           => {
-		'lib/Indexer.pm' => '$(INST_LIBDIR)/Indexer.pm',
+		'lib/Indexer.pm'  => '$(INST_LIBDIR)/Indexer.pm',
+		'lib/Parallel.pm' => '$(INST_LIBDIR)/Indexer/Dispatch/Parallel.pm',
+		'lib/Tk.pm'       => '$(INST_LIBDIR)/Indexer/Interface/Tk.pm',
+		'lib/Queue.pm'    => '$(INST_LIBDIR)/Indexer/Queue.pm',
 		},
 
 	'MAN3PODS'     => {
-		'lib/Indexer.pm' => '$(INST_MAN3DIR)/MyCPAN::Indexer.3',
+		'lib/Indexer.pm'  => '$(INST_MAN3DIR)/MyCPAN::Indexer.3',
+		'lib/Parallel.pm' => '$(INST_MAN3DIR)/MyCPAN::Indexer::Dispatch::Parallel.3',
+		'lib/Tk.pm'       => '$(INST_MAN3DIR)/MyCPAN::Indexer::Interface::Tk.3',
+		'lib/Queue.pm'    => '$(INST_MAN3DIR)/MyCPAN::Indexer::Queue.3',
 		},
 
 	clean  => { FILES    => q|MyCPAN-Indexer-*| },

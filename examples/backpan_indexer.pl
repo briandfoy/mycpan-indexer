@@ -9,7 +9,6 @@ use Data::Dumper;
 use Data::UUID;
 use File::Basename;
 use File::Find;
-use File::Find::Closures qw(find_by_regex);
 use File::Spec::Functions qw(catfile);
 use Parallel::ForkManager;
 use Log::Log4perl qw(:easy);
@@ -78,41 +77,52 @@ mkdir $yml_error_dir, 0755 unless -d $yml_error_dir;
 my $errors = 0;
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# Load classes and check that they do the right thing
+
+my $queue_class = $Config->queue_class || __PACKAGE__ . "::Queue";
+eval "require $queue_class" or die "$@\n";
+die "Interface class [$queue_class] does not implement get_queue()" 
+	unless $queue_class->can( 'get_queue' );
+
+my $dispatcher_class = $Config->dispatcher_class || __PACKAGE__ . "::Dispatch::Parallel";
+eval "require $dispatcher_class" or die "$@\n";
+die "Dispatcher class [$dispatcher_class] does not implement get_dispatcher()" 
+	unless $dispatcher_class->can( 'get_dispatcher' );
+
+my $interface_class = $Config->interface_class || __PACKAGE__ . "::Interface::Tk";
+eval "require $interface_class" or die "$@\n";
+die "Interface class [$interface_class] does not implement do_interface()" 
+	unless $interface_class->can( 'do_interface' );
+
+
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # Figure out what to index
-my @dists = do {
-	if( @ARGV ) 
-		{
-		DEBUG( "Taking dists from command line" );
-		@ARGV 
-		}
-	else 
-		{
-		my( $wanted, $reporter ) = find_by_regex( qr/\.(t?gz|zip)$/ );
-		
-		find( $wanted, $Config->backpan_dir );
-		$reporter->();
-		}
-	};
-	
-#DEBUG( "Dists to process are\n\t", join "\n\t", @dists, "\n" );
+my $dists = $queue_class->get_queue( $Config );
+die "get_queue did not return an array reference\n"
+	unless ref $dists eq ref [];
+DEBUG( "Dists to process are\n\t", join "\n\t", @$dists );
+
+exit;
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # The meat of the issue
-INFO( "Run started - " . @dists . " dists to process" );
-
-use lib qw(.);
+INFO( "Run started - " . @$dists . " dists to process" );
 
 my $Vars = { 
 	Threads    => 5,
-	queue      => \ @dists,
+	queue      => $dists,
 	UUID       => $UUID,
 	child_task => sub { &child_tasks },
 	};
 
-setup_vars( $Vars );
- 
+$dispatcher_class->get_dispatcher( $Vars );
+die "Dispatcher class [$dispatcher_class] did not set \n"
+	unless ref $Vars->{foo} eq ref sub {};
 
-do_tk_stuff( $Vars );
+exit;
+
+$interface_class->do_interface( $Vars );
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 

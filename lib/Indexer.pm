@@ -1063,14 +1063,11 @@ sub get_md5
 
 =back
 
-=head1 SEE ALSO
-
-
 =head1 SOURCE AVAILABILITY
 
-I have this code in a Git repository, which I haven't made available
-in a convenient, public way yet. If you want to clone the Git repo,
-ask me and we'll work out something.
+This code is in Github:
+
+	git://github.com/briandfoy/mycpan-indexer.git
 
 =head1 AUTHOR
 
