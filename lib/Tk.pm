@@ -1,4 +1,6 @@
 package MyCPAN::Indexer::Interface::Tk;
+use strict;
+use warnings;
 
 use Log::Log4perl qw(:easy);
 use Tk;
@@ -22,14 +24,14 @@ This class presents the information as the indexer runs, using Tk.
 
 =over 4
 
-=item do_interface( $Vars )
+=item do_interface( $Notes )
 
 
 =cut
 
 sub do_interface 
 	{
-	my( $Vars ) = @_;
+	my( $class, $Notes ) = @_;
 	
 	use Tk;
 
@@ -57,7 +59,7 @@ sub do_interface
 		$frame->Label( -text => $label, -width => 6 )->pack( -side => 'left' );
 		$frame->Entry( 
 			-width => 6, 
-			-textvariable => \ $Vars->{$label}, 
+			-textvariable => \ $Notes->{$label}, 
 			-relief => 'flat' 
 			)->pack( -side => 'right' );
 		}
@@ -71,7 +73,7 @@ sub do_interface
 		my $frame = $tracker_right->Frame->pack( -side => 'top' );
 		$frame->Label( -text => $label, -width => 6 )->pack( -side => 'left' );
 		$frame->Entry( 
-			-textvariable => \ $Vars->{$label}, 
+			-textvariable => \ $Notes->{$label}, 
 			-relief => 'flat' 
 			)->pack( -side => 'right' );
 		}
@@ -87,8 +89,8 @@ sub do_interface
 		);		
 	$bar->ProgressBar(
 		-from     => 0,
-		-to       => $Vars->{Total},
-		-variable => \ $Vars->{Done},
+		-to       => $Notes->{Total},
+		-variable => \ $Notes->{Done},
 		-colors   => [ 0, 'green',],
 		-gap      => 0,
 		)->pack( -side => 'top', -fill => 'x',  );
@@ -102,7 +104,7 @@ sub do_interface
 	$count_frame->Listbox(
 		-height => 5,
 		-width  => 3,
-		-listvariable  => [ 1 .. $Vars->{Threads} ],
+		-listvariable  => [ 1 .. $Notes->{Threads} ],
 		)->pack( -side => 'bottom');
 		
 	my $pid_frame  = _make_frame( $jobs, 'left' );
@@ -110,14 +112,14 @@ sub do_interface
 	$pid_frame->Listbox(
 		-height => 5,
 		-width  => 6,
-		-listvariable  => $Vars->{PID},
+		-listvariable  => $Notes->{PID},
 		)->pack( -side => 'bottom');
 	
 	my $proc_frame = $jobs->Frame->pack( -anchor => 'w', -expand => 1, -fill => 'x' );
 	$proc_frame->Label( -text => 'Processing', -width => 35 )->pack( -side => 'top' );
 	$proc_frame->Listbox(
 		-height => 5,
-		-listvariable  => $Vars->{recent},
+		-listvariable  => $Notes->{recent},
 		)->pack( -side => 'bottom', -expand => 1, -fill => 'x');
 	
 	
@@ -127,7 +129,7 @@ sub do_interface
 	$errors->Label( -text => 'Errors', )->pack( -side => 'top', -anchor => 'w');
 	$errors->Listbox(
 		-height => 10,
-		-listvariable => $Vars->{errors},
+		-listvariable => $Notes->{errors},
 		)->pack(
 			-expand => 1,
 			-fill   => 'x',
@@ -137,8 +139,8 @@ sub do_interface
 				
 				
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-	_make_interface_callback( $Vars );
-	$mw->repeat( 1_000, $Vars->{interface_callback} );
+	_make_interface_callback( $Notes );
+	$mw->repeat( 1_000, $Notes->{interface_callback} );
 
 	MainLoop;
 	}
@@ -192,33 +194,33 @@ sub _menu
 
 sub _make_interface_callback
 	{
-	my( $Vars ) = @_;
+	my( $Notes ) = @_;
 	
-	$Vars->{interface_callback} = sub {
-		return unless $Vars->{Left};
+	$Notes->{interface_callback} = sub {
+		return unless $Notes->{Left};
 		
-		$Vars->{_elapsed} = time - $Vars->{_started};
-		$Vars->{Elapsed} = elapsed( $Vars->{_elapsed} );
+		$Notes->{_elapsed} = time - $Notes->{_started};
+		$Notes->{Elapsed} = elapsed( $Notes->{_elapsed} );
 	
-		my $item = ${ $Vars->{queue} }[ $Vars->{queue_cursor}++ ];
+		my $item = ${ $Notes->{queue} }[ $Notes->{queue_cursor}++ ];
 				
-		if( my $pid = $Vars->{dispatcher}->start )
+		if( my $pid = $Notes->{dispatcher}->start )
 			{ #parent
 			
-			unshift @{ $Vars->{PID} }, $pid;
-			unshift @{ $Vars->{recent} }, $item;
+			unshift @{ $Notes->{PID} }, $pid;
+			unshift @{ $Notes->{recent} }, $item;
 			
-			$Vars->{Done}++;
-			$Vars->{Left} = $Vars->{Total} - $Vars->{Done};
+			$Notes->{Done}++;
+			$Notes->{Left} = $Notes->{Total} - $Notes->{Done};
 			
-			$Vars->{Rate} = sprintf "%.2f / sec ", 
-				eval { $Vars->{Done} / $Vars->{_elapsed} };
+			$Notes->{Rate} = sprintf "%.2f / sec ", 
+				eval { $Notes->{Done} / $Notes->{_elapsed} };
 			
 			}
 		else
 			{ # child
-			$Vars->{child_task}( $item );
-			$Vars->{dispatcher}->finish;
+			$Notes->{child_task}( $item );
+			$Notes->{dispatcher}->finish;
 			}
 	
 		1;

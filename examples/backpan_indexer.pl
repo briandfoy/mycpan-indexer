@@ -73,17 +73,18 @@ DEBUG( "Dists to process are\n\t", join "\n\t", @$dists );
 # The meat of the issue
 INFO( "Run started - " . @$dists . " dists to process" );
 
-my $Vars = { 
+my $Notes = { 
 	queue      => $dists,
 	child_task => $worker_class->get_task,
+	config     => $Config,
 	};
 
-$dispatcher_class->get_dispatcher( $Config, $Vars );
-#print Dumper( $Vars );
+$dispatcher_class->get_dispatcher( $Notes );
+print Dumper( $Notes );
 die "Dispatcher class [$dispatcher_class] did not set a dispatcher key\n"
-	unless exists $Vars->{dispatcher};
+	unless exists $Notes->{dispatcher};
 
-$interface_class->do_interface( $Vars );
+$interface_class->do_interface( $Notes );
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 

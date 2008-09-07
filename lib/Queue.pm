@@ -1,4 +1,6 @@
 package MyCPAN::Indexer::Queue;
+use strict;
+use warnings;
 
 use File::Find;
 use File::Find::Closures qw( find_by_regex );

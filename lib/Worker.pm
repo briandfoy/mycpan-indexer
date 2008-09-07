@@ -1,4 +1,6 @@
 package MyCPAN::Indexer::Worker;
+use strict;
+use warnings;
 
 use File::Basename;
 use File::Spec;
@@ -33,13 +35,15 @@ hands a disribution too.
    
 sub get_task
 	{
-	my( $class, $Config ) = @_;
+	my( $class, $Notes ) = @_;
 	
 	sub {
 		my $dist = shift;
 		
-		my $basename = $class->_check_for_previous_result( $dist );
+		my $basename = $class->_check_for_previous_result( $dist, $Notes );
 		return unless $basename;
+		
+		my $Config = $Notes->{config};
 		
 		INFO( "Child [$$] processing $dist\n" );
 			
@@ -53,6 +57,10 @@ sub get_task
 			exit 255;
 			}
 	
+		# XXX: this should be configurable
+		my $yml_dir       = catfile( $Config->report_dir, "meta"        );
+		my $yml_error_dir = catfile( $Config->report_dir, "meta-errors" );
+
 		my $out_dir = $yml_error_dir;
 		
 		local $SIG{ALRM} = sub { die "alarm\n" };
@@ -105,7 +113,9 @@ sub get_task
 	
 sub _check_for_previous_result
 	{	
-	my( $class, $dist ) = @_;
+	my( $class, $dist, $Notes ) = @_;
+	
+	my $Config = $Notes->{config};
 	
 	( my $basename = basename( $dist ) ) =~ s/\.(tgz|tar\.gz|zip)$//;
 
@@ -126,7 +136,9 @@ sub _check_for_previous_result
 
 sub _add_run_info
 	{
-	my( $class, $info ) = @_;
+	my( $class, $info, $Notes ) = @_;
+
+	my $Config = $Notes->{config};
 	
 	return unless eval { $info->can( 'set_run_info' ) };
 	

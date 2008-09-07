@@ -1,4 +1,6 @@
 package MyCPAN::Indexer::Dispatch::Parallel;
+use strict;
+use warnings;
 
 use Log::Log4perl qw(:easy);
 
@@ -43,9 +45,9 @@ It adds:
 
 sub get_dispatcher
 	{
-	my( $class, $Vars ) = @_;
+	my( $class, $Notes ) = @_;
 	
-	$Vars->{dispatcher} = $class->_make_forker( $Vars );
+	$Notes->{dispatcher} = $class->_make_forker( $Notes );
 	}
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
@@ -70,9 +72,9 @@ BEGIN {
 
 sub _make_forker
 	{
-	my( $self, $Config ) = @_;
+	my( $self, $Notes ) = @_;
 	
-	my $forker = Parallel::ForkManager->new( $Config->parallel_jobs || 1 );
+	my $forker = Parallel::ForkManager->new( $Notes->{config}->parallel_jobs || 1 );
 
 	# move this to interface side, and just loop through the process IDs
 	# to remove those that aren't running anymore
