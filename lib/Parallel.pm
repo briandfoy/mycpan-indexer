@@ -4,6 +4,25 @@ use warnings;
 
 use Log::Log4perl qw(:easy);
 
+BEGIN {
+	# override since Tk overrides exit and this needs the real exit
+	no warnings 'redefine';
+	use Parallel::ForkManager;
+
+	package Parallel::ForkManager;
+	
+	sub finish { my ($s, $x)=@_;
+	  if ( $s->{in_child} ) {
+		CORE::exit ($x || 0);
+	  }
+	  if ($s->{max_proc} == 0) { # max_proc == 0
+		$s->on_finish($$, $x ,$s->{processes}->{$$}, 0, 0);
+		delete $s->{processes}->{$$};
+	  }
+	  return 0;
+	}
+}
+
 =head1 NAME
 
 MyCPAN::Indexer::Dispatch::Parallel - Pass out work to sub-processes
@@ -40,8 +59,6 @@ It adds:
 	recent     => [],
 
 =cut
-   
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
 sub get_dispatcher
 	{
@@ -59,48 +76,12 @@ sub get_dispatcher
 	$Notes->{Errors}     = 0;
 	}
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-BEGIN {
-	# override since Tk overrides exit and this needs the real exit
-	no warnings 'redefine';
-	use Parallel::ForkManager;
-
-	package Parallel::ForkManager;
-	
-	sub finish { my ($s, $x)=@_;
-	  if ( $s->{in_child} ) {
-		CORE::exit ($x || 0);
-	  }
-	  if ($s->{max_proc} == 0) { # max_proc == 0
-		$s->on_finish($$, $x ,$s->{processes}->{$$}, 0, 0);
-		delete $s->{processes}->{$$};
-	  }
-	  return 0;
-	}
-}
-
 sub _make_forker
 	{
 	my( $self, $Notes ) = @_;
 	
 	my $forker = Parallel::ForkManager->new( $Notes->{config}->parallel_jobs || 1 );
 
-	# move this to interface side, and just loop through the process IDs
-	# to remove those that aren't running anymore
-
-=pod
-
-$forker->run_on_finish( sub { 
-		my $pid = shift;
-		
-		my( $index ) = grep { $Vars->{PID}[$_] == $pid } 0 .. $#{ $Vars->{PID} };
-		
-		splice( @{ $Vars->{PID} }, $index, 1 );
-		splice( @{ $Vars->{recent} }, $index, 1 );
-		}
-		);	
-
-=cut
 
 	$forker;
 	}

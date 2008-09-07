@@ -3,7 +3,7 @@ use strict;
 use warnings;
 
 use File::Basename;
-use File::Spec;
+use File::Spec::Functions qw(catfile);
 use Log::Log4perl qw(:easy);
 use MyCPAN::Indexer;
 use YAML;
