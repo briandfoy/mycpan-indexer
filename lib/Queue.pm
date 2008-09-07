@@ -29,7 +29,7 @@ indexer to process.
 This class returns a copy of @ARGV, or finds all of the tarballs or zip
 archives in under the directory named in C<backpan_dir> in the configuration.
 The F<backpan_indexer.pl> script passes the configuration object as the 
-first argument.
+first argument. It returns an array reference of file paths.
 
 =cut
 

@@ -4,29 +4,15 @@ use warnings;
 no warnings 'uninitialized';
 
 use blib;
-use ConfigReader::Simple;
 use Data::Dumper;
-use Data::UUID;
 use File::Basename;
-use File::Find;
 use File::Spec::Functions qw(catfile);
-use Parallel::ForkManager;
 use Log::Log4perl qw(:easy);
-use YAML;
 
-require 'tk.pl';
-require 'steak.pl';
-
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-# Choose something to uniquely identify this run
-my $UUID = do { 
-	my $ug = Data::UUID->new; 
-	my $uuid = $ug->create;
-	$ug->to_string( $uuid );
-	};
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # Minutely control the environment
+{
 my %pass_through = map { $_, 1 } qw( DISPLAY USER HOME PWD );
 
 foreach my $key ( keys %ENV ) 
@@ -35,6 +21,7 @@ foreach my $key ( keys %ENV )
 	}
 
 $ENV{AUTOMATED_TESTING}++;
+}
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # The set up
@@ -45,36 +32,9 @@ Log::Log4perl->init_and_watch(
 	30 
 	);
 
-my $conf    = catfile( $run_dir, 'backpan_indexer.config' );
-DEBUG( "Run dir is $run_dir; Conf file is $conf" );
+my $Config = get_config( $run_dir );
 
-my $Config = ConfigReader::Simple->new( $conf,
-	[ qw(temp_dir backpan_dir report_dir alarm 
-		copy_bad_dists retry_errors indexer_class) ]
-	);
-FATAL "Could not read config!\n" unless ref $Config;
-
-chdir $Config->temp_dir;
-
-
-my $yml_dir       = catfile( $Config->report_dir, "meta"        );
-my $yml_error_dir = catfile( $Config->report_dir, "meta-errors" );
-
-DEBUG( "Value of retry is " . $Config->retry_errors );
-DEBUG( "Value of copy_bad_dists is " . $Config->copy_bad_dists );
-
-if( $Config->retry_errors )
-	{
-	my $glob = catfile( $yml_error_dir, "*.yml" );
-	$glob =~ s/ /\\ /g;
-
-	unlink glob( $glob );
-	}
-	
-mkdir $yml_dir,       0755 unless -d $yml_dir;
-mkdir $yml_error_dir, 0755 unless -d $yml_error_dir;
-
-my $errors = 0;
+setup_dirs( $Config );
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # Load classes and check that they do the right thing
@@ -94,6 +54,10 @@ eval "require $interface_class" or die "$@\n";
 die "Interface class [$interface_class] does not implement do_interface()" 
 	unless $interface_class->can( 'do_interface' );
 
+my $worker_class = $Config->worker || __PACKAGE__ . "::Worker";
+eval "require $worker_class" or die "$@\n";
+die "Interface class [$worker_class] does not implement get_task()" 
+	unless $interface_class->can( 'get_task' );
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
@@ -103,22 +67,18 @@ die "get_queue did not return an array reference\n"
 	unless ref $dists eq ref [];
 DEBUG( "Dists to process are\n\t", join "\n\t", @$dists );
 
-exit;
-
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # The meat of the issue
 INFO( "Run started - " . @$dists . " dists to process" );
 
 my $Vars = { 
-	Threads    => 5,
 	queue      => $dists,
-	UUID       => $UUID,
-	child_task => sub { &child_tasks },
 	};
 
-$dispatcher_class->get_dispatcher( $Vars );
-die "Dispatcher class [$dispatcher_class] did not set \n"
-	unless ref $Vars->{foo} eq ref sub {};
+$dispatcher_class->get_dispatcher( $Config, $Vars );
+#print Dumper( $Vars );
+die "Dispatcher class [$dispatcher_class] did not set a dispatcher key\n"
+	unless exists $Vars->{dispatcher};
 
 exit;
 
@@ -127,106 +87,59 @@ $interface_class->do_interface( $Vars );
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-sub child_tasks
+sub get_config
 	{
-	my $dist = shift;
-	
-	my $basename = check_for_previous_result( $dist );
-	return unless $basename;
-	
-	INFO( "Child [$$] processing $dist\n" );
-		
-	my $Indexer = $Config->indexer_class || 'MyCPAN::Indexer';
-	
-	eval "require $Indexer" or die;
-	
-	unless( chdir $Config->temp_dir )
-		{
-		ERROR( "Could not change to " . $Config->temp_dir . " : $!\n" );
-		exit 255;
-		}
+	require ConfigReader::Simple;
 
-	my $out_dir = $yml_error_dir;
+	my $run_dir = shift;
 	
-	local $SIG{ALRM} = sub { die "alarm\n" };
-	alarm( $Config->alarm || 15 );
-	my $info = eval { $Indexer->run( $dist ) };
+	my $conf    = catfile( $run_dir, 'backpan_indexer.config' );
+	DEBUG( "Run dir is $run_dir; Conf file is $conf" );
+	
+	my $Config = ConfigReader::Simple->new( $conf,
+		[ qw(temp_dir backpan_dir report_dir alarm 
+			copy_bad_dists retry_errors indexer_class) ]
+		);
+		
+	FATAL( "Could not read config!" ) unless ref $Config;
 
-	unless( defined $info )
-		{
-		ERROR( "run failed: $@" );
-		return;
-		}
-	elsif( eval { $info->run_info( 'completed' ) } )
-		{
-		$out_dir = $yml_dir;
-		}
-	else
-		{
-		ERROR( "$basename did not complete\n" );
-		if( my $bad_dist_dir = $Config->copy_bad_dists )
-			{
-			my $dist_file = $info->dist_info( 'dist_file' );
-			my $basename  = $info->dist_info( 'dist_basename' );
-			my $new_name  = File::Spec->catfile( $bad_dist_dir, $basename );
-			
-			unless( -e $new_name )
-				{
-				DEBUG( "Copying bad dist" );
-				open my($in), "<", $dist_file;
-				open my($out), ">", $new_name;
-				while( <$in> ) { print { $out } $_ }
-				close $in;
-				close $out;
-				}
-			}	
-		}
-		
-	alarm 0;
-			
-	add_run_info( $info );
+
+	my $UUID = do { 
+		require Data::UUID;
+		my $ug = Data::UUID->new; 
+		my $uuid = $ug->create;
+		$ug->to_string( $uuid );
+		};
 	
-	my $out_path = catfile( $out_dir, "$basename.yml" );
+	$Config->set( 'UUID', $UUID );
 	
-	open my($fh), ">", $out_path or die "Could not open $out_path: $!\n";
-	print $fh Dump( $info );
-	
-	1;
-	}
-	
-sub check_for_previous_result
-	{	
-	my $dist = shift;
-	
-	( my $basename = basename( $dist ) ) =~ s/\.(tgz|tar\.gz|zip)$//;
-	
-	my $yml_path       = catfile( $yml_dir,       "$basename.yml" );
-	my $yml_error_path = catfile( $yml_error_dir, "$basename.yml" );
-	
-	if( my @path = grep { -e } ( $yml_path, $yml_error_path ) )
-		{
-		DEBUG( "Found run output for $basename in $path[0]. Skipping...\n" );
-		return;
-		}
-		
-	return $basename;
+	$conf;
 	}
 
-sub add_run_info
+
+sub setup_dirs
 	{
-	my( $info ) = shift;
+	my $Config = shift;
 	
-	return unless eval { $info->can( 'set_run_info' ) };
+	my $cwd = cwd();
+	chdir $Config->temp_dir;
 	
-	$info->set_run_info( $_, $Config->get( $_ ) ) 
-		foreach ( $Config->directives );
+	my $yml_dir       = catfile( $Config->report_dir, "meta"        );
+	my $yml_error_dir = catfile( $Config->report_dir, "meta-errors" );
 	
-	$info->set_run_info( 'uuid', $UUID ); 
-
-	$info->set_run_info( 'child_pid',  $$ ); 
-	$info->set_run_info( 'parent_pid', getppid ); 
-
-	$info->set_run_info( 'ENV', \%ENV ); 
+	DEBUG( "Value of retry is " . $Config->retry_errors );
+	DEBUG( "Value of copy_bad_dists is " . $Config->copy_bad_dists );
 	
-	return 1;
+	if( $Config->retry_errors )
+		{
+		my $glob = catfile( $yml_error_dir, "*.yml" );
+		$glob =~ s/ /\\ /g;
+	
+		unlink glob( $glob );
+		}
+		
+	mkdir $yml_dir,       0755 unless -d $yml_dir;
+	mkdir $yml_error_dir, 0755 unless -d $yml_error_dir;
+	
+	chdir $cwd;
 	}

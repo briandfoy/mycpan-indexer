@@ -33,6 +33,7 @@ WriteMakefile(
 		'lib/Parallel.pm' => '$(INST_LIBDIR)/Indexer/Dispatch/Parallel.pm',
 		'lib/Tk.pm'       => '$(INST_LIBDIR)/Indexer/Interface/Tk.pm',
 		'lib/Queue.pm'    => '$(INST_LIBDIR)/Indexer/Queue.pm',
+		'lib/Queue.pm'    => '$(INST_LIBDIR)/Indexer/Worker.pm',
 		},
 
 	'MAN3PODS'     => {
@@ -40,6 +41,7 @@ WriteMakefile(
 		'lib/Parallel.pm' => '$(INST_MAN3DIR)/MyCPAN::Indexer::Dispatch::Parallel.3',
 		'lib/Tk.pm'       => '$(INST_MAN3DIR)/MyCPAN::Indexer::Interface::Tk.3',
 		'lib/Queue.pm'    => '$(INST_MAN3DIR)/MyCPAN::Indexer::Queue.3',
+		'lib/Worker.pm'   => '$(INST_MAN3DIR)/MyCPAN::Indexer::Worker.3',
 		},
 
 	clean  => { FILES    => q|MyCPAN-Indexer-*| },

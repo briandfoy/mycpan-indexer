@@ -4,9 +4,9 @@ use warnings;
    
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
-sub setup_vars
+sub get_dispatcher
 	{
-	my $Vars = shift;
+	my( $class, $Vars ) = @_;
 	
 	$Vars->{queue_cursor} = 0;
 	$Vars->{$_}           = [ qw() ] foreach ( qw( recent PID errors ) );
