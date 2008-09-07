@@ -107,7 +107,7 @@ sub get_task
 		print $fh Dump( $info );
 		
 		1;
-		}
+		};
 		
 	}
 	

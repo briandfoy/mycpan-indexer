@@ -33,10 +33,13 @@ sub do_interface
 	{
 	my( $class, $Notes ) = @_;
 	
+	$Notes->{Started}  = scalar localtime;
+	$Notes->{_started} = time;
+	
 	use Tk;
 
 	my $mw = MainWindow->new;
-	$mw->geometry('400x300');	
+	$mw->geometry('500x375');	
 
 	$mw->resizable( 0, 0 );
 	$mw->title( 'BackPAN Indexer 1.00' );
@@ -51,31 +54,52 @@ sub do_interface
 	
 	my $tracker_left = $tracker->Frame->pack( 
 		-anchor => 'w', 
-		-side   => 'left' 
+		-side   => 'left',
+		-expand => 1,
+		-fill   => 'x',
 		);
-	foreach my $label ( qw(Total Done Left Errors ) )
+	foreach my $label ( qw( Total Done Left Errors ) )
 		{
 		my $frame = $tracker_left->Frame->pack( -side => 'top' );
 		$frame->Label( -text => $label, -width => 6 )->pack( -side => 'left' );
 		$frame->Entry( 
-			-width => 6, 
+			-width        => 6, 
 			-textvariable => \ $Notes->{$label}, 
-			-relief => 'flat' 
-			)->pack( -side => 'right' );
+			-relief       => 'flat', 
+			)->pack( 
+				-side => 'right', 
+				);
 		}
 	
 	my $tracker_right = $tracker->Frame->pack( 
 		-anchor => 'w', 
-		-side   => 'left'  
+		-side   => 'left',  
+		-expand => 1,
+		-fill   => 'x',
 		);
 	foreach my $label ( qw( UUID Started Elapsed Rate ) )
 		{
+		$Notes->{$label} ||= ' ' x 60;
 		my $frame = $tracker_right->Frame->pack( -side => 'top' );
-		$frame->Label( -text => $label, -width => 6 )->pack( -side => 'left' );
+		$frame->Label( 
+			-text  => $label, 
+			-width => 6,
+			-background => 'yellow',
+			)->pack( 
+				-side => 'left',
+				);
 		$frame->Entry( 
 			-textvariable => \ $Notes->{$label}, 
-			-relief => 'flat' 
-			)->pack( -side => 'right' );
+			-relief             => 'flat',
+			-width              => -1,
+			-state              => 'disabled',
+			-disabledforeground => '',
+			-disabledbackground => 'green',
+			)->pack( 
+				-side   => 'right', 
+				-expand => 1,
+				-fill   => 'x',
+				);
 		}
 	
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
@@ -93,36 +117,48 @@ sub do_interface
 		-variable => \ $Notes->{Done},
 		-colors   => [ 0, 'green',],
 		-gap      => 0,
-		)->pack( -side => 'top', -fill => 'x',  );
+		)->pack( 
+			-side => 'top', 
+			-fill => 'x',  
+			);
 
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 	my @recent = qw( a b c d e );
 	my $jobs    = $middle->Frame->pack( -anchor => 'w', -expand => 1, -fill => 'x' );
 	
 	my $count_frame = _make_frame( $jobs, 'left' );
-	$count_frame->Label( -text => '#',          -width =>  3 )->pack( -side => 'top' );
+	$count_frame->Label( -text => '#', -width =>  3 )->pack( -side => 'top' );
 	$count_frame->Listbox(
-		-height => 5,
-		-width  => 3,
+		-height        => $Notes->{Threads},
+		-width         => 3,
 		-listvariable  => [ 1 .. $Notes->{Threads} ],
-		)->pack( -side => 'bottom');
+		-relief        => 'flat',
+		)->pack( 
+			-side => 'bottom'
+			);
 		
 	my $pid_frame  = _make_frame( $jobs, 'left' );
-	$pid_frame->Label( -text => 'PID',        -width =>  6 )->pack( -side => 'top' );
+	$pid_frame->Label( -text => 'PID', -width =>  6 )->pack( -side => 'top' );
 	$pid_frame->Listbox(
-		-height => 5,
-		-width  => 6,
+		-height        => $Notes->{Threads},
+		-width         => 6,
 		-listvariable  => $Notes->{PID},
-		)->pack( -side => 'bottom');
+		-relief        => 'flat',
+		)->pack( 
+			-side => 'bottom'
+			);
 	
 	my $proc_frame = $jobs->Frame->pack( -anchor => 'w', -expand => 1, -fill => 'x' );
 	$proc_frame->Label( -text => 'Processing', -width => 35 )->pack( -side => 'top' );
 	$proc_frame->Listbox(
-		-height => 5,
+		-height        => $Notes->{Threads},
 		-listvariable  => $Notes->{recent},
-		)->pack( -side => 'bottom', -expand => 1, -fill => 'x');
-	
-	
+		)->pack( 
+			-side   => 'bottom', 
+			-expand => 1, 
+			-fill   => 'x'
+			);
+
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 	my @errors = qw( dog bird cat );
 	my $errors  = $bottom->Frame->pack( -anchor => 'w', -expand => 1, -fill => 'x' );
@@ -200,10 +236,12 @@ sub _make_interface_callback
 		return unless $Notes->{Left};
 		
 		$Notes->{_elapsed} = time - $Notes->{_started};
-		$Notes->{Elapsed} = elapsed( $Notes->{_elapsed} );
+		$Notes->{Elapsed} = _elapsed( $Notes->{_elapsed} );
 	
 		my $item = ${ $Notes->{queue} }[ $Notes->{queue_cursor}++ ];
-				
+		
+		_remove_old_processes( $Notes );
+		
 		if( my $pid = $Notes->{dispatcher}->start )
 			{ #parent
 			
@@ -227,6 +265,40 @@ sub _make_interface_callback
 		};
 	}	
 
+sub _remove_old_processes
+	{
+	my $Notes = shift;
+	
+	my @delete_indices = grep 
+		{ ! kill 0, $Notes->{PID}[$_] } 
+		0 .. $#{ $Notes->{PID} };
+	
+	foreach my $index ( @delete_indices )
+		{
+		splice @{ $Notes->{recent} }, $index, 1;
+		splice @{ $Notes->{PID} }, $index, 1;
+		}
+	}
+	
+BEGIN {
+my %hash = ( days => 864000, hours => 3600, minutes => 60 );
+
+sub _elapsed
+	{
+	my $seconds = shift;
+	
+	my @v;
+	foreach my $key ( qw(days hours minutes) )
+		{
+		push @v, int( $seconds / $hash{$key} );
+		$seconds -= $v[-1] * $hash{$key}
+		}
+		
+	push @v, $seconds;
+	
+	sprintf "%dd %02dh %02dm %02ds", @v;
+	}
+}
 1;
 
 =back

@@ -75,10 +75,18 @@ INFO( "Run started - " . @$dists . " dists to process" );
 
 my $Notes = { 
 	queue      => $dists,
-	child_task => $worker_class->get_task,
 	config     => $Config,
+	UUID       => get_uuid(),
 	};
 
+$Notes->{child_task} = $worker_class->get_task( $Notes );
+
+print Dumper( $Notes );
+#print "Ref is  $Notes->{child_task}\n";
+
+die "get_task is not a code ref" unless 
+	ref $Notes->{child_task} eq ref sub {};
+	
 $dispatcher_class->get_dispatcher( $Notes );
 print Dumper( $Notes );
 die "Dispatcher class [$dispatcher_class] did not set a dispatcher key\n"
@@ -104,16 +112,6 @@ sub get_config
 		);
 		
 	FATAL( "Could not read config!" ) unless ref $Config;
-
-
-	my $UUID = do { 
-		require Data::UUID;
-		my $ug = Data::UUID->new; 
-		my $uuid = $ug->create;
-		$ug->to_string( $uuid );
-		};
-	
-	$Config->set( 'UUID', $UUID );
 	
 	$Config;
 	}
@@ -144,4 +142,14 @@ sub setup_dirs
 	mkdir $yml_error_dir, 0755 unless -d $yml_error_dir;
 	
 	chdir $cwd;
+	}
+	
+sub get_uuid
+	{
+	my $UUID = do { 
+		require Data::UUID;
+		my $ug = Data::UUID->new; 
+		my $uuid = $ug->create;
+		$ug->to_string( $uuid );
+		};
 	}

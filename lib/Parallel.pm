@@ -54,6 +54,9 @@ sub get_dispatcher
 	
 	$Notes->{Threads}    = $Notes->{config}->parallel_jobs;
 	$Notes->{dispatcher} = $class->_make_forker( $Notes );
+	$Notes->{Total}      = scalar @{ $Notes->{queue} };
+	$Notes->{Left}       = $Notes->{Total};
+	$Notes->{Errors}     = 0;
 	}
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
