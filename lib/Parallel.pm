@@ -47,6 +47,12 @@ sub get_dispatcher
 	{
 	my( $class, $Notes ) = @_;
 	
+	foreach my $key ( qw(PID recent errors ) )
+		{
+		$Notes->{$key} = [ qw() ];
+		}
+	
+	$Notes->{Threads}    = $Notes->{config}->parallel_jobs;
 	$Notes->{dispatcher} = $class->_make_forker( $Notes );
 	}
 
