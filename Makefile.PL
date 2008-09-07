@@ -33,7 +33,7 @@ WriteMakefile(
 		'lib/Parallel.pm' => '$(INST_LIBDIR)/Indexer/Dispatch/Parallel.pm',
 		'lib/Tk.pm'       => '$(INST_LIBDIR)/Indexer/Interface/Tk.pm',
 		'lib/Queue.pm'    => '$(INST_LIBDIR)/Indexer/Queue.pm',
-		'lib/Queue.pm'    => '$(INST_LIBDIR)/Indexer/Worker.pm',
+		'lib/Worker.pm'   => '$(INST_LIBDIR)/Indexer/Worker.pm',
 		},
 
 	'MAN3PODS'     => {

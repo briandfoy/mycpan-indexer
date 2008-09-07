@@ -4,6 +4,7 @@ use warnings;
 no warnings 'uninitialized';
 
 use blib;
+use Cwd qw(cwd);
 use Data::Dumper;
 use File::Basename;
 use File::Spec::Functions qw(catfile);
@@ -39,25 +40,26 @@ setup_dirs( $Config );
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # Load classes and check that they do the right thing
 
-my $queue_class = $Config->queue_class || __PACKAGE__ . "::Queue";
+my $queue_class = $Config->queue_class || "MyCPAN::Indexer::Queue";
 eval "require $queue_class" or die "$@\n";
 die "Interface class [$queue_class] does not implement get_queue()" 
 	unless $queue_class->can( 'get_queue' );
 
-my $dispatcher_class = $Config->dispatcher_class || __PACKAGE__ . "::Dispatch::Parallel";
+my $dispatcher_class = $Config->dispatcher_class || "MyCPAN::Indexer::Dispatch::Parallel";
 eval "require $dispatcher_class" or die "$@\n";
 die "Dispatcher class [$dispatcher_class] does not implement get_dispatcher()" 
 	unless $dispatcher_class->can( 'get_dispatcher' );
 
-my $interface_class = $Config->interface_class || __PACKAGE__ . "::Interface::Tk";
+my $interface_class = $Config->interface_class || "MyCPAN::Indexer::Interface::Tk";
 eval "require $interface_class" or die "$@\n";
 die "Interface class [$interface_class] does not implement do_interface()" 
 	unless $interface_class->can( 'do_interface' );
 
-my $worker_class = $Config->worker || __PACKAGE__ . "::Worker";
+my $worker_class = $Config->worker_class || "MyCPAN::Indexer::Worker";
+DEBUG( "worker class is $worker_class" );
 eval "require $worker_class" or die "$@\n";
-die "Interface class [$worker_class] does not implement get_task()" 
-	unless $interface_class->can( 'get_task' );
+die "Worker class [$worker_class] does not implement get_task()" 
+	unless $worker_class->can( 'get_task' );
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
@@ -73,14 +75,13 @@ INFO( "Run started - " . @$dists . " dists to process" );
 
 my $Vars = { 
 	queue      => $dists,
+	child_task => $worker_class->get_task,
 	};
 
 $dispatcher_class->get_dispatcher( $Config, $Vars );
 #print Dumper( $Vars );
 die "Dispatcher class [$dispatcher_class] did not set a dispatcher key\n"
 	unless exists $Vars->{dispatcher};
-
-exit;
 
 $interface_class->do_interface( $Vars );
 
@@ -113,7 +114,7 @@ sub get_config
 	
 	$Config->set( 'UUID', $UUID );
 	
-	$conf;
+	$Config;
 	}
 
 
