@@ -99,12 +99,14 @@ sub get_task
 			
 		alarm 0;
 				
-		$class->_add_run_info( $info );
+		$class->_add_run_info( $info, $Notes );
 		
 		my $out_path = catfile( $out_dir, "$basename.yml" );
 		
 		open my($fh), ">", $out_path or die "Could not open $out_path: $!\n";
 		print $fh Dump( $info );
+		
+		DEBUG( "Child [$$] process done" );
 		
 		1;
 		};

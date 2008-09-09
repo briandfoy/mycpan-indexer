@@ -82,7 +82,6 @@ sub _make_forker
 	
 	my $forker = Parallel::ForkManager->new( $Notes->{config}->parallel_jobs || 1 );
 
-
 	$forker;
 	}
 

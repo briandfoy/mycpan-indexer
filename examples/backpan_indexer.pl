@@ -116,14 +116,13 @@ sub get_config
 	$Config;
 	}
 
-
 sub setup_dirs
 	{
 	my $Config = shift;
 	
 	my $cwd = cwd();
-	mkdir $Config->temp_dir or 
-		die "Could not make [" . $Config->temp_dir . "]: $!\n";
+	
+	mkdir $Config->temp_dir unless -d $Config->temp_dir;
 	chdir $Config->temp_dir or 
 		die "Could not change to [" . $Config->temp_dir . "]: $!\n";
 	
