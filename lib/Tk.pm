@@ -33,9 +33,6 @@ sub do_interface
 	{
 	my( $class, $Notes ) = @_;
 	
-	$Notes->{Started}  = scalar localtime;
-	$Notes->{_started} = time;
-	
 	use Tk;
 
 	my $mw = MainWindow->new;
@@ -61,7 +58,11 @@ sub do_interface
 	foreach my $label ( qw( Total Done Left Errors ) )
 		{
 		my $frame = $tracker_left->Frame->pack( -side => 'top' );
-		$frame->Label( -text => $label, -width => 6 )->pack( -side => 'left' );
+		$frame->Label( 
+			-text  => $label, 
+			-width => 6 )->pack( 
+				-side => 'left' 
+				);
 		$frame->Entry( 
 			-width        => 6, 
 			-textvariable => \ $Notes->{$label}, 
@@ -175,7 +176,6 @@ sub do_interface
 				
 				
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-	_make_interface_callback( $Notes );
 	$mw->repeat( 1_000, $Notes->{interface_callback} );
 
 	MainLoop;
@@ -228,79 +228,6 @@ sub _menu
 	return $menu;
 	}
 
-sub _make_interface_callback
-	{
-	my( $Notes ) = @_;
-	
-	$Notes->{interface_callback} = sub {
-		return unless $Notes->{Left};
-		
-		$Notes->{_elapsed} = time - $Notes->{_started};
-		$Notes->{Elapsed} = _elapsed( $Notes->{_elapsed} );
-	
-		my $item = ${ $Notes->{queue} }[ $Notes->{queue_cursor}++ ];
-		
-		_remove_old_processes( $Notes );
-		
-		if( my $pid = $Notes->{dispatcher}->start )
-			{ #parent
-			
-			unshift @{ $Notes->{PID} }, $pid;
-			unshift @{ $Notes->{recent} }, $item;
-			
-			$Notes->{Done}++;
-			$Notes->{Left} = $Notes->{Total} - $Notes->{Done};
-			
-			$Notes->{Rate} = sprintf "%.2f / sec ", 
-				eval { $Notes->{Done} / $Notes->{_elapsed} };
-			
-			}
-		else
-			{ # child
-			$Notes->{child_task}( $item );
-			$Notes->{dispatcher}->finish;
-			ERROR( "The child [$$] is still running!" )
-			}
-	
-		1;
-		};
-	}	
-
-sub _remove_old_processes
-	{
-	my $Notes = shift;
-	
-	my @delete_indices = grep 
-		{ ! kill 0, $Notes->{PID}[$_] } 
-		0 .. $#{ $Notes->{PID} };
-	
-	foreach my $index ( @delete_indices )
-		{
-		splice @{ $Notes->{recent} }, $index, 1;
-		splice @{ $Notes->{PID} }, $index, 1;
-		}
-	}
-	
-BEGIN {
-my %hash = ( days => 864000, hours => 3600, minutes => 60 );
-
-sub _elapsed
-	{
-	my $seconds = shift;
-	
-	my @v;
-	foreach my $key ( qw(days hours minutes) )
-		{
-		push @v, int( $seconds / $hash{$key} );
-		$seconds -= $v[-1] * $hash{$key}
-		}
-		
-	push @v, $seconds;
-	
-	sprintf "%dd %02dh %02dm %02ds", @v;
-	}
-}
-1;
 
 =back
 

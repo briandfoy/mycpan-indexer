@@ -63,27 +63,110 @@ It adds:
 sub get_dispatcher
 	{
 	my( $class, $Notes ) = @_;
-	
-	foreach my $key ( qw(PID recent errors ) )
-		{
-		$Notes->{$key} = [ qw() ];
-		}
-	
-	$Notes->{Threads}    = $Notes->{config}->parallel_jobs;
-	$Notes->{dispatcher} = $class->_make_forker( $Notes );
-	$Notes->{Total}      = scalar @{ $Notes->{queue} };
-	$Notes->{Left}       = $Notes->{Total};
-	$Notes->{Errors}     = 0;
+		
+	$Notes->{Threads}             = $Notes->{config}->parallel_jobs;
+	$Notes->{dispatcher}          = $class->_make_forker( $Notes );
+	$Notes->{interface_callback } = $class->_make_interface_callback( $Notes );
 	}
 
 sub _make_forker
 	{
 	my( $self, $Notes ) = @_;
 	
-	my $forker = Parallel::ForkManager->new( $Notes->{config}->parallel_jobs || 1 );
+	my $forker = Parallel::ForkManager->new( 
+		$Notes->{config}->parallel_jobs || 1 );
 
 	$forker;
 	}
+
+sub _make_interface_callback
+	{
+	my( $class, $Notes ) = @_;
+	
+	foreach my $key ( qw(PID recent errors ) )
+		{
+		$Notes->{$key} = [ qw() ];
+		}
+
+	$Notes->{Total}        = scalar @{ $Notes->{queue} };
+	$Notes->{Left}         = $Notes->{Total};
+	$Notes->{Errors}       = 0;
+	$Notes->{Done}         = 0;
+	
+	$Notes->{queue_cursor} = 0;
+	
+	$Notes->{interface_callback} = sub {
+		return unless $Notes->{Left};
+
+		$Notes->{Started}  ||= scalar localtime;
+		$Notes->{_started} ||= time;
+
+		$Notes->{_elapsed} = time - $Notes->{_started};
+		$Notes->{Elapsed}  = _elapsed( $Notes->{_elapsed} );
+	
+		my $item = ${ $Notes->{queue} }[ $Notes->{queue_cursor}++ ];
+		
+		$class->_remove_old_processes( $Notes );
+		
+		if( my $pid = $Notes->{dispatcher}->start )
+			{ #parent
+			
+			unshift @{ $Notes->{PID} }, $pid;
+			unshift @{ $Notes->{recent} }, $item;
+			
+			$Notes->{Done}++;
+			$Notes->{Left} = $Notes->{Total} - $Notes->{Done};
+			
+			$Notes->{Rate} = sprintf "%.2f / sec ", 
+				eval { $Notes->{Done} / $Notes->{_elapsed} };
+			
+			}
+		else
+			{ # child
+			$Notes->{child_task}( $item );
+			$Notes->{dispatcher}->finish;
+			ERROR( "The child [$$] is still running!" )
+			}
+	
+		1;
+		};
+	}	
+
+sub _remove_old_processes
+	{
+	my( $class, $Notes ) = @_;
+	
+	my @delete_indices = grep 
+		{ ! kill 0, $Notes->{PID}[$_] } 
+		0 .. $#{ $Notes->{PID} };
+	
+	foreach my $index ( @delete_indices )
+		{
+		splice @{ $Notes->{recent} }, $index, 1;
+		splice @{ $Notes->{PID} }, $index, 1;
+		}
+	}
+	
+BEGIN {
+my %hash = ( days => 864000, hours => 3600, minutes => 60 );
+
+sub _elapsed
+	{
+	my $seconds = shift;
+	
+	my @v;
+	foreach my $key ( qw(days hours minutes) )
+		{
+		push @v, int( $seconds / $hash{$key} );
+		$seconds -= $v[-1] * $hash{$key}
+		}
+		
+	push @v, $seconds;
+	
+	sprintf "%dd %02dh %02dm %02ds", @v;
+	}
+}
+1;
 
 1;
 
