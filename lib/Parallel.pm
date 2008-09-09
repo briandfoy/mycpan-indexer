@@ -92,22 +92,22 @@ sub _make_interface_callback
 	$Notes->{Left}         = $Notes->{Total};
 	$Notes->{Errors}       = 0;
 	$Notes->{Done}         = 0;
+	$Notes->{Started}      = scalar localtime;
 	
 	$Notes->{queue_cursor} = 0;
 	
 	$Notes->{interface_callback} = sub {
+		$class->_remove_old_processes( $Notes );
+
 		return unless $Notes->{Left};
 
-		$Notes->{Started}  ||= scalar localtime;
 		$Notes->{_started} ||= time;
 
 		$Notes->{_elapsed} = time - $Notes->{_started};
 		$Notes->{Elapsed}  = _elapsed( $Notes->{_elapsed} );
 	
 		my $item = ${ $Notes->{queue} }[ $Notes->{queue_cursor}++ ];
-		
-		$class->_remove_old_processes( $Notes );
-		
+
 		if( my $pid = $Notes->{dispatcher}->start )
 			{ #parent
 			
@@ -117,6 +117,7 @@ sub _make_interface_callback
 			$Notes->{Done}++;
 			$Notes->{Left} = $Notes->{Total} - $Notes->{Done};
 			
+			no warnings;
 			$Notes->{Rate} = sprintf "%.2f / sec ", 
 				eval { $Notes->{Done} / $Notes->{_elapsed} };
 			

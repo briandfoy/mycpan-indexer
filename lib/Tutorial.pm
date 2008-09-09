@@ -15,6 +15,9 @@ its components in an anonymous hash called C<$Notes>. The different
 components have access to this hash. (To Do: this is some pretty bad
 design smell, but that's how it is right now).
 
+Specific implementations will impose other requirements not listed
+in this tutorial.
+
 =head1 The Queue class
 
 The Queue class is responsible for getting the list of distributions to

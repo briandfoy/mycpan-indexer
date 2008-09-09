@@ -81,14 +81,10 @@ my $Notes = {
 
 $Notes->{child_task} = $worker_class->get_task( $Notes );
 
-print Dumper( $Notes );
-#print "Ref is  $Notes->{child_task}\n";
-
 die "get_task is not a code ref" unless 
 	ref $Notes->{child_task} eq ref sub {};
 	
 $dispatcher_class->get_dispatcher( $Notes );
-print Dumper( $Notes );
 die "Dispatcher class [$dispatcher_class] did not set a dispatcher key\n"
 	unless exists $Notes->{dispatcher};
 

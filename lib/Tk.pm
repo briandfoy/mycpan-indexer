@@ -176,7 +176,7 @@ sub do_interface
 				
 				
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-	$mw->repeat( 1_000, $Notes->{interface_callback} );
+	$mw->repeat( 500, $Notes->{interface_callback} );
 
 	MainLoop;
 	}
@@ -253,3 +253,5 @@ Copyright (c) 2008, brian d foy, All Rights Reserved.
 You may redistribute this under the same terms as Perl itself.
 
 =cut
+
+1;
