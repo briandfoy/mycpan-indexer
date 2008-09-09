@@ -122,7 +122,10 @@ sub setup_dirs
 	my $Config = shift;
 	
 	my $cwd = cwd();
-	chdir $Config->temp_dir;
+	mkdir $Config->temp_dir or 
+		die "Could not make [" . $Config->temp_dir . "]: $!\n";
+	chdir $Config->temp_dir or 
+		die "Could not change to [" . $Config->temp_dir . "]: $!\n";
 	
 	my $yml_dir       = catfile( $Config->report_dir, "meta"        );
 	my $yml_error_dir = catfile( $Config->report_dir, "meta-errors" );
