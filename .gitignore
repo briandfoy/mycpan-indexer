@@ -10,3 +10,4 @@ blib
 *.log
 Makefile
 examples/backpan_indexer.config
+.DS_Store
