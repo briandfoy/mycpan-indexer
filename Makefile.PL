@@ -21,11 +21,15 @@ WriteMakefile(
 		'MD5'                              => '0',
 		'Module::Extract::Namespaces'      => '0',
 		'Module::Extract::Use'             => '0',
-		'Module::Extract::VERSION'         => '0',		
+		'Module::Extract::VERSION'         => '0',
+		'Parallel::ForkManager'            => '0',
 		'Probe::Perl'                      => '0',
 		'Test::More'                       => '0',
 		'Test::Output'                     => '0',
+		'Tk'                               => '0',
+		'Tk::ProgressBar'                  => '0',
 		'YAML::Syck'                       => '0',
+		'YAML'                             => '0',
 		},
 
 	'PM'           => {
@@ -34,6 +38,7 @@ WriteMakefile(
 		'lib/Tk.pm'       => '$(INST_LIBDIR)/Indexer/Interface/Tk.pm',
 		'lib/Queue.pm'    => '$(INST_LIBDIR)/Indexer/Queue.pm',
 		'lib/Worker.pm'   => '$(INST_LIBDIR)/Indexer/Worker.pm',
+		'lib/Tutorial.pm' => '$(INST_LIBDIR)/Indexer/Tutorial.pm',
 		},
 
 	'MAN3PODS'     => {
@@ -42,6 +47,7 @@ WriteMakefile(
 		'lib/Tk.pm'       => '$(INST_MAN3DIR)/MyCPAN::Indexer::Interface::Tk.3',
 		'lib/Queue.pm'    => '$(INST_MAN3DIR)/MyCPAN::Indexer::Queue.3',
 		'lib/Worker.pm'   => '$(INST_MAN3DIR)/MyCPAN::Indexer::Worker.3',
+		'lib/Tutorial.pm' => '$(INST_MAN3DIR)/MyCPAN::Indexer::Tutorial.3',
 		},
 
 	clean  => { FILES    => q|MyCPAN-Indexer-*| },

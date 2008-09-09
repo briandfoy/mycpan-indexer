@@ -18,3 +18,7 @@ t/\d
 t/cover_db*
 ^cover_db\b
 .git
+examples/tk.pl
+examples/steak.pl
+examples/curses.pl
+examples/backpan_indexer.log

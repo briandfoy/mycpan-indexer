@@ -1,13 +1,18 @@
 Changes
 examples/backpan_indexer.config
-examples/backpan_indexer.log4perl
 examples/backpan_indexer.pl
 examples/dual_life_indexer.pl
 lib/Indexer.pm
+lib/Parallel.pm
+lib/Queue.pm
+lib/Tk.pm
+lib/Tutorial.pm
+lib/Worker.pm
 LICENSE
 Makefile.PL
 MANIFEST			This list of files
 README
+t/compile.t
 t/load.t
 t/pod.t
 t/pod_coverage.t
