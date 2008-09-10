@@ -89,3 +89,5 @@ Copyright (c) 2008, brian d foy, All Rights Reserved.
 You may redistribute this under the same terms as Perl itself.
 
 =cut
+
+1;
