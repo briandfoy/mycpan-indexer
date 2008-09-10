@@ -1,45 +1,70 @@
+#####################################################################
+# Information about you to add to each report as a way of identifying
+# the runner and the system. These are just strings and don't make
+# anything else happen.
+
+# give yourself a name
+indexer_id Joe Config <joe.config@example.com>
+
+# give the indexing system a name, just to identify the machine
+system_id config
+
+#####################################################################
+# Where to store files and reports
+
 # where to find the distributions
 # this doesn't have to be an actual backpan.
-#backpan_dir /Volumes/Maxtor 120/BackPAN/authors/id/B/BD/BDFOY
 backpan_dir /MINICPAN/authors/id/B/BD/BDFOY
 
 # where to store the distribution reports
-#report_dir  /Volumes/Maxtor 120/BackPAN indexer/test
-report_dir  /Users/brian/Desktop/Perl Projects/BackPAN Test/report
+report_dir  /Users/Joe/Desktop/BackPAN-Index/report
 
 # where to unpack the dists or create any temporary files
-#temp_dir    /Volumes/Maxtor 120/BackPAN indexer/temp
-temp_dir    /Users/brian/Desktop/Perl Projects/BackPAN Test/tmp
+temp_dir    /Users/Joe/Desktop/BackPAN-Index/tmp
+
+
+#####################################################################
+# Where to store files and reports
 
 # the maximum amont of time allowed to index a distribution, in seconds
 alarm       15
 
 # If set to a true value, copy bad distributions to the named directory
+# This is useful when you want to examine them further without having
+# to look for them.
 copy_bad_dists /dev/null
 
 # Try to index a distribution even if it was previously tried and
-# had an error
+# had an error. This is good for debugging and clearing out errors
+# without having to clear the report cache.
 retry_errors 1
 
-# give yourself a name
-indexer_id brian d foy <brian.d.foy@gmail.com>
+# The number of parallel jobs to run simultaneously.
+parallel_jobs 4
 
-# give the indexing system a name, just to identify the machine
-system_id macbookpro
+
+#####################################################################
+# These are the major components of for backpan_indexer.pl
+# Each component is separate from the others, although each 
+# expects that the other components will do their jobs and set
+# the right things. See MyCPAN::Indexer::Tutorial for more details.
 
 # the Perl class to use as the Indexing class. It has to at least
 # provide a run method
 indexer_class MyCPAN::Indexer
 
+# The Perl class that gets the list of distributions to process#
+# See MyCPAN::Indexer::Tutorial for more details
 queue_class MyCPAN::Indexer::NullTester
 
-# the Perl class to use to hand out indexing jobs. This needs to 
-# provide a 
+# The Perl class that supplies the child task subroutine
+# See MyCPAN::Indexer::Tutorial for more details
+worker_class MyCPAN::Indexer::Worker
+
+# The Perl class to use to hand out indexing jobs
+# See MyCPAN::Indexer::Tutorial for more details
 dispatcher_class MyCPAN::Indexer::Dispatch::Parallel
 
+# The Perl class to use to create the live interface
+# See MyCPAN::Indexer::Tutorial for more details
 interface_class MyCPAN::Indexer::Interface::Tk
-
-work_class MyCPAN::Indexer::Worker
-
-# The number of parallel jobs to run
-parallel_jobs 4
