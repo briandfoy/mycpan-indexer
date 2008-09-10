@@ -41,9 +41,10 @@ sub get_task { $_[1]->{child_task} = sub { 1 } }
 
 =item Dispatcher class: get_dispatcher()
 
-C<get_dispatcher> adds a dispatcher key to HASH_REF. The value is an object that responds to the start and finish
-methods, but does nothing. C<get_dispatcher> also sets the C<interface_callback>
-key to a code reference that returns 1 and does nothing else.
+C<get_dispatcher> adds a dispatcher key to HASH_REF. The value is an
+object that responds to the start and finish methods, but does
+nothing. C<get_dispatcher> also sets the C<interface_callback> key to
+a code reference that returns 1 and does nothing else.
 
 =cut
 
