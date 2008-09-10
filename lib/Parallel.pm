@@ -176,7 +176,7 @@ sub _elapsed
 
 =head1 SEE ALSO
 
-MyCPAN::Indexer
+MyCPAN::Indexer, MyCPAN::Indexer::Tutorial
 
 =head1 SOURCE AVAILABILITY
 

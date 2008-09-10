@@ -26,32 +26,36 @@ indexer to process.
 
 =over 4
 
-=item get_queue( $Config )
+=item get_queue( $Notes )
 
-This class returns a copy of @ARGV, or finds all of the tarballs or zip
-archives in under the directory named in C<backpan_dir> in the configuration.
-The F<backpan_indexer.pl> script passes the configuration object as the 
-first argument. It returns an array reference of file paths.
+C<get_queue> sets the key C<queue> in C<$Notes> hash reference. It
+sets it to a copy of @ARGV, or finds all of the tarballs or zip
+archives in under the directory named in C<backpan_dir> in the
+configuration. 
 
 =cut
 
 sub get_queue
 	{
-	my( $class, $Config ) = @_;
+	my( $class, $Notes ) = @_;
 	
-	if( @ARGV ) 
-		{
-		DEBUG( "Taking dists from command line" );
-		[ @ARGV ]
-		}
-	else 
-		{
-		DEBUG( "Taking dists from " . $Config->backpan_dir );
-		my( $wanted, $reporter ) = find_by_regex( qr/\.(t?gz|zip)$/ );
+	$Notes->{queue} = do {
+		if( @ARGV ) 
+			{
+			DEBUG( "Taking dists from command line" );
+			[ @ARGV ]
+			}
+		else 
+			{
+			DEBUG( "Taking dists from " . $Notes->{config}->backpan_dir );
+			my( $wanted, $reporter ) = find_by_regex( qr/\.(t?gz|zip)$/ );
+			
+			find( $wanted, $Notes->{config}->backpan_dir );
+			[ $reporter->() ];
+			}
+		};
 		
-		find( $wanted, $Config->backpan_dir );
-		[ $reporter->() ];
-		}
+	1;
 	}
 	
 1;
@@ -61,7 +65,7 @@ sub get_queue
 
 =head1 SEE ALSO
 
-MyCPAN::Indexer
+MyCPAN::Indexer, MyCPAN::Indexer::Tutorial
 
 =head1 SOURCE AVAILABILITY
 

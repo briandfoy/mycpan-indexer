@@ -95,7 +95,7 @@ the dispatcher to start new work.
 
 Implements:
 
-	go_interface( $Notes )
+	do_interface( $Notes )
 	
 Creates in C<$Notes>
 

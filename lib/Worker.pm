@@ -22,14 +22,20 @@ Use this in backpan_indexer.pl by specifying it as the queue class:
 =head1 DESCRIPTION
 
 This class takes a distribution and analyses it. This is what the dispatcher
-hands a disribution too.
+hands a disribution to for the actual indexing.
 
 =head2 Methods
 
 =over 4
 
-=item get_task( $Config )
+=item get_task( $Notes )
 
+C<get_task> sets the C<child_task> key in the C<$Notes> hash reference. The
+value is a code reference that takes a distribution path as its only 
+argument and indexes that distribution.
+
+See L<MyCPAN::Indexer::Tutorial> for details about what C<get_task> expects
+and should do.
 
 =cut
    
@@ -37,7 +43,7 @@ sub get_task
 	{
 	my( $class, $Notes ) = @_;
 	
-	sub {
+	$Notes->{child_task} = sub {
 		my $dist = shift;
 		
 		my $basename = $class->_check_for_previous_result( $dist, $Notes );
@@ -162,7 +168,7 @@ sub _add_run_info
 
 =head1 SEE ALSO
 
-MyCPAN::Indexer
+MyCPAN::Indexer, MyCPAN::Indexer::Tutorial
 
 =head1 SOURCE AVAILABILITY
 

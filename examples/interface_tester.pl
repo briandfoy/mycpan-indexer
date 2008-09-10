@@ -1,4 +1,6 @@
 #!/usr/bin/perl
+
+#!/usr/bin/perl
 use strict;
 use warnings;
 no warnings 'uninitialized';
@@ -21,7 +23,6 @@ foreach my $key ( keys %ENV )
 	delete $ENV{$key} unless exists $pass_through{$key} 
 	}
 
-$ENV{AUTOMATED_TESTING}++;
 }
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
@@ -61,23 +62,25 @@ eval "require $worker_class" or die "$@\n";
 die "Worker class [$worker_class] does not implement get_task()" 
 	unless $worker_class->can( 'get_task' );
 
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# Figure out what to index
+my $dists = $queue_class->get_queue( $Config );
+die "get_queue did not return an array reference\n"
+	unless ref $dists eq ref [];
+DEBUG( "Dists to process are\n\t", join "\n\t", @$dists );
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# The meat of the issue
+INFO( "Run started - " . @$dists . " dists to process" );
+
 my $Notes = { 
+	queue      => $dists,
 	config     => $Config,
 	UUID       => get_uuid(),
 	};
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-# Figure out what to index
-$queue_class->get_queue( $Notes );
-die "get_queue did set queue to an array reference\n"
-	unless ref $Notes->{queue} eq ref [];
-DEBUG( "Dists to process are\n\t", join "\n\t", @{ $Notes->{queue} } );
-
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-# The meat of the issue
-INFO( "Run started - " . @{ $Notes->{queue} } . " dists to process" );
-
-$worker_class->get_task( $Notes );
+$Notes->{child_task} = $worker_class->get_task( $Notes );
 
 die "get_task is not a code ref" unless 
 	ref $Notes->{child_task} eq ref sub {};
