@@ -69,6 +69,8 @@ C<do_interface> simly returns 1.
 
 sub do_interface { 1 }
 
+=back 
+
 =head1 SEE ALSO
 
 MyCPAN::Indexer::Tutorial

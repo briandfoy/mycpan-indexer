@@ -14,11 +14,11 @@ use Log::Log4perl qw(:easy);
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # Minutely control the environment
 {
-my %pass_through = map { $_, 1 } qw( DISPLAY USER HOME PWD );
+my %pass_through = map { $_, 1 } qw( DISPLAY USER HOME PWD TERM);
 
 foreach my $key ( keys %ENV ) 
 	{ 
-	delete $ENV{$key} unless exists $pass_through{$key} 
+	#delete $ENV{$key} unless exists $pass_through{$key} 
 	}
 
 $ENV{AUTOMATED_TESTING}++;

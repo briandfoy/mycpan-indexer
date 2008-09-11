@@ -55,7 +55,7 @@ indexer_class MyCPAN::Indexer
 
 # The Perl class that gets the list of distributions to process#
 # See MyCPAN::Indexer::Tutorial for more details
-queue_class MyCPAN::Indexer::NullTester
+queue_class MyCPAN::Indexer::Queue
 
 # The Perl class that supplies the child task subroutine
 # See MyCPAN::Indexer::Tutorial for more details

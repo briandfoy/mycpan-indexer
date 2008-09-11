@@ -30,12 +30,14 @@ WriteMakefile(
 		'Tk::ProgressBar'                  => '0',
 		'YAML::Syck'                       => '0',
 		'YAML'                             => '0',
+		'Curses'                           => '0',
 		},
 
 	'PM'           => {
 		'lib/Indexer.pm'    => '$(INST_LIBDIR)/Indexer.pm',
 		'lib/Parallel.pm'   => '$(INST_LIBDIR)/Indexer/Dispatch/Parallel.pm',
 		'lib/Tk.pm'         => '$(INST_LIBDIR)/Indexer/Interface/Tk.pm',
+		'lib/Curses.pm'     => '$(INST_LIBDIR)/Indexer/Interface/Curses.pm',
 		'lib/Queue.pm'      => '$(INST_LIBDIR)/Indexer/Queue.pm',
 		'lib/Worker.pm'     => '$(INST_LIBDIR)/Indexer/Worker.pm',
 		'lib/Tutorial.pm'   => '$(INST_LIBDIR)/Indexer/Tutorial.pm',
