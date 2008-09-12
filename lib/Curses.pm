@@ -133,7 +133,7 @@ sub _update_values
 	my( $Notes ) = @_;
 		
 	no warnings;
-	foreach my $key ( qw() )
+	foreach my $key ( qw(Total UUID Started Done Left Errors Elapsed Rate) )
 		{
 		my $tuple = $labels->{$key};
 
@@ -152,8 +152,6 @@ sub _update_values
 		refresh;
 		}
 
-=pod
-
 	my $row = $labels->{PID}[0];
 	foreach my $i ( 1 .. $Notes->{Threads} )
 		{
@@ -171,8 +169,6 @@ sub _update_values
 			sprintf "%${width}s", $Notes->{recent}[$i-1] );
 		
 		}
-
-=cut
 
 	}
 }
