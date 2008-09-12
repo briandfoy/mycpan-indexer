@@ -47,10 +47,10 @@ sub do_interface
 	refresh();
 	
 	$Notes->{curses}{windows}{progress}      = newwin( 3, COLS(),   1,  0 );
-	$Notes->{curses}{windows}{left_tracker}  = newwin( 6, 8,   4,  0 );
-	$Notes->{curses}{windows}{right_tracker} = newwin( 6, 10,   4, 12 );
-	$Notes->{curses}{windows}{PID}           = newwin( 7, COLS(),  10,  0 );
-	$Notes->{curses}{windows}{Errors}        = newwin( 7, COLS(), 17,  0 );
+	$Notes->{curses}{windows}{left_tracker}  = newwin( 6, 12,   4,  0 );
+	$Notes->{curses}{windows}{right_tracker} = newwin( 6, 10,   4, 17 );
+	$Notes->{curses}{windows}{PID}           = newwin( 7, COLS(),  12,  0 );
+	$Notes->{curses}{windows}{Errors}        = newwin( 7, COLS(), 21,  0 );
 
 	foreach my $value ( values %{ $Notes->{curses}{windows} } )
 		{
@@ -100,7 +100,7 @@ sub _update_screen
 	{
 	&_update_labels;
 	&_update_progress;
-	#&_update_values;
+	&_update_values;
 	}
 	
 sub _update_labels
@@ -113,11 +113,12 @@ sub _update_labels
 		{
 		my $tuple = $labels->{$key};
 		
-		addstr( 
+		eval { addstr( 
 			$Notes->{curses}{windows}{ $tuple->[0] },
 			@$tuple[1,2,3] 
 			);
 		refresh( $Notes->{curses}{windows}{ $tuple->[0] } );
+		};
 		}
 
 
@@ -140,7 +141,7 @@ sub _update_progress
 	{
 	my( $Notes ) = @_;
 
-	my $progress = COLS() - 2 / $Notes->{Total} * $Notes->{Done};
+	my $progress = ( COLS() - 2 ) / $Notes->{Total} * $Notes->{Done};
 	
 	addstr( 
 		$Notes->{curses}{windows}{progress}, 
@@ -155,23 +156,19 @@ sub _update_values
 	my( $Notes ) = @_;
 		
 	no warnings;
-	foreach my $key ( qw() )
+	foreach my $key ( qw(Total Done Left Errors UUID) )
 		{
 		my $tuple = $labels->{$key};
 
-		next unless $tuple->[4];
+		next unless $tuple->[5];
 
-		move( 
-			$tuple->[0],
-			$tuple->[1] + $tuple->[3] + 2
-			);
-		refresh;
 		addstr( 
-			$tuple->[0], 
-			$tuple->[1] + $tuple->[3] + 2, 
-			sprintf "%" . $tuple->[4] . "s", $Notes->{$tuple->[2]} 
+			$Notes->{curses}{windows}{ $tuple->[0] },
+			$tuple->[1], 
+			$tuple->[2] + $tuple->[4] + 2, 
+			sprintf "%" . $tuple->[5] . "s", $Notes->{$tuple->[3]} 
 			);
-		refresh;
+		refresh( $Notes->{curses}{windows}{ $tuple->[0] } );
 		}
 
 =pod
