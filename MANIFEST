@@ -1,7 +1,6 @@
 Changes
-examples/backpan_indexer.config
+examples/backpan_indexer.config.dist
 examples/backpan_indexer.pl
-examples/dual_life_indexer.pl
 lib/Indexer.pm
 lib/Parallel.pm
 lib/Queue.pm
