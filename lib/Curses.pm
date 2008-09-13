@@ -5,6 +5,9 @@ use warnings;
 use Log::Log4perl qw(:easy);
 use Curses;
 
+use vars qw($VERSION);
+$VERSION = '1.15_01';
+
 =head1 NAME
 
 MyCPAN::Indexer::Interface::Curses - Present the run info in a terminal

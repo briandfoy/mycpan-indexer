@@ -2,6 +2,9 @@ package MyCPAN::Indexer::Queue;
 use strict;
 use warnings;
 
+use vars qw($VERSION);
+$VERSION = '1.15_01';
+
 use File::Find;
 use File::Find::Closures qw( find_by_regex );
 use Log::Log4perl qw(:easy);

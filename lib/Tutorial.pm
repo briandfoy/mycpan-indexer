@@ -1,3 +1,10 @@
+package MyCPAN::Indexer::Tutorial;
+use strict;
+use warnings;
+
+use vars qw($VERSION);
+$VERSION = '1.15_01';
+
 =head1 NAME
 
 MyCPAN::Indexer::Tutorial - How the backpan_indexer.pl pieces fit together

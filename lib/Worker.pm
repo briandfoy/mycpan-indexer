@@ -2,6 +2,9 @@ package MyCPAN::Indexer::Worker;
 use strict;
 use warnings;
 
+use vars qw($VERSION);
+$VERSION = '1.15_01';
+
 use File::Basename;
 use File::Spec::Functions qw(catfile);
 use Log::Log4perl qw(:easy);

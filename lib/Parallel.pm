@@ -2,6 +2,9 @@ package MyCPAN::Indexer::Dispatch::Parallel;
 use strict;
 use warnings;
 
+use vars qw($VERSION);
+$VERSION = '1.15_01';
+
 use Log::Log4perl qw(:easy);
 
 BEGIN {
