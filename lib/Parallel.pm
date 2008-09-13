@@ -99,7 +99,11 @@ sub _make_interface_callback
 	$Notes->{interface_callback} = sub {
 		$class->_remove_old_processes( $Notes );
 
-		return unless $Notes->{Left};
+		unless( $Notes->{Left} )
+			{
+			$Notes->{dispatcher}->wait_all_children;
+			return;
+			};
 
 		$Notes->{_started} ||= time;
 
@@ -140,8 +144,8 @@ sub _remove_old_processes
 	my @delete_indices = grep 
 		{ ! kill 0, $Notes->{PID}[$_] } 
 		0 .. $#{ $Notes->{PID} };
-	
-	foreach my $index ( @delete_indices )
+		
+	foreach my $index ( reverse @delete_indices )
 		{
 		splice @{ $Notes->{recent} }, $index, 1;
 		splice @{ $Notes->{PID} }, $index, 1;

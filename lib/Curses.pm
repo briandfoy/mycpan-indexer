@@ -65,7 +65,7 @@ sub do_interface
 
 		_update_screen( $Notes );
 		
-		sleep 3;
+		sleep 1;
 		
 		}
 
@@ -89,9 +89,9 @@ my $labels = {
 my $headers = {
 	'##'       => [ qw(PID           1  1 ##            2   0) ],
 	PID        => [ qw(PID           1  5 PID           6   0) ],
-	Processing => [ qw(PID           1 13 Processing   -40  0) ],
+	Processing => [ qw(PID           1 13 Processing  -40   0) ],
 
-	ErrorList  => [ qw(Errors        0  1 Errors         7  0) ],
+	ErrorList  => [ qw(Errors        0  1 Errors        7   0) ],
 	};
 
 my $values = {};
@@ -205,9 +205,10 @@ sub _update_values
 			$Notes->{curses}{windows}{PID},
 			$i + 1, 
 			$headers->{Processing}[2], 
-			sprintf "%-${width}s", substr( $Notes->{recent}[$i-1], 0, $width )
+			sprintf "%-${width}s", substr( 
+				(defined $Notes->{recent}[$i-1] ? $Notes->{recent}[$i-1] : ''), 0, $width )
 			);
-		
+				
 		refresh( $Notes->{curses}{windows}{PID} );
 		}
 
