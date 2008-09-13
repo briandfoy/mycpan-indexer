@@ -317,7 +317,6 @@ sub dist_info
 
 	my( $self, $key ) = @_;
 
-	#print STDERR Dumper( $self );
 	DEBUG( "dist info for $key is " . $self->{dist_info}{$key} );
 	$self->{dist_info}{$key};
 	}
@@ -1002,6 +1001,7 @@ take the object and dump it in some way.
 
 sub report_dist_info
 	{
+	return 1;
 	TRACE( sub { get_caller_info } );
 
 	no warnings 'uninitialized';

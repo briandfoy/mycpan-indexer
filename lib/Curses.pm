@@ -29,10 +29,12 @@ This class presents the information as the indexer runs, using Curses.
 
 =cut
 
+BEGIN { $SIG{INT} = sub { exit } }
+
 sub do_interface 
 	{
 	my( $class, $Notes ) = @_;
-	print "Calling do_interface\n";
+	DEBUG "Calling do_interface";
 	
 	initscr();
 	noecho();
@@ -44,6 +46,18 @@ sub do_interface
 	addstr( 0, 0, 'BackPAN Indexer 1.00' );	
 	refresh();
 	
+	$Notes->{curses}{windows}{progress}      = newwin( 3, COLS(),   1,  0 );
+	$Notes->{curses}{windows}{left_tracker}  = newwin( 6, 20,   4,  0 );
+	$Notes->{curses}{windows}{right_tracker} = newwin( 6, COLS() - 21,   4, 21 );
+	$Notes->{curses}{windows}{PID}           = newwin( 7, COLS(),  12,  0 );
+	$Notes->{curses}{windows}{Errors}        = newwin( 7, COLS(), 21,  0 );
+
+	foreach my $value ( values %{ $Notes->{curses}{windows} } )
+		{
+		box( $value, 0, 0 );
+		refresh( $value );
+		}
+		
 	my $count = 0;
 	while( 1 )
 		{
@@ -51,31 +65,33 @@ sub do_interface
 
 		_update_screen( $Notes );
 		
-		sleep 1;
+		sleep 3;
 		
 		}
 
 	}
 
 {
+no warnings;
 my $labels = {
-	# Label, row, column, key, key length, value length
-	Total      => [ qw(3  0 Total         6   6) ],
-	Done       => [ qw(4  0 Done          6   6) ],
-	Left       => [ qw(5  0 Left          6   6) ],
-	Errors     => [ qw(6  0 Errors        6   6) ],
+	# Label,           win,        row, column, key, key length, value length
+	Total      => [ qw(left_tracker 1  1 Total         6   6) ],
+	Done       => [ qw(left_tracker 2  1 Done          6   6) ],
+	Left       => [ qw(left_tracker 3  1 Left          6   6) ],
+	Errors     => [ qw(left_tracker 4  1 Errors        6   6) ],
 	
-	UUID       => [ qw(3 20 UUID          7  30) ],
-	Started    => [ qw(4 20 Started       7 -30) ],
-	Elapsed    => [ qw(5 20 Elapsed       7 -30) ],
-	Rate       => [ qw(6 20 Rate          7 -30) ],
-
-	'##'       => [ qw(8  0 ##            2   0) ],
-	PID        => [ qw(8  4 PID           6   0) ],
-	Processing => [ qw(8 12 Processing   40   0) ],
-
-	ErrorList  => [ qw(15 0 Errors        7   0) ],
+	UUID       => [ qw(right_tracker 1 1 UUID          8  30) ],
+	Started    => [ qw(right_tracker 2 1 Started      8 -30) ],
+	Elapsed    => [ qw(right_tracker 3 1 Elapsed      8 -30) ],
+	Rate       => [ qw(right_tracker 4 1 Rate         8 -30) ],
+	};
 	
+my $headers = {
+	'##'       => [ qw(PID 1  1 ##            2   0) ],
+	PID        => [ qw(PID 1  5 PID           6   0) ],
+	Processing => [ qw(PID 1 13 Processing   -40   0) ],
+
+	ErrorList  => [ qw(Errors 0 1 Errors        7   0) ],
 	};
 
 my $values = {};
@@ -96,36 +112,59 @@ sub _update_labels
 	foreach my $key ( keys %$labels )
 		{
 		my $tuple = $labels->{$key};
-		move( @$tuple[0,1]  );
-		refresh();
-		addstr( @$tuple[0,1,2] );
-		refresh;
+		
+		eval { addstr( 
+			$Notes->{curses}{windows}{ $tuple->[0] },
+			@$tuple[1,2,3] 
+			);
+		refresh( $Notes->{curses}{windows}{ $tuple->[0] } );
+		};
 		}
 
-	my $row = $labels->{'##'}[0];
+	foreach my $key ( keys %$headers )
+		{
+		my $tuple = $headers->{$key};
+		
+		eval { 
+		
+		my $width = $tuple->[4];
+		addstr( 
+			$Notes->{curses}{windows}{ $tuple->[0] },
+			@$tuple[1,2],
+			sprintf "%${width}s", $tuple->[3]
+			);
+		refresh( $Notes->{curses}{windows}{ $tuple->[0] } );
+		};
+		}
+
+
 	foreach my $i ( 1 .. $Notes->{Threads} )
 		{
-		my $width = $labels->{'##'}[3];
-		move( $row + $i, $labels->{'##'}[1] );
-		refresh();
-		addstr( $row + $i, $labels->{'##'}[1], 
+		no warnings;
+		my $width = $headers->{'##'}[4];
+		addstr( 
+			$Notes->{curses}{windows}{PID},
+			$i + 1, 
+			$headers->{'##'}[2] + 1, 
 			sprintf "%${width}s", $i );
-		refresh;
+		refresh( $Notes->{curses}{windows}{PID} );
 		}
 
-	refresh();
+	refresh( $Notes->{curses}{windows}{PID} );
 	}
 
 sub _update_progress
 	{
 	my( $Notes ) = @_;
 
-	my $progress = COLS() / $Notes->{Total} * $Notes->{Done};
+	my $progress = ( COLS() - 2 ) / $Notes->{Total} * $Notes->{Done};
 	
-	move( 2, 0 );
-	refresh;
-	addstr( 2, 0, '*' x $progress );
-	refresh;	
+	addstr( 
+		$Notes->{curses}{windows}{progress}, 
+		1, 1,
+		'*' x $progress 
+		);
+	refresh( $Notes->{curses}{windows}{progress} );	
 	}
 	
 sub _update_values
@@ -133,41 +172,43 @@ sub _update_values
 	my( $Notes ) = @_;
 		
 	no warnings;
-	foreach my $key ( qw(Total UUID Started Done Left Errors Elapsed Rate) )
+	foreach my $key ( qw(Total Done Left Errors UUID Started Elapsed Rate) )
 		{
 		my $tuple = $labels->{$key};
 
-		next unless $tuple->[4];
-
-		move( 
-			$tuple->[0],
-			$tuple->[1] + $tuple->[3] + 2
-			);
-		refresh;
 		addstr( 
-			$tuple->[0], 
-			$tuple->[1] + $tuple->[3] + 2, 
-			sprintf "%" . $tuple->[4] . "s", $Notes->{$tuple->[2]} 
+			$Notes->{curses}{windows}{ $tuple->[0] },
+			$tuple->[1], 
+			$tuple->[2] + $tuple->[4] + 2, 
+			sprintf "%" . $tuple->[5] . "s", $Notes->{$tuple->[3]} 
 			);
-		refresh;
+		refresh( $Notes->{curses}{windows}{ $tuple->[0] } );
 		}
 
-	my $row = $labels->{PID}[0];
 	foreach my $i ( 1 .. $Notes->{Threads} )
 		{
-		my $width = $labels->{'##'}[3];
-		addstr( $row + $i, $labels->{'##'}[1], 
-			sprintf "%${width}s", $i );
+		my $width = $headers->{PID}[4];
+		addstr( 
+			$Notes->{curses}{windows}{PID},
+			$i + 1, $headers->{PID}[2], 
+			sprintf "%${width}s", $Notes->{PID}[$i-1] 
+			);
 
-		$width = $labels->{PID}[3];
-		addstr( $row + $i, $labels->{PID}[1], 
-			sprintf "%${width}s", $Notes->{PID}[$i-1] );
-
-		$width = $labels->{Processing}[3];
-		addstr( $row + $i, $labels->{Processing}[1], ' ' x 70 );
-		addstr( $row + $i, $labels->{Processing}[1], 
-			sprintf "%${width}s", $Notes->{recent}[$i-1] );
+		$width = COLS() - $headers->{Processing}[2] - 1;
+		addstr( 
+			$Notes->{curses}{windows}{PID},
+			$i + 1, 
+			$headers->{Processing}[2], 
+			' ' x ( COLS() - $headers->{Processing}[2] - 1 )
+			);
+		addstr( 
+			$Notes->{curses}{windows}{PID},
+			$i + 1, 
+			$headers->{Processing}[2], 
+			sprintf "%-${width}s", substr( $Notes->{recent}[$i-1], 0, $width )
+			);
 		
+		refresh( $Notes->{curses}{windows}{PID} );
 		}
 
 	}
