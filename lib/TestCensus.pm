@@ -162,9 +162,16 @@ sub get_reporter
 	1;
 	}
 
-sub get_test_module_list
+sub show_test_module_list
 	{
-	return \%Seen;
+	print "Total module use\n";
+
+	foreach my $module ( sort { $Seen{$b} <=> $Seen{$a} } keys %Seen )
+		{
+		print "$module: $Seen{$module}\n";
+		
+		last if $Seen{$module} < 100;
+		}
 	}
 
 }

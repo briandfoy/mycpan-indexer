@@ -35,6 +35,7 @@ WriteMakefile(
 
 	'PM'           => {
 		'lib/AsYAML.pm'     => '$(INST_LIBDIR)/Indexer/Reporter/AsYAML.pm',
+		'lib/Text.pm'       => '$(INST_LIBDIR)/Indexer/Interface/Text.pm',
 		'lib/Curses.pm'     => '$(INST_LIBDIR)/Indexer/Interface/Curses.pm',
 		'lib/Indexer.pm'    => '$(INST_LIBDIR)/Indexer.pm',
 		'lib/NullTester.pm' => '$(INST_LIBDIR)/Indexer/NullTester.pm',

@@ -66,10 +66,7 @@ sub do_interface
 		{
 		$Notes->{interface_callback}->();
 
-		_update_screen( $Notes );
-		
-		sleep 1;
-		
+		_update_screen( $Notes );		
 		}
 
 	}
