@@ -22,21 +22,25 @@ MyCPAN::Indexer::TestCensus - Count the Test modules used in test suites
 
 =head1 DESCRIPTION
 
-This is the indexing component for a run that only wants to count the
-Test:: modules used in a test suite. It inherits most things for
-MyCPAN::Indexer, but overrides examine_dist to just index the test
-files.
+This module implements the indexer_class and reporter_class components
+to allow C<backpan_indexer.pl> to count the test modules used in the
+indexed distributions. 
+
+It runs through the indexing and prints a report at the end of the run.
+You probably
 
 =cut
 
 use Carp qw(croak);
+use Cwd qw(cwd);
 
 use Log::Log4perl qw(:easy);
 
 __PACKAGE__->run( @ARGV ) unless caller;
 
-=over 4
+=head2 Indexer class
 
+=over 4
 
 =item examine_dist
 
@@ -49,17 +53,20 @@ Most of this needs to move out of run and into this method.
 {
 my @methods = (
 	#    method                error message                  fatal
+	[ 'unpack_dist',        "Could not unpack distribtion!",     1 ],
+	[ 'find_dist_dir',      "Did not find distro directory!",    1 ],
 	[ 'find_tests',         "Could not find tests!",             0 ],
 	);
 
 sub examine_dist
 	{
-	TRACE( sub { get_caller_info } );
+#	TRACE( sub { get_caller_info } );
 
 	foreach my $tuple ( @methods )
 		{
 		my( $method, $error, $die_on_error ) = @$tuple;
-
+		DEBUG( "examine_dist calling $method" );
+		
 		unless( $_[0]->$method() )
 			{
 			ERROR( $error );
@@ -88,9 +95,17 @@ sub examine_dist
 	}
 }
 
+=item setup_run_info
+
+Like C<setup_run_info> in C<MyCPAN::Indexer>, but it remembers fewer
+things. The test census really just cares about statements in the test
+files, so the details about the run aren't as interesting.
+
+=cut
+
 sub setup_run_info
 	{
-	TRACE( sub { get_caller_info } );
+#	TRACE( sub { get_caller_info } );
 
 	require Config;
 	
@@ -109,9 +124,17 @@ sub setup_run_info
 	}
 
 
+=item setup_dist_info
+
+Like C<setup_dist_info> in C<MyCPAN::Indexer>, but it remembers fewer
+things. The test census really just cares about statements in the test
+files, so the details about the distribution aren't as interesting.
+
+=cut
+
 sub setup_dist_info
 	{
-	TRACE( sub { get_caller_info } );
+#	TRACE( sub { get_caller_info } );
 
 	my( $self, $dist ) = @_;
 
@@ -120,6 +143,12 @@ sub setup_dist_info
 		
 	return 1;
 	}
+
+=back
+
+=head2 Reporter class
+
+=over 4
 
 =item get_reporter( $Notes )
 
@@ -133,7 +162,7 @@ and should do.
 =cut
 
 {
-my %Seen;
+use DBM::Deep;
 
 sub get_reporter
 	{
@@ -141,8 +170,9 @@ sub get_reporter
 
 	my( $class, $Notes ) = @_;
 
-
 	$Notes->{reporter} = sub {
+		my $Seen = DBM::Deep->new( "test_use.db" );
+
 		my( $Notes, $info ) = @_;
 
 		my $test_files = $info->{dist_info}{test_info};
@@ -153,7 +183,7 @@ sub get_reporter
 			
 			foreach my $used_module ( @$uses )
 				{
-				$Seen{$used_module}++;
+				$Seen->{$used_module}++;
 				}
 			}
 
@@ -162,20 +192,18 @@ sub get_reporter
 	1;
 	}
 
-sub show_test_module_list
-	{
-	print "Total module use\n";
-
-	foreach my $module ( sort { $Seen{$b} <=> $Seen{$a} } keys %Seen )
-		{
-		print "$module: $Seen{$module}\n";
-		
-		last if $Seen{$module} < 100;
-		}
-	}
-
 }
 
+sub final_words
+	{
+	my( $class );
+	
+	my $Seen = DBM::Deep->new( "test_use.db" );
+
+	
+	
+	}
+	
 =pod
 
 foreach my $file ( glob "*.yml" )

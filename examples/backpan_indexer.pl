@@ -10,7 +10,6 @@ use File::Basename;
 use File::Spec::Functions qw(catfile);
 use Log::Log4perl qw(:easy);
 
-
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # Minutely control the environment
 {
@@ -51,6 +50,7 @@ my @components = (
 	[ qw( reporter_class   MyCPAN::Indexer::Reporter::AsYAML  get_reporter   ) ],
 	[ qw( worker_class     MyCPAN::Indexer::Worker            get_task       ) ],
 	[ qw( interface_class  MyCPAN::Indexer::Interface::Curses do_interface   ) ],
+	[ qw( reporter_class   MyCPAN::Indexer::Interface::Curses final_words    ) ],
 	);
 
 foreach my $tuple ( @components )
@@ -65,7 +65,7 @@ foreach my $tuple ( @components )
 		
 	$class->$method( $Notes );
 	}
-	
+
 }
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
