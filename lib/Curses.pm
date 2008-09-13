@@ -75,23 +75,23 @@ sub do_interface
 no warnings;
 my $labels = {
 	# Label,           win,        row, column, key, key length, value length
-	Total      => [ qw(left_tracker 1  1 Total         6   6) ],
-	Done       => [ qw(left_tracker 2  1 Done          6   6) ],
-	Left       => [ qw(left_tracker 3  1 Left          6   6) ],
-	Errors     => [ qw(left_tracker 4  1 Errors        6   6) ],
+	Total      => [ qw(left_tracker  1  1 Total         6   6) ],
+	Done       => [ qw(left_tracker  2  1 Done          6   6) ],
+	Left       => [ qw(left_tracker  3  1 Left          6   6) ],
+	Errors     => [ qw(left_tracker  4  1 Errors        6   6) ],
 	
-	UUID       => [ qw(right_tracker 1 1 UUID          8  30) ],
-	Started    => [ qw(right_tracker 2 1 Started      8 -30) ],
-	Elapsed    => [ qw(right_tracker 3 1 Elapsed      8 -30) ],
-	Rate       => [ qw(right_tracker 4 1 Rate         8 -30) ],
+	UUID       => [ qw(right_tracker 1  1 UUID          8  30) ],
+	Started    => [ qw(right_tracker 2  1 Started       8 -30) ],
+	Elapsed    => [ qw(right_tracker 3  1 Elapsed       8 -30) ],
+	Rate       => [ qw(right_tracker 4  1 Rate          8 -30) ],
 	};
 	
 my $headers = {
-	'##'       => [ qw(PID 1  1 ##            2   0) ],
-	PID        => [ qw(PID 1  5 PID           6   0) ],
-	Processing => [ qw(PID 1 13 Processing   -40   0) ],
+	'##'       => [ qw(PID           1  1 ##            2   0) ],
+	PID        => [ qw(PID           1  5 PID           6   0) ],
+	Processing => [ qw(PID           1 13 Processing   -40  0) ],
 
-	ErrorList  => [ qw(Errors 0 1 Errors        7   0) ],
+	ErrorList  => [ qw(Errors        0  1 Errors         7  0) ],
 	};
 
 my $values = {};
