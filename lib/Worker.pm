@@ -78,7 +78,7 @@ sub get_task
 		elsif( ! eval { $info->run_info( 'completed' ) } )
 			{
 			ERROR( "$basename did not complete\n" );
-			$class->_copy_bad_dist( $Notes ) if $Config->copy_bad_dists;
+			$class->_copy_bad_dist( $Notes, $info ) if $Config->copy_bad_dists;
 			}
 			
 		alarm 0;
@@ -96,10 +96,9 @@ sub get_task
 
 sub _copy_bad_dist
 	{
-	my( $class, $Notes ) = @_;
+	my( $class, $Notes, $info ) = @_;
 	
-	
-	if( my $bad_dist_dir = $Notes{config}->copy_bad_dists )
+	if( my $bad_dist_dir = $Notes->{config}->copy_bad_dists )
 		{
 		my $dist_file = $info->dist_info( 'dist_file' );
 		my $basename  = $info->dist_info( 'dist_basename' );

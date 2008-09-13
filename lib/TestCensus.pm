@@ -121,30 +121,75 @@ sub setup_dist_info
 	return 1;
 	}
 
-=item report_dist_info
+=item get_reporter( $Notes )
 
-Write a nice report. This isn't anything useful yet. From your program,
-take the object and dump it in some way.
+C<get_reporter> sets the C<reporter> key in the C<$Notes> hash reference. The
+value is a code reference that takes the information collected about a distribution
+and counts the modules used in the test files.
+
+See L<MyCPAN::Indexer::Tutorial> for details about what C<get_reporter> expects
+and should do.
 
 =cut
 
-sub report_dist_info
+{
+my %Seen;
+
+sub get_reporter
 	{
-	return 1;
-	TRACE( sub { get_caller_info } );
+	#TRACE( sub { get_caller_info } );
 
-	no warnings 'uninitialized';
+	my( $class, $Notes ) = @_;
 
-	my $module_hash = $_[0]->dist_info( 'module_versions' );
 
-	while( my( $k, $v ) = each %$module_hash )
-		{
-		print "$k => $v\n\t";
-		}
+	$Notes->{reporter} = sub {
+		my( $Notes, $info ) = @_;
 
-	print "\n";
+		my $test_files = $info->{dist_info}{test_info};
+
+		foreach my $test_file ( @$test_files )
+			{
+			my $uses = $test_file->{uses};
+			
+			foreach my $used_module ( @$uses )
+				{
+				$Seen{$used_module}++;
+				}
+			}
+
+		};
+		
+	1;
 	}
+
+sub get_test_module_list
+	{
+	return \%Seen;
+	}
+
+}
+
+=pod
+
+foreach my $file ( glob "*.yml" )
+	{
+	my $yaml = LoadFile( $file );
 	
+	my $test_files = $yaml->{dist_info}{test_info};
+	
+	foreach my $test_file ( @$test_files )
+		{
+		my $uses = $test_file->{uses};
+		
+		foreach my $used_module ( @$uses )
+			{
+			$Seen{$used_module}++;
+			}
+		}
+	}
+
+=cut
+
 =back
 
 =head1 TO DO

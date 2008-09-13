@@ -14,11 +14,11 @@ use Log::Log4perl qw(:easy);
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # Minutely control the environment
 {
-my %pass_through = map { $_, 1 } qw( DISPLAY USER HOME PWD TERM);
+my %pass_through = map { $_, 1 } qw( DISPLAY USER HOME PWD TERM );
 
 foreach my $key ( keys %ENV ) 
 	{ 
-	#delete $ENV{$key} unless exists $pass_through{$key} 
+	delete $ENV{$key} unless exists $pass_through{$key} 
 	}
 
 $ENV{AUTOMATED_TESTING}++;
@@ -39,14 +39,18 @@ setup_dirs( $Config );
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # Load classes and check that they do the right thing
+my $Notes = { 
+	config     => $Config,
+	UUID       => get_uuid(),
+	};
 
 {
 my @components = (
 	[ qw( queue_class      MyCPAN::Indexer::Queue             get_queue      ) ],
 	[ qw( dispatcher_class MyCPAN::Indexer::Parallel          get_dispatcher ) ],
-	[ qw( interface_class  MyCPAN::Indexer::Interface::Curses do_interface   ) ],
 	[ qw( reporter_class   MyCPAN::Indexer::Reporter::AsYAML  get_reporter   ) ],
 	[ qw( worker_class     MyCPAN::Indexer::Worker            get_task       ) ],
+	[ qw( interface_class  MyCPAN::Indexer::Interface::Curses do_interface   ) ],
 	);
 
 foreach my $tuple ( @components )
@@ -56,38 +60,13 @@ foreach my $tuple ( @components )
 	my $class = $Config->get( $directive) || $default_class;
 	
 	eval "require $class" or die "$@\n";
-	die "$directive [$queue_class] does not implement $method()" 
+	die "$directive [$class] does not implement $method()" 
 		unless $class->can( $method );
+		
+	$class->$method( $Notes );
 	}
 	
 }
-
-my $Notes = { 
-	config     => $Config,
-	UUID       => get_uuid(),
-	};
-
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-# Figure out what to index
-$queue_class->get_queue( $Notes );
-die "get_queue did set queue to an array reference\n"
-	unless ref $Notes->{queue} eq ref [];
-DEBUG( "Dists to process are\n\t", join "\n\t", @{ $Notes->{queue} } );
-
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-# The meat of the issue
-INFO( "Run started - " . @{ $Notes->{queue} } . " dists to process" );
-
-$worker_class->get_task( $Notes );
-
-die "get_task is not a code ref" unless 
-	ref $Notes->{child_task} eq ref sub {};
-	
-$dispatcher_class->get_dispatcher( $Notes );
-die "Dispatcher class [$dispatcher_class] did not set a dispatcher key\n"
-	unless exists $Notes->{dispatcher};
-
-$interface_class->do_interface( $Notes );
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 

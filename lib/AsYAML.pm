@@ -31,30 +31,32 @@ This class takes the result of examining a distribution and saves it.
 
 =item get_reporter( $Notes )
 
-C<get_task> sets the C<child_task> key in the C<$Notes> hash reference. The
-value is a code reference that takes a distribution path as its only 
-argument and indexes that distribution.
+C<get_reporter> sets the C<reporter> key in the C<$Notes> hash reference. The
+value is a code reference that takes the information collected about a distribution
+and dumps it as a YAML file.
 
-See L<MyCPAN::Indexer::Tutorial> for details about what C<get_task> expects
+See L<MyCPAN::Indexer::Tutorial> for details about what C<get_reporter> expects
 and should do.
 
-=cut		my $out_path = catfile( $out_dir, "$basename.yml" );
-		
-
-{
-my $yml_dir       = catfile( $Config->report_dir, "meta"        );
-my $yml_error_dir = catfile( $Config->report_dir, "meta-errors" );
+=cut
 
 sub get_reporter
 	{
-	TRACE( sub { get_caller_info } );
+	#TRACE( sub { get_caller_info } );
 
-	my( $Notes, $info ) = @_;
+	my( $class, $Notes ) = @_;
+
+	my $yml_dir       = catfile( $Notes->{config}->report_dir, "meta"        );
+	my $yml_error_dir = catfile( $Notes->{config}->report_dir, "meta-errors" );
 
 	$Notes->{reporter} = sub {
 		my( $Notes, $info ) = @_;
+
+		my $dist = $info->dist_info( 'dist_file' );
 		
-		my $out_dir  = $info->{completed} ? $yml_dir : $yml_error_dir;
+		( my $basename = basename( $dist ) ) =~ s/\.(tgz|tar\.gz|zip)$//;
+		
+		my $out_dir  = $info->run_info( 'completed' ) ? $yml_dir : $yml_error_dir;
 		
 		my $out_path = catfile( $out_dir, "$basename.yml" );
 
@@ -66,4 +68,26 @@ sub get_reporter
 	1;
 	}
 
-}
+=back
+
+=head1 TO DO
+
+=head1 SOURCE AVAILABILITY
+
+This code is in Github:
+
+	git://github.com/briandfoy/mycpan-indexer.git
+
+=head1 AUTHOR
+
+brian d foy, C<< <bdfoy@cpan.org> >>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (c) 2008, brian d foy, All Rights Reserved.
+
+You may redistribute this under the same terms as Perl itself.
+
+=cut
+
+1;
