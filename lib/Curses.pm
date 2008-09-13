@@ -6,7 +6,7 @@ use Log::Log4perl qw(:easy);
 use Curses;
 
 use vars qw($VERSION);
-$VERSION = '1.15_01';
+$VERSION = '1.16_01';
 
 =head1 NAME
 
