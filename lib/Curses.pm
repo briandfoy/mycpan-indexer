@@ -47,8 +47,8 @@ sub do_interface
 	refresh();
 	
 	$Notes->{curses}{windows}{progress}      = newwin( 3, COLS(),   1,  0 );
-	$Notes->{curses}{windows}{left_tracker}  = newwin( 6, 12,   4,  0 );
-	$Notes->{curses}{windows}{right_tracker} = newwin( 6, 10,   4, 17 );
+	$Notes->{curses}{windows}{left_tracker}  = newwin( 6, 20,   4,  0 );
+	$Notes->{curses}{windows}{right_tracker} = newwin( 6, COLS() - 21,   4, 21 );
 	$Notes->{curses}{windows}{PID}           = newwin( 7, COLS(),  12,  0 );
 	$Notes->{curses}{windows}{Errors}        = newwin( 7, COLS(), 21,  0 );
 
@@ -87,9 +87,9 @@ my $labels = {
 	};
 	
 my $headers = {
-	'##'       => [ qw(PID 0  1 ##            2   0) ],
-	PID        => [ qw(PID 0  5 PID           6   0) ],
-	Processing => [ qw(PID 0 13 Processing   40   0) ],
+	'##'       => [ qw(PID 1  1 ##            2   0) ],
+	PID        => [ qw(PID 1  5 PID           6   0) ],
+	Processing => [ qw(PID 1 13 Processing   -40   0) ],
 
 	ErrorList  => [ qw(Errors 0 1 Errors        7   0) ],
 	};
@@ -121,15 +121,31 @@ sub _update_labels
 		};
 		}
 
+	foreach my $key ( keys %$headers )
+		{
+		my $tuple = $headers->{$key};
+		
+		eval { 
+		
+		my $width = $tuple->[4];
+		addstr( 
+			$Notes->{curses}{windows}{ $tuple->[0] },
+			@$tuple[1,2],
+			sprintf "%${width}s", $tuple->[3]
+			);
+		refresh( $Notes->{curses}{windows}{ $tuple->[0] } );
+		};
+		}
 
-	my $row = $labels->{'##'}[0];
+
 	foreach my $i ( 1 .. $Notes->{Threads} )
 		{
 		no warnings;
-		my $width = $labels->{'##'}[3];
+		my $width = $headers->{'##'}[4];
 		addstr( 
 			$Notes->{curses}{windows}{PID},
-			$row + $i, $labels->{'##'}[1], 
+			$i + 1, 
+			$headers->{'##'}[2] + 1, 
 			sprintf "%${width}s", $i );
 		refresh( $Notes->{curses}{windows}{PID} );
 		}
@@ -156,11 +172,9 @@ sub _update_values
 	my( $Notes ) = @_;
 		
 	no warnings;
-	foreach my $key ( qw(Total Done Left Errors UUID) )
+	foreach my $key ( qw(Total Done Left Errors UUID Started Elapsed Rate) )
 		{
 		my $tuple = $labels->{$key};
-
-		next unless $tuple->[5];
 
 		addstr( 
 			$Notes->{curses}{windows}{ $tuple->[0] },
@@ -171,27 +185,32 @@ sub _update_values
 		refresh( $Notes->{curses}{windows}{ $tuple->[0] } );
 		}
 
-=pod
-
-	my $row = $labels->{PID}[0];
 	foreach my $i ( 1 .. $Notes->{Threads} )
 		{
-		my $width = $labels->{'##'}[3];
-		addstr( $row + $i, $labels->{'##'}[1], 
-			sprintf "%${width}s", $i );
+		my $width = $headers->{PID}[4];
+		addstr( 
+			$Notes->{curses}{windows}{PID},
+			$i + 1, $headers->{PID}[2], 
+			sprintf "%${width}s", $Notes->{PID}[$i-1] 
+			);
 
-		$width = $labels->{PID}[3];
-		addstr( $row + $i, $labels->{PID}[1], 
-			sprintf "%${width}s", $Notes->{PID}[$i-1] );
-
-		$width = $labels->{Processing}[3];
-		addstr( $row + $i, $labels->{Processing}[1], ' ' x 70 );
-		addstr( $row + $i, $labels->{Processing}[1], 
-			sprintf "%${width}s", $Notes->{recent}[$i-1] );
+		$width = COLS() - $headers->{Processing}[2] - 1;
+		addstr( 
+			$Notes->{curses}{windows}{PID},
+			$i + 1, 
+			$headers->{Processing}[2], 
+			' ' x ( COLS() - $headers->{Processing}[2] - 1 )
+			);
+		addstr( 
+			$Notes->{curses}{windows}{PID},
+			$i + 1, 
+			$headers->{Processing}[2], 
+			sprintf "%-${width}s", substr( $Notes->{recent}[$i-1], 0, $width )
+			);
 		
+		refresh( $Notes->{curses}{windows}{PID} );
 		}
 
-=cut
 
 	}
 }
