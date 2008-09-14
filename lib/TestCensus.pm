@@ -195,6 +195,8 @@ sub get_reporter
 			foreach my $used_module ( @$uses )
 				{
 				next unless $used_module =~ m/^Test\b/;
+				#local $SIG{__WARN__} = sub { print STDERR "get_reporter [$dist][$used_module]: ", @_;
+				#WARN( "get_reporter [$dist][$used_module]: " . join '', @_ ) };
 				$db->{dist}{$dist}{test_modules}{$used_module}++;
 				$db->{test_modules}{$used_module}++;
 				}
@@ -221,7 +223,9 @@ sub final_words
 		locking => 1,
 		);
 
-	print "Found modules:\n";
+	my $dist_count = keys %{ $db->{dist} };
+	
+	print "Found modules in $dist_count dists:\n";
 
 	foreach my $module (
 		sort { $db->{test_modules}{$b} <=> $db->{test_modules}{$a} 
