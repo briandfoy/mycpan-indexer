@@ -10,6 +10,8 @@ use File::Basename;
 use File::Spec::Functions qw(catfile);
 use Log::Log4perl qw(:easy);
 
+$|++;
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # Minutely control the environment
 {

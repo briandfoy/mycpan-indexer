@@ -174,11 +174,10 @@ sub get_reporter
 	$Notes->{reporter} = sub {
 
 		my( $Notes, $info ) = @_;
-
+		
 		my $test_files = $info->{dist_info}{test_info};
 
-		our %DBM;
-		dbmopen %DBM, $file, 0755 or die "$!";
+		dbmopen my %DBM, "/Users/brian/Desktop/test_use", 0755 or die "$!";
 
 		foreach my $test_file ( @$test_files )
 			{
@@ -206,7 +205,7 @@ sub final_words
 	DEBUG( "Final words from the Reporter" );
 	
 	our %DBM;
-	dbmopen %DBM, $file, undef;
+	dbmopen %DBM, "/Users/brian/Desktop/test_use", undef;
 
 	print "Found modules:\n";
 
