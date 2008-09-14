@@ -179,14 +179,16 @@ sub get_reporter
 		my( $Notes, $info ) = @_;
 		
 		my $test_files = $info->{dist_info}{test_info};
-
+		DEBUG( "No test files in dist" ) unless @$test_files;
+		
 		my $db = DBM::Deep->new( 
 			file    => $dbm_file, 
 			locking => 1,
 			);
 
 		my $dist = $info->dist_info( 'dist_file' );
-		
+
+		$db->{dist_count}{$dist}++;		
 		foreach my $test_file ( @$test_files )
 			{
 			my $uses = $test_file->{uses};
@@ -233,6 +235,16 @@ sub final_words
 		{
 		printf "%6d %s\n", $db->{test_modules}{$module}, $module;
 		}
+
+	print "\n\nFound dists in $dist_count dists:\n";
+
+	foreach my $dist (
+		sort { $db->{dist_count}{$b} <=> $db->{dist_count}{$a} 
+			|| $a cmp $b } keys %{ $db->{dist_count} } )
+		{
+		printf "%6d %s\n", $db->{dist_count}{$dist}, $dist;
+		}
+
 	}
 	
 =pod
