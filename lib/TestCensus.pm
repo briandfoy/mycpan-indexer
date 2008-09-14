@@ -161,9 +161,10 @@ and should do.
 
 =cut
 
-{
-use DBM::Deep;
+our $file = "test_use";
+#unlink $file;
 
+{
 sub get_reporter
 	{
 	#TRACE( sub { get_caller_info } );
@@ -171,21 +172,26 @@ sub get_reporter
 	my( $class, $Notes ) = @_;
 
 	$Notes->{reporter} = sub {
-		my $Seen = DBM::Deep->new( "test_use.db" );
 
 		my( $Notes, $info ) = @_;
 
 		my $test_files = $info->{dist_info}{test_info};
 
+		our %DBM;
+		dbmopen %DBM, $file, 0755 or die "$!";
+
 		foreach my $test_file ( @$test_files )
 			{
 			my $uses = $test_file->{uses};
+			DEBUG( "Found test modules @$uses" );
 			
 			foreach my $used_module ( @$uses )
 				{
-				$Seen->{$used_module}++;
+				$DBM{$used_module}++;
 				}
 			}
+		
+		dbmclose %DBM;
 
 		};
 		
@@ -195,13 +201,23 @@ sub get_reporter
 }
 
 sub final_words
-	{
-	my( $class );
+	{	
+	my( $class ); 
+	DEBUG( "Final words from the Reporter" );
 	
-	my $Seen = DBM::Deep->new( "test_use.db" );
+	our %DBM;
+	dbmopen %DBM, $file, undef;
 
+	print "Found modules:\n";
+
+	foreach my $module (
+		sort { $DBM{$b} <=> $DBM{$a} || $a cmp $b } keys %DBM )
+		{
+		next unless $module =~ m/^Test\b/;
+		printf "%6d %s\n", $DBM{$module}, $module;
+		}
 	
-	
+	dbmclose %DBM;
 	}
 	
 =pod

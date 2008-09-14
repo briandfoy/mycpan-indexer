@@ -49,7 +49,6 @@ sub do_interface
 		{
 		last if $Notes->{Left} <= 0;
 	
-		print "This is in do_interface\n";
 		local $|;
 		$|++;
 		

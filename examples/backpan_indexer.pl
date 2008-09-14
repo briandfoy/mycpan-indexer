@@ -63,6 +63,7 @@ foreach my $tuple ( @components )
 	die "$directive [$class] does not implement $method()" 
 		unless $class->can( $method );
 		
+	DEBUG( "Calling $class->$method()" );
 	$class->$method( $Notes );
 	}
 
