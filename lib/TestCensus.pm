@@ -33,7 +33,8 @@ You probably
 
 use Carp qw(croak);
 use Cwd qw(cwd);
-
+use DBM::Deep;
+use File::Spec::Functions qw(catfile);
 use Log::Log4perl qw(:easy);
 
 __PACKAGE__->run( @ARGV ) unless caller;
@@ -161,9 +162,6 @@ and should do.
 
 =cut
 
-our $file = "test_use";
-#unlink $file;
-
 {
 sub get_reporter
 	{
@@ -171,14 +169,24 @@ sub get_reporter
 
 	my( $class, $Notes ) = @_;
 
+	my $dbm_file = catfile( $Notes->{config}->report_dir, "test_module_use.db" );
+	unlink $dbm_file;
+	
+	DEBUG( "get_reporter DBM::Deep file is $dbm_file" );
+	
 	$Notes->{reporter} = sub {
 
 		my( $Notes, $info ) = @_;
 		
 		my $test_files = $info->{dist_info}{test_info};
 
-		dbmopen my %DBM, "/Users/brian/Desktop/test_use", 0755 or die "$!";
+		my $db = DBM::Deep->new( 
+			file    => $dbm_file, 
+			locking => 1,
+			);
 
+		my $dist = $info->dist_info( 'dist_file' );
+		
 		foreach my $test_file ( @$test_files )
 			{
 			my $uses = $test_file->{uses};
@@ -186,12 +194,12 @@ sub get_reporter
 			
 			foreach my $used_module ( @$uses )
 				{
-				$DBM{$used_module}++;
+				next unless $used_module =~ m/^Test\b/;
+				$db->{dist}{$dist}{test_modules}{$used_module}++;
+				$db->{test_modules}{$used_module}++;
 				}
 			}
 		
-		dbmclose %DBM;
-
 		};
 		
 	1;
@@ -201,22 +209,26 @@ sub get_reporter
 
 sub final_words
 	{	
-	my( $class ); 
+	my( $class, $Notes ) = @_; 
 	DEBUG( "Final words from the Reporter" );
+
+	my $dbm_file = catfile( $Notes->{config}->report_dir, "test_module_use.db" );
+	ERROR( "Could not find DBM file [$dbm_file]") unless -e $dbm_file;
+	DEBUG( "final_words DBM::Deep file is $dbm_file" );
 	
-	our %DBM;
-	dbmopen %DBM, "/Users/brian/Desktop/test_use", undef;
+	my $db = DBM::Deep->new( 
+		file    => $dbm_file, 
+		locking => 1,
+		);
 
 	print "Found modules:\n";
 
 	foreach my $module (
-		sort { $DBM{$b} <=> $DBM{$a} || $a cmp $b } keys %DBM )
+		sort { $db->{test_modules}{$b} <=> $db->{test_modules}{$a} 
+			|| $a cmp $b } keys %{ $db->{test_modules} } )
 		{
-		next unless $module =~ m/^Test\b/;
-		printf "%6d %s\n", $DBM{$module}, $module;
+		printf "%6d %s\n", $db->{test_modules}{$module}, $module;
 		}
-	
-	dbmclose %DBM;
 	}
 	
 =pod

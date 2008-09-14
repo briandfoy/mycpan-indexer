@@ -63,7 +63,7 @@ worker_class MyCPAN::Indexer::Worker
 
 # The Perl class that saves the result of the Worker class
 # See MyCPAN::Indexer::Tutorial for more details
-storage_class MyCPAN::Indexer::Storage::AsYAML
+reporter_class MyCPAN::Indexer::Reporter::AsYAML
 
 # The Perl class to use to hand out indexing jobs
 # See MyCPAN::Indexer::Tutorial for more details
