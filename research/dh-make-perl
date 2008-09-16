@@ -1,0 +1,1657 @@
+#!/usr/bin/perl -w
+use Pod::Parser;
+use YAML;
+use IO::File;
+use File::Basename;
+use File::Find;
+use File::Copy qw(copy move);
+use User::pwent;
+use Getopt::Long;
+use Cwd;
+use CPAN;
+use Module::Depends::Intrusive;
+use Email::Date::Format qw(email_date);
+use strict;
+
+# TODO: 
+# * get more info from the package (maybe using CPAN methods)
+
+######################################################################
+# This Pod::Parser must be declared before the main program flow. If you
+# are trying to figure out what happens inside dh-make-perl, skip down 
+# until 'package main'.
+package MyPod;
+
+@MyPod::ISA = qw(Pod::Parser);
+
+sub set_names {
+        my ($parser, @names) = @_;
+        foreach my $n (@names) {
+                $parser->{_deb_}->{$n} = undef;
+        }
+}
+
+sub get {
+        my ($parser, $name) = @_;
+        $parser->{_deb_}->{$name};
+}
+
+sub cleanup {
+        my $parser = shift;
+        delete $parser->{_current_};
+        foreach my $k ( keys %{$parser->{_deb_}}) {
+                $parser->{_deb_}->{$k} = undef;
+        }
+}
+
+sub command {
+        my ($parser, $command, $paragraph, $line_num) = @_;
+        $paragraph =~ s/\s+$//s;
+        if ($command =~ /head/ && exists($parser->{_deb_}->{$paragraph})) {
+                $parser->{_current_} = $paragraph;
+                $parser->{_lineno_} = $line_num;
+        } else {
+                delete $parser->{_current_};
+        }
+        #print "GOT: $command -> $paragraph\n";
+}
+
+sub add_text {
+        my ($parser, $paragraph, $line_num) = @_;
+        return unless exists $parser->{_current_};
+        return if ($line_num - $parser->{_lineno_} > 15);
+        $paragraph =~ s/^\s+//s;
+        $paragraph =~ s/\s+$//s;
+        $paragraph = $parser->interpolate($paragraph, $line_num);
+        $parser->{_deb_}->{$parser->{_current_}} .= "\n\n".$paragraph;
+        #print "GOTT: $paragraph'\n";
+}
+
+sub verbatim { shift->add_text(@_)}
+
+sub textblock { shift->add_text(@_)}
+
+sub interior_sequence {
+        my ($parser, $seq_command, $seq_argument) = @_;
+        if ($seq_command eq 'E') {
+                my %map = ('gt' => '>', 'lt' => '<', 'sol' => '/', 'verbar' => '|');
+                return $map{$seq_argument} if exists $map{$seq_argument};
+                return chr($seq_argument) if ($seq_argument =~ /^\d+$/);
+                # html names...
+        }
+        return $seq_argument;
+}
+
+######################################################################
+# Main dh-make-perl starts here, don't look any further!
+package main;
+my (@stdmodules, $min_perl_version, $debstdversion, $priority, $section,
+    $depends, $bdepends, $bdependsi, $maintainer, $arch, $closes, $date,
+    $debiandir, $startdir, $datadir, $homedir, $email);
+our %overrides;
+
+$debstdversion = '3.8.0';
+$priority = 'optional';
+$section = 'perl';
+$depends = '${perl:Depends}';
+# 5.6.0-12 is where arch-indep modules are moved in /usr/share/perl5
+# (according to dh_perl)
+# if the module has stricter requirements, this build-dependency
+# is replaced below by calling substitute_perl_dependency
+$min_perl_version = '5.6.10-12';
+$bdependsi = "perl (>= $min_perl_version)";
+$arch = 'all';
+$date = email_date(time);
+$startdir = getcwd();
+$datadir = '/usr/share/dh-make-perl';
+$homedir = "$ENV{HOME}/.dh-make-perl";
+
+my ($perlname, $maindir, $modulepm, $meta);
+my ($pkgname, $srcname, 
+    # $version is the version from the perl module itself
+    $version, 
+    # $pkgversion is the resulting version of the package: User's
+    # --version=s or "$version-1"
+    $pkgversion, 
+    $desc, $longdesc, $copyright, $author, $upsurl);
+my ($extrasfields, $extrapfields);
+my ($module_build);
+my (@docs, @examples, $changelog, @args);
+
+my %opts = (
+    'dh'   => 7,
+);
+
+my $mod_cpan_version;
+
+$opts{dbflags} = $>==0?"":"-rfakeroot";
+chomp($date);
+
+GetOptions(\%opts, 
+           'arch=s', 'basepkgs=s', 'bdepends=s', 'bdependsi=s',
+           'build!', 'core-ok', 'cpan=s', 'cpanplus=s', 'closes=i', 
+           'cpan-mirror=s', 'dbflags=s', 'depends=s', 'desc=s',
+           'exclude|i:s{,}', 'help', 'install!', 'nometa', 'notest',
+           'pkg-perl!', 'requiredeps', 'version=s', 'e=s', 'email=s',
+           'p=s', 'packagename=s', 'refresh|R', 'dh=i'
+) or die usage_instructions();
+
+$bdepends = "debhelper (>= $opts{dh})";
+@stdmodules = get_stdmodules();
+
+# Help requested? Nice, we can just die! Isn't it helpful?
+die usage_instructions() if $opts{help};
+die "CPANPLUS support disabled, sorry" if $opts{cpanplus};
+
+$opts{exclude} = '(?:\/|^)(?:CVS|\.svn)\/' if (!defined $opts{exclude} or
+                                          $opts{exclude} eq '');
+
+$arch = $opts{arch} if defined $opts{arch};
+
+if (defined $opts{e}) {
+  $email = $opts{e};
+} elsif (defined $opts{email}) {
+  $email = $opts{email};
+} else {
+  $email = '';
+}
+$maintainer = get_maintainer($email);
+
+if ( $opts{refresh} )
+{
+    print "Engaging refresh mode\n";
+    $maindir='.';
+    $meta = process_meta("$maindir/META.yml") if (-f "$maindir/META.yml"); # package name
+    ($pkgname, $version) = extract_basic();  # also detects arch-dep package
+    $module_build = (-f "$maindir/Build.PL") ? "Module-Build" : "MakeMaker";
+    $debiandir='./debian';
+    extract_changelog($maindir);
+    extract_docs($maindir);
+    extract_examples($maindir);
+    print "Found changelog: $changelog\n" if defined $changelog;
+    print "Found docs: @docs\n";
+    print "Found examples: @examples\n" if @examples;
+    copy("$debiandir/rules", "$debiandir/rules.bak");
+    create_rules("$debiandir/rules");
+    fix_rules(
+        "$debiandir/rules",
+        (defined $changelog ? $changelog : ''),
+        \@docs, \@examples,
+    );
+    copy("$debiandir/copyright", "$debiandir/copyright.bak");
+    create_copyright("$debiandir/copyright");
+    print "--- Done\n";
+    exit 0;
+}
+
+load_overrides();
+my $tarball = setup_dir();
+$meta = process_meta("$maindir/META.yml") if (-f "$maindir/META.yml");
+findbin_fix();
+
+
+if (defined $opts{desc}) {
+  $desc = $opts{desc};
+} else {
+  $desc = '';
+}
+($pkgname, $version) = extract_basic();
+if (defined $opts{p}) {
+  $pkgname = $opts{p};
+} elsif (defined $opts{packagename}) {
+  $pkgname = $opts{packagename};
+}
+unless (defined $opts{version}) {
+        $pkgversion = $version . "-1";
+} else {
+        $pkgversion = $opts{version};
+}
+
+move ($tarball, dirname($tarball) . "/${pkgname}_${version}.orig.tar.gz") if ($tarball && $tarball =~ /(?:\.tar\.gz|\.tgz)$/);
+$module_build = (-f "$maindir/Build.PL") ? "Module-Build" : "MakeMaker";
+extract_changelog($maindir);
+extract_docs($maindir);
+extract_examples($maindir);
+
+if (defined $opts{bdepends}) {
+    $bdepends = $opts{bdepends};
+} else {
+    $bdepends .= ', libmodule-build-perl' if ($module_build eq "Module-Build");
+}
+$bdependsi = $opts{bdependsi} if defined $opts{bdependsi};
+
+if (defined $opts{depends}) {
+    $depends = $opts{depends};
+} else {
+    $depends .= ', ${shlibs:Depends}' if $arch eq 'any';
+    $depends .= ', ${misc:Depends}';
+    my $extradeps = extract_depends($maindir, $meta);
+    $depends .= ( $extradeps ? ", $extradeps" : '' );
+}
+
+apply_overrides();
+
+die "Cannot find a description for the package: use the --desc switch\n" 
+    unless $desc;
+print "Package does not provide a long description - " , 
+    " Please fill it in manually.\n"
+    if (!defined $longdesc or $longdesc =~ /^\s*\.?\s*$/);
+print "Using maintainer: $maintainer\n";
+print "Found changelog: $changelog\n" if defined $changelog;
+print "Found docs: @docs\n";
+print "Found examples: @examples\n" if @examples;
+-d $debiandir && die "The directory $debiandir is already present and I won't overwrite it: remove it yourself.\n";
+# start writing out the data
+mkdir ($debiandir, 0755) || die "Cannot create $debiandir dir: $!\n";
+create_control("$debiandir/control");
+if (defined $opts{closes}) {
+    $closes = $opts{closes};
+} else {
+    $closes = get_itp($pkgname);
+}
+create_changelog("$debiandir/changelog", $closes);
+create_rules("$debiandir/rules");
+create_compat("$debiandir/compat");
+create_watch("$debiandir/watch") if $upsurl;
+#create_readme("$debiandir/README.Debian");
+create_copyright("$debiandir/copyright");
+fix_rules("$debiandir/rules", (defined $changelog ? $changelog : ''), \@docs, \@examples);
+apply_final_overrides();
+build_package($maindir) if $opts{build} or $opts{install};
+install_package($debiandir) if $opts{install};
+print "--- Done\n";
+exit(0);
+
+sub usage_instructions {
+return <<"USAGE"
+Usage:
+$0 [ --build ] [ --install ] [ SOURCE_DIR | --cpan MODULE ]
+$0 --refresh|-R
+Other options: [ --desc DESCRIPTION ] [ --arch all|any ] [ --version VERSION ]
+               [ --depends DEPENDS ] [ --bdepends BUILD-DEPENDS ]
+               [ --bdependsi BUILD-DEPENDS-INDEP ] [ --cpan-mirror MIRROR ]
+               [ --exclude|-i [REGEX] ] [ --notest ] [ --nometa ]
+               [ --requiredeps ] [ --core-ok ] [ --basepkgs PKGSLIST ]
+               [ --closes ITPBUG ] [ --packagename|-p PACKAGENAME ]
+               [ --email|-e EMAIL ] [ --pkg-perl ] [ --dh <ver> ]
+USAGE
+}
+
+sub get_stdmodules {
+    my ($base_packages, @modules, $paths);
+    $base_packages = $opts{basepkgs} || 'perl,perl-base,perl-modules';
+
+    # We will check on all the base Perl packages for the modules they provide.
+    # To know which files we care for, we look at @INC - In a format easy to
+    # integrate into a regex
+    $paths = join('|', @INC);
+
+    for my $pkg (split(/,/,$base_packages)) {
+        for my $file (map {chomp;$_} `dpkg -L $pkg`) {
+            next unless $file =~ s!^(?:$paths)[\d\.]*/(.*).pm$!$1!x;
+
+            $file =~ s!/!::!g;
+            push @modules, $file;
+        }
+    }
+
+    return sort @modules;
+}
+
+sub setup_dir {
+        my ($dist, $mod, $cpanversion, $tarball);
+        $mod_cpan_version = '';
+        if ($opts{cpan}) {
+                my ($new_maindir);
+                # Is the module a core module?
+                if (grep(/$opts{cpan}/, @stdmodules)) {
+                        die "$opts{cpan} is a standard module.\n" 
+                            unless $opts{'core-ok'};
+                }	
+
+                # Make CPAN happy, make the user happy: Be more tolerant!
+                # Accept names to be specified with double-colon, dash or slash
+                $opts{cpan} =~ s![/-]!::!g;
+
+###		require CPAN;
+                CPAN::Config->load;
+
+                unshift(@{$CPAN::Config->{'urllist'}}, $opts{'cpan-mirror'})
+                    if $opts{'cpan-mirror'};
+
+                $CPAN::Config->{'build_dir'} = $ENV{'HOME'} . "/.cpan/build";
+                $CPAN::Config->{'cpan_home'} = $ENV{'HOME'} . "/.cpan/";
+                $CPAN::Config->{'histfile'}  = $ENV{'HOME'} . "/.cpan/history";
+                $CPAN::Config->{'keep_source_where'} = $ENV{'HOME'} . "/.cpan/source";
+                
+                # This modification allows to retrieve all the modules that
+                # match the user-provided string. 
+                #
+                # expand() returns a list of matching items when called in list
+                # context, so after retrieving it, I try to match exactly what
+                # the user asked for. Specially important when there are
+                # different modules which only differ in case.
+                #
+                # This Closes: #451838
+                my @mod = CPAN::Shell->expand('Module', '/^'.$opts{cpan}.'$/') 
+                        or die "Can't find '$opts{cpan}' module on CPAN\n";
+                foreach(@mod) {
+                        my $file = $_->cpan_file();
+                        $file =~ s#.*/##; # remove directory
+                        $file =~ s/(.*)-.*/$1/; # remove version and extension
+                        $file =~ s/-/::/g; # convert dashes to colons
+                        if($file eq $opts{cpan}) {
+                                $mod = $_;
+                                last;
+                        }
+                }
+                $mod = shift @mod unless($mod);
+                $mod_cpan_version = $mod->cpan_version;
+                $cpanversion = $CPAN::VERSION;
+                $cpanversion =~ s/_.*//;
+
+                $tarball = $CPAN::Config->{'keep_source_where'} . "/authors/id/";
+                
+                if ($cpanversion < 1.59) { # wild guess on the version number
+                        $dist = $CPAN::META->instance('CPAN::Distribution', $mod->{CPAN_FILE});
+                        $dist->get || die "Cannot get $mod->{CPAN_FILE}\n";
+                        $tarball .= $mod->{CPAN_FILE};
+                        $maindir = $dist->{'build_dir'};
+                } else {
+                        # CPAN internals changed
+                        $dist = $CPAN::META->instance('CPAN::Distribution', $mod->cpan_file);
+                        $dist->get || die "Cannot get ", $mod->cpan_file, "\n";
+                        $tarball .= $mod->cpan_file;
+                        $maindir = $dist->dir;
+                }
+
+                copy ($tarball, $ENV{'PWD'});
+                $tarball = $ENV{'PWD'} . "/" . basename($tarball);
+                # build_dir contains a random part since 1.88_59
+                # use the new CPAN::Distribution::base_id (introduced in 1.91_53)
+                $new_maindir = $ENV{PWD} . "/" . (
+                        $cpanversion < 1.9153 ? basename($maindir) : $dist->base_id
+                );
+                # rename existing directory
+                if (-d $new_maindir && system("mv", "$new_maindir", "$new_maindir.$$") == 0) {
+                        print '='x70,"\n";
+                        print "Unpacked tarball already existed, directory renamed to $new_maindir.$$\n";
+                        print '='x70,"\n";
+                }
+                system("mv", "$maindir", "$new_maindir") == 0 
+                        or die "Failed to move $maindir to $new_maindir: $!";
+                $maindir = $new_maindir;
+
+        } elsif ($opts{cpanplus}) {
+                die "CPANPLUS support is b0rken at the moment.";
+#  	        my ($cb, $href, $file);
+
+# 		eval "use CPANPLUS 0.045;";
+# 		$cb = CPANPLUS::Backend->new(conf => {debug => 1, verbose => 1});
+# 		$href = $cb->fetch( modules => [ $opts{cpanplus} ], fetchdir => $ENV{'PWD'});
+# 		die "Cannot get $opts{cpanplus}\n" if keys(%$href) != 1;
+# 		$file = (values %$href)[0];
+# 		print $file, "\n\n";
+# 		$maindir = $cb->extract( files => [ $file ], extractdir => $ENV{'PWD'} )->{$file};
+        } else {
+                $maindir = shift(@ARGV) || '.';
+                $maindir =~ s/\/$//;
+        }
+        return $tarball;
+}
+
+sub build_package {
+        my $maindir = shift;
+        # uhmf! dpkg-genchanges doesn't cope with the deb being in another dir..
+        #system("dpkg-buildpackage -b -us -uc $opts{dbflags}") == 0
+        system("fakeroot make -C $maindir -f debian/rules clean");
+        system("fakeroot make -C $maindir -f debian/rules binary") == 0
+                || die "Cannot create deb package\n";
+}
+
+sub install_package {
+        my ($archspec, $debname);
+
+        if ($arch eq 'any') {
+                $archspec = `dpkg --print-architecture`;
+                chomp($archspec);
+            } else {
+                $archspec = $arch;
+            }
+
+        $debname = "${pkgname}_$version-1_$archspec.deb";
+
+        system("dpkg -i $startdir/$debname") == 0
+                || die "Cannot install package $startdir/$debname\n";
+}
+
+sub process_meta {
+    my ($file, $yaml);
+    $file = shift;
+    # Command line option nometa causes this function not to be run
+    return {} if $opts{nometa};
+
+    # YAML::LoadFile has the bad habit of dying when it cannot properly parse
+    # a file - Catch it in an eval, and if it dies, return -again- just an
+    # empty hashref. Oh, were it not enough: It dies, but $! is not set, so we
+    # check against $@. Crap, crap, crap :-/
+    eval {
+        $yaml = YAML::LoadFile($file);
+    };
+    if ($@) {
+        print "Error parsing $file - Ignoring it.\n";
+        print "Please notify module upstream maintainer.\n";
+        $yaml = {};
+    }
+
+    # Returns a simple hashref with all the keys/values defined in META.yml
+    return $yaml;
+}
+
+sub extract_basic_copyright {
+    for my $f (map("$maindir/$_", qw(LICENSE LICENCE COPYING))) {
+        if (-f $f) {
+            my $fh = _file_r($f);
+            return join('', $fh->getlines);
+        }
+    }
+    return undef;
+}
+
+sub extract_basic {
+    ($perlname, $version) = extract_name_ver();
+    find(\&check_for_xs, $maindir);
+    $pkgname = lc $perlname;
+    $pkgname = 'lib'.$pkgname unless $pkgname =~ /^lib/;
+    $pkgname .= '-perl' unless ($pkgname =~ /-perl$/ and $opts{cpan} !~ /::perl$/i);
+
+    # ensure policy compliant names and versions (from Joeyh)...
+    $pkgname =~ s/[^-.+a-zA-Z0-9]+/-/g;
+        
+    $srcname = $pkgname;
+    $version =~ s/[^-.+a-zA-Z0-9]+/-/g;
+    $version = "0$version" unless $version =~ /^\d/;
+
+    print "Found: $perlname $version ($pkgname arch=$arch)\n";
+    $debiandir = "$maindir/debian";
+
+    $upsurl = "http://search.cpan.org/dist/$perlname/";
+
+    $copyright = extract_basic_copyright();
+    if ($modulepm) {
+        extract_desc($modulepm);
+    }
+
+    $opts{exclude} = '^$' unless $opts{exclude};
+    find(sub {
+        $File::Find::name !~ /$opts{exclude}/ &&
+            /\.(pm|pod)$/ &&
+            extract_desc($_);
+    }, $maindir);
+
+    return ($pkgname, $version);
+}
+
+sub makefile_pl {
+    return "$maindir/Makefile.PL";
+}
+
+sub findbin_fix {
+    # FindBin requires to know the name of the invoker - and requires it to be
+    # Makefile.PL to function properly :-/
+    $0 = makefile_pl();
+    if (exists $FindBin::{Bin}) {
+        FindBin::again();
+    }
+}
+
+sub extract_name_ver {
+        my ($name, $ver, $makefile);
+        $makefile = makefile_pl();
+
+        if (defined $meta->{name} and defined $meta->{version}) {
+            $name = $meta->{name};
+            $ver = $meta->{version};
+
+        } else {
+            ($name, $ver) = extract_name_ver_from_makefile($makefile);
+        }
+
+        $name =~ s/::/-/g;
+        return ($name, $ver);
+}
+
+sub extract_name_ver_from_makefile {
+        my ($file, $name, $ver, $vfrom, $dir, $makefile);
+        $makefile = shift;
+
+        {
+            local $/ = undef;
+            my $fh = _file_r($makefile);
+            $file = $fh->getline;
+        }
+
+        # Replace q[quotes] by "quotes"
+        $file =~ s/q\[(.+)]/'$1'/g;
+
+        # Get the name
+        if ($file =~ /([\'\"]?)
+            DISTNAME\1\s*
+            (=>|,)
+            \s*
+            ([\'\"]?)
+            (\S+)\3/xs) {
+            # Regular MakeMaker
+            $name = $4;
+        } elsif ($file =~ /([\'\"]?)
+                 NAME\1\s*
+                 (=>|,)
+                 \s*
+                 ([\'\"]?)
+                 (\S+)\3/xs) {
+            # Regular MakeMaker
+            $name = $4;
+        } elsif ($file =~ /name
+                 \s*
+                 \(
+                     ([\'\"]?)
+                         (\S+)
+                     \1
+                 \);/xs) {
+            # Module::Install syntax
+            $name = $2;
+        }
+        $name =~ s/,.*$//;
+        # band aid: need to find a solution also for build in directories
+        # warn "name is $name (cpan name: $opts{cpan})\n";
+        $name = $opts{cpan} if ($name eq '__PACKAGE__' && $opts{cpan});
+        $name = $opts{cpanplus} if ($name eq '__PACKAGE__' && $opts{cpanplus});
+
+        # Get the version
+        if (defined $opts{version}) {
+            # Explicitly specified
+            $ver = $opts{version};
+
+        } elsif ($file =~ /([\'\"]?)VERSION\1\s*(=>|,)\s*([\'\"]?)(\S+)\3/s) {
+            # Regular MakeMaker
+            $ver = $4;
+            # Where is the version taken from?
+            $vfrom = $4 if 
+                $file =~ /([\'\"]?)VERSION_FROM\1\s*(=>|,)\s*([\'\"]?)(\S+)\3/s;
+
+        } elsif ($file =~ /([\'\"]?)VERSION_FROM\1\s*(=>|,)\s*([\'\"]?)(\S+)\3/s) {
+            # Regular MakeMaker pointing to where the version is taken from
+            $vfrom = $4;
+
+        } elsif ($file =~ /version\((\S+)\)/s) {
+            # Module::Install
+            $ver = $1;
+        }
+
+        $dir = dirname($makefile) || './';
+
+        $modulepm = "$dir/$vfrom" if defined $vfrom;
+
+        for (($name, $ver)) {
+                next unless defined;
+                next unless /^\$/;
+                # decode simple vars
+                s/(\$\w+).*/$1/;
+                if ($file =~ /\Q$_\E\s*=\s*([\'\"]?)(\S+)\1\s*;/) {
+                        $_ = $2;
+                }
+        }
+
+        unless (defined $ver) {
+            local $/ = "\n";
+            # apply the method used by makemaker
+            if (defined $dir and defined $vfrom and -f "$dir/$vfrom"
+                and -r "$dir/$vfrom") {
+                my $fh = _file_r("$dir/$vfrom");
+                while (my $lin = $fh->getline) {
+                    if ($lin =~ /([\$*])(([\w\:\']*)\bVERSION)\b.*\=/) {
+                        no strict;
+                        #warn "ver: $lin";
+                        $ver = (eval $lin)[0];
+                        last;
+                    }
+                }
+                $fh->close;
+            } else {
+                if ( $mod_cpan_version ) {
+                    $ver = $mod_cpan_version;
+                    warn "Cannot use internal module data to gather the ".
+                        "version; using cpan_version\n";
+                } else {
+                    die "Cannot use internal module data to gather the ".
+                        "version; use --cpan or --version\n";
+                }
+            }
+        }
+
+        return ($name, $ver);
+}
+
+sub extract_desc {
+        my ($file, $parser);
+        $file = shift;
+        $parser = new MyPod;
+        return unless -f $file;
+        $parser->set_names(qw(NAME DESCRIPTION DETAILS COPYRIGHT AUTHOR AUTHORS));
+        $parser->parse_from_file($file);
+        if ($desc) {
+            # No-op - We already have it, probably from the command line
+
+        } elsif ($meta->{abstract}) {
+            # Get it from META.yml
+            $desc = $meta->{abstract};
+
+        } elsif (my $my_desc = $parser->get('NAME')) {
+            # Parse it, fix it, send it!
+            $my_desc =~ s/^\s*\S+\s+-\s+//s;
+            $my_desc =~ s/^\s+//s;
+            $my_desc =~ s/\s+$//s;
+            $my_desc =~ s/^([^\s])/ $1/mg;
+            $my_desc =~ s/\n.*$//s;
+            $desc = $my_desc;
+        }
+        # Replace linefeeds (not followed by a space) in $desc with spaces
+        $desc =~ s/\n(?=\S)/ /gs;
+
+        unless ($longdesc) {
+                $longdesc = $parser->get('DESCRIPTION')
+                        || $parser->get('DETAILS')
+                        || $desc;
+        }
+        if (defined $longdesc && $longdesc !~ /^$/) {
+                $longdesc =~ s/^\s+//s;
+                $longdesc =~ s/\s+$//s;
+                $longdesc =~ s/^\t/ /mg;
+                $longdesc =~ s/^\s*$/ ./mg;
+                $longdesc =~ s/^\s*/ /mg;
+                $longdesc =~ s/^([^\s])/ $1/mg;
+                $longdesc =~ s/\r//g;
+        }
+
+        $copyright = $copyright || $parser->get('COPYRIGHT') ||
+            $parser->get('LICENSE') || $parser->get('COPYRIGHT & LICENSE');
+        if (!$author) {
+            if (ref $meta->{author}) {
+                # Does the author information appear in META.yml?
+                $author = join(', ', @{$meta->{author}});
+            } else {
+                # Get it from the POD - and clean up
+                # trailing/preceding spaces!
+                $author = $parser->get('AUTHOR') || $parser->get('AUTHORS');
+                $author =~ s/^\s*(\S.*\S)\s*$/$1/gs if $author;
+            }
+        }
+
+        $parser->cleanup;
+}
+
+sub extract_changelog {
+        my ($dir) = shift;
+        $dir .= '/' unless $dir =~ m(/$);
+        find(sub {
+                $changelog = substr($File::Find::name, length($dir))
+                        if (!defined($changelog) && /^change(s|log)$/i and (! $opts{exclude} or $File::Find::name !~ /$opts{exclude}/));
+        }, $dir);
+}
+
+sub extract_docs {
+        my ($dir) = shift;
+        $dir .= '/' unless $dir =~ m(/$);
+        find(sub {
+                push (@docs, substr($File::Find::name, length($dir)))
+                        if (/^(README|TODO|BUGS|NEWS|ANNOUNCE)/i and (! $opts{exclude} or $File::Find::name !~ /$opts{exclude}/)) ;
+        }, $dir);
+}
+
+sub extract_examples {
+        my ($dir) = shift;
+        $dir .= '/' unless $dir =~ m(/$);
+        find(sub {
+                push (@examples, substr($File::Find::name, length($dir)) . '/*')
+                        if (/^(examples?|eg|samples?)$/i and (! $opts{exclude} or $File::Find::name !~ /$opts{exclude}/)) ;
+        }, $dir);
+}
+
+sub run_depends {
+    my ($depends_module, $dir) = @_;
+
+    no warnings;
+    local *STDERR;
+    open(STDERR, ">/dev/null");
+    my $mod_dep = $depends_module->new();
+
+    $mod_dep->dist_dir( $dir );
+    $mod_dep->find_modules();
+
+    my %dep_hash = %{$mod_dep->requires};
+
+    my $error = $mod_dep->error();
+    die "Error: $error\n" if $error;
+    return %dep_hash;
+}
+
+sub extract_depends {
+    my $dir = shift;
+    my $meta = shift;
+    my (%dep_hash, @uses, @deps, @not_debs, $has_apt_file);
+    local @INC = ($dir, @INC);
+
+    $dir .= '/' unless $dir =~ m/\/$/;
+
+    # try Module::Depends::Intrusive, but if that fails then
+    # fall back to Module::Depends.
+
+    eval {
+        %dep_hash = run_depends('Module::Depends::Intrusive',$dir);
+    };
+    if ($@) {
+        warn '='x70,"\n";
+        warn "First attempt (Module::Depends::Intrusive) at a dependency\n" .
+        "check failed. Possible use of Module::Install ?\n" .
+        "Trying again with Module::Depends ... \n";
+        warn '='x70,"\n";
+
+        eval {
+            %dep_hash = run_depends('Module::Depends',$dir);
+        };
+
+        if ($@) {
+            warn '='x70,"\n";
+            warn "Could not find the dependencies for the requested module.\n";
+            warn "Generated error: $@";
+
+            warn "Please check if your module depends on Module::Install\n" .
+            "for its build process - Automatically finding its\n" .
+            "dependencies is unsupported, please specify them manually\n" .
+            "using the 'depends' option. \n";
+            warn "Alternatively, including a META.yml file with dependencies\n" .
+            "should allow discovery even for Module::Install modules. \n";
+            warn '='x70,"\n";
+
+            exit 1;
+        }
+    }
+
+        foreach my $module (keys( %dep_hash )) {
+                next if (grep ( /^$module$/, @stdmodules));
+                
+                push @uses, $module;
+        }
+
+        if (`which apt-file`) {
+            $has_apt_file = 1;
+            foreach my $module (@uses) {
+                my (@rawsearch, @search, $ls, $ver, $re, $mod);
+
+                if ($module eq 'perl') {
+                    substitute_perl_dependency($dep_hash{perl});
+                    next;
+                }
+
+                $mod = $module;
+                print "Searching for package containing $module using apt-file.\n";
+                $module =~ s|::|/|g;
+
+                # Regex's to search the return of apt-file to find the right pkg
+                $ls  = '(?:lib|share)';
+                $ver = '\d+(\.\d+)+';
+                $re  = "usr/(?:$ls/perl/$ver|$ls/perl5)/$module\\.pm";
+
+                @rawsearch = `apt-file search -x '$re'`;
+
+                # rank non -perl packages lower
+                @search = sort {
+                        if ($a !~ /-perl: /)    { return 1; }
+                        elsif ($b !~ /-perl: /) { return -1; }
+                        else                    { return $a cmp $b; } # or 0?
+                } @rawsearch;
+                
+                for (@search) {
+                    # apt-file output
+                    # package-name: path/to/perl/module.pm
+                    chomp; 
+                    my ($p, $f) = split / /, $_;
+                    chop($p); #Get rid of the ":"
+                    if ($f =~ /$re/ && ! 
+                        grep { $_ eq $p } @deps, split(/,/,@stdmodules)) {
+                        if (exists $dep_hash{$mod}) {
+                            my $v = $dep_hash{$mod};
+                            $v =~ s/^v//;   # strip leading 'v' from version
+                            push @deps, {name=>$p, 
+                                         version=>$v};
+                        } else {
+                            push @deps, {name => $p};
+                        }
+                        last;
+                    }
+                }
+                        
+                unless (@search) {
+                    $module =~ s|/|::|g;
+                    push @not_debs, $module;
+                }
+            }
+        } elsif ( $opts{requiredeps} ) {
+            die "--requiredeps was specified, but apt-file was not found\n";
+        }
+        
+        print "\n";
+        print "Needs the following debian packages: " .
+            join (", ", map {$_->{name}} @deps) . "\n" if (@deps);
+        if (@not_debs) {
+            my ($missing_debs_str);
+            if ($has_apt_file) {
+                $missing_debs_str = join("\n", "Needs the following modules for which there are no debian packages available",
+                                         map({" - $_"} @not_debs), '');
+            } else {
+                $missing_debs_str = join("\n", "The following Perl modules are required and not installed in your system:",
+                                         map({" - $_"} @not_debs),
+                                         "You do not have 'apt-file' currently installed - If you install it, I will",
+                                         "be able to tell you which Debian packages are those modules in (if they are",
+                                         "packaged).");
+            }
+
+            if ( $opts{requiredeps} ) {
+                die $missing_debs_str;
+            } else {
+                print $missing_debs_str;
+            }
+            
+        }
+
+        return join (", ", map { $_->{version} ?
+                                     $_->{name} ." (>= ". $_->{version} .")" :
+                                     $_->{name} } @deps);
+}
+
+sub get_itp {
+    use WWW::Mechanize;
+    
+    my ($package) = shift @_;
+    
+    my $wnpp = "http://bugs.debian.org/cgi-bin/pkgreport.cgi?pkg=wnpp;includesubj=ITP: $package";
+    my $mech = WWW::Mechanize->new();
+    
+    $mech->get($wnpp);
+    
+    my @links = $mech->links();
+    
+    foreach my $link (@links) {
+        my $desc = $link->text();
+
+        return $1 if $desc =~ /^#(\d+): ITP: $package /;
+    }
+    return 0;
+}
+
+sub substitute_perl_dependency {
+    # If we get 'perl' specified in here, the module requires a
+    # specific version of Perl in order to be run. This is only
+    # reliable if we have ${perl:Depends} in $depends and either 
+    # of $bdepends and $bdependsi - Warn otherwise.
+    my ($version, $dep_str, $old_dep_str, $old_bdep_str);
+    $version = shift;
+
+    # Over-escaping? I'm putting this in variables to get a bit more clarity.
+    # Remember they will be fed into the regex engine.
+    $dep_str = "perl (>= $version)";
+    $old_dep_str = '\\$\\{perl:Depends\\}';
+    $old_bdep_str = "perl \\(>= $min_perl_version\\)";
+
+    unless ($depends =~ s/$old_dep_str/$dep_str/ and
+            ($bdepends =~ s/$old_bdep_str/$dep_str/ or
+             $bdependsi =~ s/$old_bdep_str/$dep_str/)) {
+        warn "The module requires Perl version $version, but you have ",
+        "apparently overriden the default dependency handling.\n",
+        "Please note that you might need to manually edit your debian/control ",
+        "- It might not make sense at all!\n";
+    }
+}
+
+sub check_for_xs {
+        (! $opts{exclude} or $File::Find::name !~ /$opts{exclude}/) && /\.(xs|c|cpp|cxx)$/i && do {
+                $arch = 'any';
+        };
+}
+
+sub fix_rules  {
+        my ($rules_file, $changelog_file, $docs, $examples, $test_line, $fh, @content);
+        ($rules_file, $changelog_file, $docs, $examples) = @_;
+
+        if( $opts{dh} < 7 )
+        {
+            $test_line = ($module_build eq 'Module-Build') ? 
+                '$(PERL) Build test' : '$(MAKE) test';
+            $test_line = "#$test_line" if $opts{notest};
+
+            $fh = _file_rw($rules_file);
+            @content = $fh->getlines;
+
+            $fh->seek(0, 0) || die "Can't rewind $rules_file: $!";
+            $fh->truncate(0)|| die "Can't truncate $rules_file: $!";
+            for (@content) {
+                s/#CHANGES#/$changelog_file/g;
+                s/#EXAMPLES#/join " ", @examples/eg;
+                s/\s+dh_installexamples\s+$//g; # no need for empty dh_installexamples
+                    s/#DOCS#/join " ", @docs/eg;
+                s/#TEST#/$test_line/g;
+                $fh->print($_);
+            }
+            $fh->close;
+        }
+        else
+        {
+            if( @examples )
+            {
+                open F, '>>', "$maindir/debian/$pkgname.examples" or die $!;
+                print F "$_\n" foreach @examples;
+                close F;
+            }
+            if( @docs )
+            {
+                open F, '>>', "$maindir/debian/$pkgname.docs" or die $!;
+                print F "$_\n" foreach @docs;
+                close F;
+            }
+        }
+}
+
+sub create_control {
+        my $fh = _file_w(shift);
+
+        if ($arch ne 'all' and 
+            !defined($opts{bdepends}) and !defined($opts{bdependsi})) {
+            $bdepends .= ", $bdependsi";
+            $bdependsi = '';
+        }
+
+        $fh->print("Source: $srcname\n");
+        $fh->print("Section: $section\n");
+        $fh->print("Priority: $priority\n");
+        $fh->print("Build-Depends: $bdepends\n") if $bdepends;
+        $fh->print("Build-Depends-Indep: $bdependsi\n") if $bdependsi;
+        $fh->print($extrasfields) if defined $extrasfields;
+        if( $opts{'pkg-perl'} )
+        {
+            $fh->print("Maintainer: Debian Perl Group <pkg-perl-maintainers\@lists.alioth.debian.org>\n");
+            $fh->print("Uploaders: $maintainer\n");
+        }
+        else
+        {
+            $fh->print("Maintainer: $maintainer\n");
+        }
+        $fh->print("Standards-Version: $debstdversion\n");
+        $fh->print("Homepage: $upsurl\n") if $upsurl;
+        do {
+            $fh->print("Vcs-Svn: svn://svn.debian.org/pkg-perl/trunk/$srcname/\n");
+            $fh->print("Vcs-Browser: http://svn.debian.org/wsvn/pkg-perl/trunk/$srcname/\n");
+        } if $opts{'pkg-perl'};
+        $fh->print("\n");
+        $fh->print("Package: $pkgname\n");
+        $fh->print("Architecture: $arch\n");
+        $fh->print("Depends: $depends\n") if $depends;
+        $fh->print($extrapfields) if defined $extrapfields;
+        $fh->print("Description: $desc\n$longdesc\n .\n This description was automagically extracted from the module by dh-make-perl.\n");
+        $fh->close;
+}
+
+sub create_changelog {
+        my $fh = _file_w(shift);
+        my $bug = shift;
+        
+        my $closes = $bug ? " (Closes: #$bug)" : '';
+
+        $fh->print("$srcname ($pkgversion) unstable; urgency=low\n");
+        $fh->print("\n  * Initial Release.$closes\n\n");
+        $fh->print(" -- $maintainer  $date\n");
+        #$fh->print("Local variables:\nmode: debian-changelog\nEnd:\n");
+        $fh->close
+}
+
+sub create_rules {
+        my ($file, $rulesname, $error);
+        ($file) = shift;
+        $rulesname = (
+            ($opts{dh} eq 7)
+            ? $arch eq 'all'?'rules.dh7.noxs'          :'rules.dh7.xs'
+            : $arch eq 'all'?"rules.$module_build.noxs":"rules.$module_build.xs"
+        );
+        
+        for my $source (("$homedir/$rulesname", "$datadir/$rulesname")) {
+                copy($source, $file) && do {
+                        print "Using rules: $source\n";
+                        last;
+                };
+                $error = $!;
+        }
+        die "Cannot copy rules file ($rulesname): $error\n" unless -e $file;
+        chmod(0755, $file);
+}
+
+sub create_compat {
+        my $fh = _file_w(shift);
+        $fh->print("$opts{dh}\n");
+        $fh->close;
+}
+
+sub create_copyright {
+    my ($fh, %fields, @res, @incomplete, $year);
+    $fh = _file_w(shift);
+
+    # In case $author spawns more than one line, indent them all.
+    my $cprt_author = $author || '(information incomplete)';
+    $cprt_author =~ s/\n/\n    /gs;
+    $cprt_author =~ s/^\s*$/    ./gm;
+
+    push @res, "Format-Specification:
+    http://wiki.debian.org/Proposals/CopyrightFormat?action=recall&rev=196";
+
+    # Header section
+    %fields = (Name => $perlname, Maintainer => $cprt_author,
+               Source => $upsurl);
+    for my $key (keys %fields) {
+        my $full = "Upstream-$key";
+        if ($fields{$key}) {
+            push @res, "$full: $fields{$key}";
+        } else {
+            push @incomplete, "Could not get the information for $full";
+        }
+    }
+    push(@res, "Disclaimer: This copyright info was automatically extracted ",
+         "    from the perl module. It may not be accurate, so you better ",
+         "    check the module sources in order to ensure the module for its ",
+         "    inclusion in Debian or for general legal information. Please, ",
+         "    if licensing information is incorrectly generated, file a bug ",
+         "    on dh-make-perl.");
+    push @res, '';
+
+    # Files section - We cannot "parse" the module's licensing
+    # information for anything besides general information.
+    push @res, 'Files: *';
+
+    # Absence of author should have already been reported in the
+    # Header section
+    push @res, "Copyright: $cprt_author";
+
+    # This is far from foolproof, but usually works with most
+    # boilerplate-generated modules.
+    #
+    # We go over the most common combinations only
+
+    my (%texts, %licenses);
+        %texts = ('Artistic' => 
+"    This program is free software; you can redistribute it and/or modify\n".
+"    it under the terms of the Artistic License, which comes with Perl.\n".
+"    On Debian GNU/Linux systems, the complete text of the Artistic License\n".
+"    can be found in /usr/share/common-licenses/Artistic",
+                  'GPL-1+' => 
+"    This program is free software; you can redistribute it and/or modify\n" .
+"    it under the terms of the GNU General Public License as published by \n" .
+"    the Free Software Foundation; either version 1, or (at your option)\n" .
+"    any later version.\n" .
+"    On Debian GNU/Linux systems, the complete text of the GNU General\n" .
+"    Public License can be found in `/usr/share/common-licenses/GPL'",
+                  'GPL-2' => 
+"    This program is free software; you can redistribute it and/or modify\n" .
+"    it under the terms of the GNU General Public License as published by\n" .
+"    the Free Software Foundation; version 2 dated June, 1991.\n" .
+"    On Debian GNU/Linux systems, the complete text of version 2 of the GNU\n".
+"    General Public License can be found in `/usr/share/common-licenses/GPL-2'",
+                  'GPL-2+' => 
+"    This program is free software; you can redistribute it and/or modify\n" .
+"    it under the terms of the GNU General Public License as published by\n" .
+"    the Free Software Foundation; version 2 dated June, 1991, or (at your\n" .
+"    option) any later version.\n".
+"    On Debian GNU/Linux systems, the complete text of version 2 of the GNU\n".
+"    General Public License can be found in `/usr/share/common-licenses/GPL-2'",
+                  'GPL-3' => 
+"    This program is free software; you can redistribute it and/or modify\n" .
+"    it under the terms of the GNU General Public License as published by\n" .
+"    the Free Software Foundation; version 3 dated June, 2007.\n" .
+"    On Debian GNU/Linux systems, the complete text of version 3 of the GNU\n".
+"    General Public License can be found in `/usr/share/common-licenses/GPL-3'",
+                  'GPL-3+' => 
+"    This program is free software; you can redistribute it and/or modify\n" .
+"    it under the terms of the GNU General Public License as published by\n" .
+"    the Free Software Foundation; version 3 dated June, 2007, or (at your\n" .
+"    option) any later version\n" .
+"    On Debian GNU/Linux systems, the complete text of version 3 of the GNU\n".
+"    General Public License can be found in `/usr/share/common-licenses/GPL-3'",
+                  'unparsable' => 
+"    No known license could be automatically determined for this module.\n".
+"    If this module conforms to a commonly used license, please report this\n".
+"    as a bug in dh-make-perl. In any case, please find the proper license\n".
+"    and fix this file!"
+        );
+
+    if ($meta->{license} or $copyright) {
+        my $mangle_cprt;
+        # Pre-mangle the copyright information for the common similar cases
+        $mangle_cprt = $copyright || ''; # avoid warning
+        $mangle_cprt =~ s/GENERAL PUBLIC LICENSE/GPL/g;
+
+        # Of course, more licenses (i.e. LGPL, BSD-like, Public
+        # Domain, etc.) could be added... Feel free to do so. Keep in
+        # mind that many licenses are not meant to be used as
+        # templates (i.e. you must add the author name and some
+        # information within the licensing text as such).
+        if ($meta && $meta->{license} =~ /perl/i or
+            $mangle_cprt && $mangle_cprt =~ /terms\s*as\s*Perl\s*itself/is) {
+            push @res, "License-Alias: Perl";
+            $licenses{'GPL-1+'} = 1;
+            $licenses{'Artistic'} = 1;
+        } else {
+            if ($mangle_cprt =~ /[^L]GPL/) {
+                if ($mangle_cprt =~ /GPL.*version\s*1.*later\s+version/is) {
+                    $licenses{'GPL-1+'} = 1;
+                } elsif ($mangle_cprt =~ /GPL.*version\s*2.*later\s+version/is) {
+                    $licenses{'GPL-2+'} = 1;
+                } elsif ($mangle_cprt =~ /GPL.*version\s*2/is) {
+                    $licenses{'GPL-2'} = 1;
+                } elsif ($mangle_cprt =~ /GPL.*version\s*3.*later\s+version/is) {
+                    $licenses{'GPL-3+'} = 1;
+                } elsif ($mangle_cprt =~ /GPL.*version\s*3/is) {
+                    $licenses{'GPL-3'} = 1;
+                }
+            }
+            
+            if ($mangle_cprt =~ /Artistic\s*License/is) {
+                $licenses{'Artistic'} = 1;
+            }
+
+            # Other licenses?
+
+            if (! keys(%licenses)) {
+                $licenses{unparsable} = 1;
+                push(@incomplete,
+                     "Licensing information is present, but cannot be parsed");
+            }
+        }
+
+        push @res, "License: " . join(' | ', keys %licenses);
+
+    } else {
+        push @res, "License: ";
+        push @incomplete, 'No licensing information found'; 
+    }
+
+    # debian/* files information - We default to the module being
+    # licensed as the superset of the module and Perl itself.
+    $licenses{'Artistic'} = $licenses{'GPL-1+'} = 1;
+    $year = (localtime)[5]+1900;
+    push(@res, "", "Files: debian/*", "Copyright: $year, $maintainer");
+    push @res, "License: ". join(' | ', keys %licenses);
+
+    map {$texts{$_} && push(@res, '', "License: $_", $texts{$_})} 
+    keys %licenses;
+
+    $fh->print(join("\n", @res, ''));
+    $fh->close;
+
+    _warn_incomplete_copyright(join("\n", @incomplete)) if @incomplete;
+}
+
+sub create_readme {
+         my $fh = _file_w(shift);
+        $fh->print(
+"This is the debian package for the $perlname module.
+It was created by $maintainer using dh-make-perl.
+");
+        $fh->close;
+}
+
+sub create_watch {
+        my $fh = _file_w(shift);
+
+        my $version_re = 'v?(\d[\d_.-]+)\.(?:tar(?:\.gz|\.bz2)?|tgz|zip)';
+
+        $fh->print(
+"\# format version number, currently 3; this line is compulsory!
+version=3
+\# URL to the package page followed by a regex to search
+$upsurl   .*/$perlname-$version_re\$
+");
+        $fh->close;
+}
+
+sub get_maintainer {
+    my ($user, $pwnam, $email, $name, $mailh);
+        $user = $ENV{LOGNAME} || $ENV{USER};
+        $pwnam = getpwuid($<);
+        die "Cannot determine current user\n" unless $pwnam;
+        if (defined $ENV{DEBFULLNAME}) {
+                $name = $ENV{DEBFULLNAME};
+        } else {
+                $name = $pwnam->gecos;
+                $name =~ s/,.*//;
+        }
+        $user ||= $pwnam->name;
+        $name ||= $user;
+        $email = shift @_ || ($ENV{DEBEMAIL} || $ENV{EMAIL});
+        unless ($email) {
+                chomp($mailh = `cat /etc/mailname`);
+                $email = $user.'@'.$mailh;
+        }
+
+        $email =~ s/^(.*)\s+<(.*)>$/$2/;
+        
+        return "$name <$email>";
+}
+
+sub load_overrides {
+    eval {
+        do "$datadir/overrides" if -f "$datadir/overrides";
+        do "$homedir/overrides" if -f "$homedir/overrides";
+    };
+    if ($@) {
+        die "Error when processing the overrides files: $@";
+    }
+}
+
+sub apply_overrides {
+        my ($data, $val, $subkey);
+
+        ($data, $subkey) = get_override_data();
+        return unless defined $data;
+        $pkgname = $val if (defined($val=get_override_val($data, $subkey, 'pkgname')));
+        $srcname = $val if (defined($val=get_override_val($data, $subkey, 'srcname')));
+        $section = $val if (defined($val=get_override_val($data, $subkey, 'section')));
+        $priority = $val if (defined($val=get_override_val($data, $subkey, 'priority')));
+        $depends = $val if (defined($val=get_override_val($data, $subkey, 'depends')));
+        $bdepends = $val if (defined($val=get_override_val($data, $subkey, 'bdepends')));
+        $bdependsi = $val if (defined($val=get_override_val($data, $subkey, 'bdependsi')));	
+        $desc = $val if (defined($val=get_override_val($data, $subkey, 'desc')));
+        $longdesc = $val if (defined($val=get_override_val($data, $subkey, 'longdesc')));
+        $pkgversion = $val if (defined($val=get_override_val($data, $subkey, 'version')));
+        $arch = $val if (defined($val=get_override_val($data, $subkey, 'arch')));
+        $changelog = $val if (defined($val=get_override_val($data, $subkey, 'changelog')));
+        @docs = split(/\s+/, $val) if (defined($val=get_override_val($data, $subkey, 'docs')));
+
+        $extrasfields = $val if (defined($val=get_override_val($data, $subkey, 'sfields')));
+        $extrapfields = $val if (defined($val=get_override_val($data, $subkey, 'pfields')));
+        $maintainer = $val if (defined($val=get_override_val($data, $subkey, 'maintainer')));
+        # fix longdesc if needed
+        $longdesc =~ s/^\s*/ /mg;
+}
+
+sub apply_final_overrides {
+        my ($data, $val, $subkey);
+
+        ($data, $subkey) = get_override_data();
+        return unless defined $data;
+        get_override_val($data, $subkey, 'finish');
+}
+
+sub get_override_data {
+        my ($data, $checkver, $subkey);
+        $data = $overrides{$perlname};
+
+        return unless defined $data;
+        die "Value of '$perlname' in overrides not a hashref\n" unless ref($data) eq 'HASH';
+        if (defined($checkver = $data->{checkver})) {
+                die "checkver not a function\n" unless (ref($checkver) eq 'CODE');
+                $subkey = &$checkver($maindir);
+        } else {
+                $subkey = $pkgversion;
+        }
+        return ($data, $subkey);
+}
+
+sub get_override_val {
+        my ($data, $subkey, $key, $val);
+        ($data, $subkey, $key) = @_;
+        $val = defined($data->{$subkey.$key})?$data->{$subkey.$key}:$data->{$key};
+        return &$val() if (defined($val) && ref($val) eq 'CODE');
+        return $val;
+}
+
+sub _warn_incomplete_copyright {
+    print '*'x10, '
+Copyright information incomplete!
+
+Upstream copyright information could not be automatically determined.
+
+If you are building this package for your personal use, you might disregard
+this information; however, if you intend to upload this package to Debian
+(or in general, if you plan on distributing it), you must look into the
+complete copyright information.
+
+The causes for this warning are:
+', @_,"\n";
+}
+
+sub _file_r {
+    my ($file, $fh);
+    $file = shift;
+    $fh = IO::File->new($file, 'r') or die "Cannot open $file: $!\n";
+    return $fh;
+}
+
+sub _file_w {
+    my ($file, $fh);
+    $file = shift;
+    $fh = IO::File->new($file, 'w') or die "Cannot open $file: $!\n";
+    return $fh;
+}
+
+sub _file_rw {
+    my ($file, $fh);
+    $file = shift;
+    $fh = IO::File->new($file, 'r+') or die "Cannot open $file: $!\n";
+    return $fh;
+}
+
+=head1 NAME
+
+B<dh-make-perl> - Create debian source packages from perl modules
+
+=head1 SYNOPSIS
+
+B<dh-make-perl> [B<SOURCE_DIR> | B<--cpan> I<MODULE>]
+
+B<dh-make-perl> B<--refresh>
+
+You can modify B<dh-make-perl>'s behaviour with some switches:
+
+=over
+
+=item B<--desc> I<SHORT DESCRIPTION>
+
+Uses the argument to --desc as short description for the package.
+
+=item B<--arch> I<any> | I<all>
+
+This switches between arch-dependent and arch-independet packages. If B<--arch>
+isn't used, B<dh-make-perl> uses a relatively good-working algorithms to
+decide this alone.
+
+=item B<--version> I<VERSION>
+
+Specifies the version of the resulting package.
+
+=item B<--email> | B<-e> I<EMAIL>
+
+Manually specify the Maintainer email address to use in debian/control and
+in debian/changelog.
+
+=item B<--packagename> | B<-p> I<PACKAGENAME>
+
+Manually specify the Package Name, useful when the module has dashes in its
+name.
+
+=item B<--closes> I<ITPBUG>
+
+Manually specify the ITP bug number that this package closes. If not 
+given, dh-make-perl will try to connect to bugs.debian.org to fetch the 
+appropriate bug number, using WWW::Mechanize.
+
+=item B<--depends> I<DEPENDS>
+
+Manually specify the string to be used for the module's dependencies. This 
+should be used when building modules where dh-make-perl cannot guess the Perl
+dependencies (such as modules built using L<Module::Install>), or when the
+Perl code depends on non-Perl binaries or libraries. Usually, dh-make-perl
+will figure out the dependencies by itself. If you need to pass dh-make-perl
+dependency information, you must do it using the debian package format. i.e.
+
+dh-make-perl --depends libtest-more-perl 
+
+=item B<--bdepends> I<BUILD-DEPENDS>
+
+Manually specify the string to be used for the module's build-dependencies
+(that is, the packages and their versions that have to be installed in order to
+successfully build the package). Keep in mind that packages generated by
+dh-make-perl require debhelper to be specified as a build dependency. Same note
+as for --depends applies here - Use only when needed.
+
+=item B<--bdependsi> I<BUILD-DEPENDS-INDEP>
+
+Manually specify the string to be used for the module's build-dependencies
+for architecture-independent builds. Same notes as those for the --depends 
+and --bdepends options apply here.
+
+Note that for --depends, --bdepends and --bdependsi you can also specify that
+the field should not appear in debian/rules (if you really mean it, of course
+;-) ) by giving it an empty string as an argument.
+
+=item B<--pkg-perl>
+
+Useful when preparing a package for the Debian Perl Group
+L<http://pkg-perl.alioth.debian.org>.
+
+Sets C<Maintainer>, C<Uploaders>, C<Vcs-Svn> and C<Vcs-Browser> fields in
+debian/control accordingly, and sets packaging-related licensing to GPLv2.
+
+=item B<--cpan-mirror> I<MIRROR>
+
+Specifies a CPAN site to use as mirror.
+
+=item B<--exclude> | B<-i> [I<REGEX>]
+
+This allows you to specify a PCRE to exclude some files from the search for
+docs and stuff like that. If no argument is given (but the switch is specified
+- not specifying the switch will include everything), it defaults to exclude
+CVS and .svn directories.
+
+=item B<--build>
+
+Builds the package after setting it up.
+
+NB: This builds only a binary package (by calling "fakeroot debian/rules
+binary") and does not sign the package. It is meant for a quick local
+install of a package, not for creating a package ready for submission to the
+Debian archive.
+
+=item B<--install>
+
+Installs the freshly built package. Specifying --install implies --build - The
+package will not be installed unless it was built (obviously ;-) )
+
+=item B<--notest>
+
+Does not run the automatic testing of the module as part of the build script.
+This is mostly useful when packaging buggy or incomplete software.
+
+=item B<--basepkgs>
+
+Explicitly gives a comma-separated list of packages to consider "base"
+packages (i.e. packages that should always be available in Debian
+systems). This option defaults to C<perl,perl-base,perl-modules> - It
+is used to check for module dependencies. If a needed module is in the
+C<basepkgs>, it won't be mentioned in the C<depends:> field of
+C<debian/control>.
+
+If this option is specified, the above mentioned default packages will
+not be included (but will be mentioned as explicit dependencies in the
+resulting package). You can, of course, mention your own modules
+and explicitly specify the default values.
+
+Note that this option should be used sparsingly and with care, as it
+might lead to packages not being rebuildable because of unfulfilled
+dependencies.
+
+=item B<--requiredeps>
+
+Fail if a dependency perl package was not found (dependency tracking
+requires the apt-file package installed and updated)
+
+=item B<--core-ok>
+
+Allows building core Perl modules. By default, dh-make-perl will not allow
+building a module that is shipped as part of the standard Perl library; by
+specifying this option, dh-make-perl will build them anyway.
+
+Note that, although it is not probable, this might break unrelated items in 
+your system - If a newer version of a core module breaks the API, all kinds
+of daemons might get upset ;-)
+
+=item B<--refresh>
+
+Refresh mode.
+
+Instead of creating new debian/ directory, B<--refresh> makes B<dh-make-perl>
+to re-create only B<debian/rules> according to the current templates.
+
+This is useful when B<debian/rules> was created using older templates and
+doesn't contain much customisations. As always, you're strongly encouraged to
+verify if B<debian/rules> looks sane.
+
+=item B<--dh ver>
+
+Set desired debhelper version. If C<ver> is 7, generated debian/rules is
+minimalistic, using the auto-mode of debhelper. Also, any additional
+documentation and examples are listed in additional files under debian/, instead
+of being listed in debian/rules
+
+=back
+
+=head1 DESCRIPTION
+
+B<dh-make-perl> will create the files required to build
+a debian source package out of a perl package.
+This works for most simple packages and is also useful
+for getting started with packaging perl modules.
+
+You can specify a module name with the B<--cpan> switch
+and B<dh-make-perl> will download the module for you from
+a CPAN mirror, or you can specify the directory with the
+already unpacked sources. If neither --cpan nor a directory
+is given as argument, dh-make-perl tries to create a
+perl package from the data in F<.>
+
+There is an override mechanism in place to handle most of
+the little changes that may be needed for some modules
+(this hasn't been tested much, though, and the override
+database needs to be filled in).
+
+You can build and install the debian package using the --build
+and --install command line switches.
+
+Using this program is no excuse for not reading the
+debian developer documentation, including the Debian policy,
+the perl policy, the packaging manual and so on.
+
+=head1 FILES
+
+The following directories will be searched to find additional files
+required by dh-make-perl:
+
+        /usr/share/dh-make-perl/
+        $HOME/.dh-make-perl/
+
+=over 4
+
+=item * overrides
+
+File that overrides information retreived (or guessed) about the package.
+All the files in the library directories are loaded: entries in the home
+take precedence. See the distributed overrides file for usage information.
+
+=item * rules.MakeMaker.noxs
+
+A debian/rules makefile for modules that use ExtUtils::MakeMaker, but don't
+have C/XS code.
+
+=item * rules.MakeMaker.xs
+
+A debian/rules makefile for modules that use ExtUtils::MakerMaker and
+C/XS code.
+
+=item * rules.Module-Build.noxs
+
+A debian/rules makefile for modules that use Module::Build, but don't have 
+C/XS code.
+
+=item * rules.Module-Build.xs
+
+A debian/rules makefile for modules that use Module::Build and C/XS code.
+
+=back
+
+=head1 ENVIRONMENT
+
+HOME - get user's home directory
+
+DEBFULLNAME - get the real name of the maintainer
+
+LOGNAME or USER - get the username
+
+DEBEMAIL or EMAIL - get the email address of the user
+
+=head1 BUGS
+
+Several, let me know when you find them.
+
+=head1 AUTHOR
+
+Paolo Molaro E<lt>lupus@debian.orgE<gt> (MIA)
+
+Maintained for a time by Ivan Kohler E<lt>ivan-debian@420.amE<gt>.
+
+Maintained for a time by Marc Brockschmdit E<lt>marc@dch-faq.deE<gt>.
+
+Now maintained by Gunnar Wolf E<lt>gwolf@gwolf.orgE<gt>, and team-maintained 
+by the Debian pkg-perl team, http://alioth.debian.org/projects/pkg-perl
+
+Patches from:
+
+=over
+
+=item Adam Sjoegren E<lt>asjo@koldfront.dkE<gt>
+
+=item Adrian Phillips E<lt>adrianp@powertech.noE<gt>
+
+=item Amos Shapira E<lt>amos.shapira@gmail.comE<gt>
+
+=item Christian Kurz E<lt>shorty@debian.orgE<gt>
+
+=item Damyan Ivanov E<lt>divanov@creditreform.bgE<gt>
+
+=item David Paleino E<lt>d.paleino@gmail.comE<gt>
+
+=item David Pashley E<lt>david@davidpashley.comE<gt>
+
+=item Edward Betts E<lt>edward@debian.orgE<gt>
+
+=item Fermin Galan E<lt>galan@dit.upm.esE<gt>
+
+=item Geoff Richards E<lt>qef@ungwe.orgE<gt>
+
+=item Gergely Nagy E<lt>algernon@bonehunter.rulez.orgE<gt>
+
+=item gregor herrmann E<lt>gregoa@debian.orgE<gt>
+
+=item Hilko Bengen E<lt>bengen@debian.orgE<gt>
+
+=item Kees Cook E<lt>keex@outflux.netE<gt>
+
+=item Jesper Krogh E<lt>jesper@krogh.ccE<gt>
+
+=item Johnny Morano E<lt>jmorano@moretrix.comE<gt>
+
+=item Juerd E<lt>juerd@ouranos.juerd.netE<gt>
+
+=item Marc Chantreux (mail withheld)
+
+=item Matt Hope E<lt>dopey@debian.orgE<gt>
+
+=item Noel Maddy E<lt>noel@zhtwn.comE<gt>
+
+=item Oliver Gorwits E<lt>oliver.gorwits@oucs.ox.ac.ukE<gt>
+
+=item Peter Moerch E<lt>mn3k66i02@sneakemail.comE<gt>
+
+=item Stephen Oberholtzer E<lt>oliverklozoff@gmail.comE<gt>
+
+=item Ton Nijkes E<lt>tonn@wau.mis.ah.nlE<gt>
+
+=back
+
+... And others who, sadly, we have forgot to add :-/
+
+=cut
