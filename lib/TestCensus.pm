@@ -161,8 +161,6 @@ and should do.
 
 =cut
 
-our $file = "test_use";
-#unlink $file;
 
 {
 sub get_reporter
@@ -171,6 +169,8 @@ sub get_reporter
 
 	my( $class, $Notes ) = @_;
 
+	unlink "/Users/brian/Desktop/test_use";
+	
 	$Notes->{reporter} = sub {
 
 		my( $Notes, $info ) = @_;
