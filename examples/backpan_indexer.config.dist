@@ -14,7 +14,7 @@ system_id config
 
 # where to find the distributions
 # this doesn't have to be an actual backpan.
-backpan_dir /MINICPAN/authors/id/B/BD/BDFOY
+backpan_dir /Users/Joed/BackPAN
 
 # where to store the distribution reports
 report_dir  /Users/Joe/Desktop/BackPAN-Index/report

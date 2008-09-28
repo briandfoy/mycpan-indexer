@@ -2,15 +2,30 @@
 use strict;
 use warnings;
 no warnings 'uninitialized';
+use vars qw( %Options );
 
 use blib;
 use Cwd qw(cwd);
 use Data::Dumper;
 use File::Basename;
 use File::Spec::Functions qw(catfile);
+use Getopt::Std;
 use Log::Log4perl qw(:easy);
 
 $|++;
+
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# Process the options
+{
+my $run_dir = dirname( $0 );
+( my $script  = basename( $0 ) ) =~ s/\.\w+$//;
+
+getopts('i:f:', \%Options); 
+
+$Options{f} ||= catfile( $run_dir, "$script.conf" );
+$Options{i} ||= catfile( $run_dir, "$script.log4perl" );
+}
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # Minutely control the environment
@@ -27,14 +42,9 @@ $ENV{AUTOMATED_TESTING}++;
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # The set up
-my $run_dir = dirname( $0 );
+Log::Log4perl->init_and_watch( $Options{i}, 30 );
 
-Log::Log4perl->init_and_watch( 
-	catfile( $run_dir, 'backpan_indexer.log4perl' ), 
-	30 
-	);
-
-my $Config = get_config( $run_dir );
+my $Config = get_config( $Options{f} );
 
 setup_dirs( $Config );
 
@@ -78,12 +88,11 @@ sub get_config
 	{
 	require ConfigReader::Simple;
 
-	my $run_dir = shift;
+	my $file = shift;
 	
-	my $conf    = catfile( $run_dir, 'backpan_indexer.config' );
-	DEBUG( "Run dir is $run_dir; Conf file is $conf" );
+	DEBUG( "Conf file is $file" );
 	
-	my $Config = ConfigReader::Simple->new( $conf,
+	my $Config = ConfigReader::Simple->new( $file,
 		[ qw(temp_dir backpan_dir report_dir alarm 
 			copy_bad_dists retry_errors indexer_class) ]
 		);

@@ -68,6 +68,16 @@ sub get_reporter
 	1;
 	}
 
+=item final_words( $Notes )
+
+Right before backpan_indexer.pl is about to finish, it calls this method to
+give the reporter a chance to do something at the end. In this case it does
+nothing.
+
+=cut
+
+sub final_words { 1 };
+
 =back
 
 =head1 TO DO

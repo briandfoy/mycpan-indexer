@@ -66,7 +66,9 @@ sub do_interface
 		{
 		$Notes->{interface_callback}->();
 
-		_update_screen( $Notes );		
+		_update_screen( $Notes );
+		
+		last if $Notes->{Left} <= 0;
 		}
 
 	}
@@ -157,7 +159,7 @@ sub _update_progress
 	{
 	my( $Notes ) = @_;
 
-	my $progress = ( COLS() - 2 ) / $Notes->{Total} * $Notes->{Done};
+	my $progress = eval { ( COLS() - 2 ) / $Notes->{Total} * $Notes->{Done} } || 0;
 	
 	addstr( 
 		$Notes->{curses}{windows}{progress}, 
