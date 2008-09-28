@@ -10,15 +10,16 @@ use File::Basename;
 use File::Spec::Functions qw(catfile);
 use Log::Log4perl qw(:easy);
 
+$|++;
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # Minutely control the environment
 {
-my %pass_through = map { $_, 1 } qw( DISPLAY USER HOME PWD TERM);
+my %pass_through = map { $_, 1 } qw( DISPLAY USER HOME PWD TERM );
 
 foreach my $key ( keys %ENV ) 
 	{ 
-	#delete $ENV{$key} unless exists $pass_through{$key} 
+	delete $ENV{$key} unless exists $pass_through{$key} 
 	}
 
 $ENV{AUTOMATED_TESTING}++;
@@ -39,54 +40,36 @@ setup_dirs( $Config );
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # Load classes and check that they do the right thing
-
-my $queue_class = $Config->queue_class || "MyCPAN::Indexer::Queue";
-eval "require $queue_class" or die "$@\n";
-die "Interface class [$queue_class] does not implement get_queue()" 
-	unless $queue_class->can( 'get_queue' );
-
-my $dispatcher_class = $Config->dispatcher_class || "MyCPAN::Indexer::Dispatch::Parallel";
-eval "require $dispatcher_class" or die "$@\n";
-die "Dispatcher class [$dispatcher_class] does not implement get_dispatcher()" 
-	unless $dispatcher_class->can( 'get_dispatcher' );
-
-my $interface_class = $Config->interface_class || "MyCPAN::Indexer::Interface::Tk";
-eval "require $interface_class" or die "$@\n";
-die "Interface class [$interface_class] does not implement do_interface()" 
-	unless $interface_class->can( 'do_interface' );
-
-my $worker_class = $Config->worker_class || "MyCPAN::Indexer::Worker";
-DEBUG( "worker class is $worker_class" );
-eval "require $worker_class" or die "$@\n";
-die "Worker class [$worker_class] does not implement get_task()" 
-	unless $worker_class->can( 'get_task' );
-
 my $Notes = { 
 	config     => $Config,
 	UUID       => get_uuid(),
 	};
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-# Figure out what to index
-$queue_class->get_queue( $Notes );
-die "get_queue did set queue to an array reference\n"
-	unless ref $Notes->{queue} eq ref [];
-DEBUG( "Dists to process are\n\t", join "\n\t", @{ $Notes->{queue} } );
+{
+my @components = (
+	[ qw( queue_class      MyCPAN::Indexer::Queue             get_queue      ) ],
+	[ qw( dispatcher_class MyCPAN::Indexer::Parallel          get_dispatcher ) ],
+	[ qw( reporter_class   MyCPAN::Indexer::Reporter::AsYAML  get_reporter   ) ],
+	[ qw( worker_class     MyCPAN::Indexer::Worker            get_task       ) ],
+	[ qw( interface_class  MyCPAN::Indexer::Interface::Curses do_interface   ) ],
+	[ qw( reporter_class   MyCPAN::Indexer::Interface::Curses final_words    ) ],
+	);
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-# The meat of the issue
-INFO( "Run started - " . @{ $Notes->{queue} } . " dists to process" );
-
-$worker_class->get_task( $Notes );
-
-die "get_task is not a code ref" unless 
-	ref $Notes->{child_task} eq ref sub {};
+foreach my $tuple ( @components )
+	{
+	my( $directive, $default_class, $method ) = @$tuple;
 	
-$dispatcher_class->get_dispatcher( $Notes );
-die "Dispatcher class [$dispatcher_class] did not set a dispatcher key\n"
-	unless exists $Notes->{dispatcher};
+	my $class = $Config->get( $directive) || $default_class;
+	
+	eval "require $class" or die "$@\n";
+	die "$directive [$class] does not implement $method()" 
+		unless $class->can( $method );
+		
+	DEBUG( "Calling $class->$method()" );
+	$class->$method( $Notes );
+	}
 
-$interface_class->do_interface( $Notes );
+}
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 

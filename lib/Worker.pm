@@ -65,12 +65,6 @@ sub get_task
 			ERROR( "Could not change to " . $Config->temp_dir . " : $!\n" );
 			exit 255;
 			}
-	
-		# XXX: this should be configurable
-		my $yml_dir       = catfile( $Config->report_dir, "meta"        );
-		my $yml_error_dir = catfile( $Config->report_dir, "meta-errors" );
-
-		my $out_dir = $yml_error_dir;
 		
 		local $SIG{ALRM} = sub { die "alarm\n" };
 		alarm( $Config->alarm || 15 );
@@ -81,45 +75,45 @@ sub get_task
 			ERROR( "run failed: $@" );
 			return;
 			}
-		elsif( eval { $info->run_info( 'completed' ) } )
-			{
-			$out_dir = $yml_dir;
-			}
-		else
+		elsif( ! eval { $info->run_info( 'completed' ) } )
 			{
 			ERROR( "$basename did not complete\n" );
-			if( my $bad_dist_dir = $Config->copy_bad_dists )
-				{
-				my $dist_file = $info->dist_info( 'dist_file' );
-				my $basename  = $info->dist_info( 'dist_basename' );
-				my $new_name  = catfile( $bad_dist_dir, $basename );
-				
-				unless( -e $new_name )
-					{
-					DEBUG( "Copying bad dist" );
-					open my($in), "<", $dist_file;
-					open my($out), ">", $new_name;
-					while( <$in> ) { print { $out } $_ }
-					close $in;
-					close $out;
-					}
-				}	
+			$class->_copy_bad_dist( $Notes, $info ) if $Config->copy_bad_dists;
 			}
 			
 		alarm 0;
 				
 		$class->_add_run_info( $info, $Notes );
 		
-		my $out_path = catfile( $out_dir, "$basename.yml" );
-		
-		open my($fh), ">", $out_path or die "Could not open $out_path: $!\n";
-		print $fh Dump( $info );
+		$Notes->{reporter}->( $Notes, $info );
 		
 		DEBUG( "Child [$$] process done" );
 		
 		1;
 		};
 		
+	}
+
+sub _copy_bad_dist
+	{
+	my( $class, $Notes, $info ) = @_;
+	
+	if( my $bad_dist_dir = $Notes->{config}->copy_bad_dists )
+		{
+		my $dist_file = $info->dist_info( 'dist_file' );
+		my $basename  = $info->dist_info( 'dist_basename' );
+		my $new_name  = catfile( $bad_dist_dir, $basename );
+		
+		unless( -e $new_name )
+			{
+			DEBUG( "Copying bad dist" );
+			open my($in), "<", $dist_file;
+			open my($out), ">", $new_name;
+			while( <$in> ) { print { $out } $_ }
+			close $in;
+			close $out;
+			}
+		}	
 	}
 	
 sub _check_for_previous_result

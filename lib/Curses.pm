@@ -52,8 +52,8 @@ sub do_interface
 	$Notes->{curses}{windows}{progress}      = newwin( 3, COLS(),   1,  0 );
 	$Notes->{curses}{windows}{left_tracker}  = newwin( 6, 20,   4,  0 );
 	$Notes->{curses}{windows}{right_tracker} = newwin( 6, COLS() - 21,   4, 21 );
-	$Notes->{curses}{windows}{PID}           = newwin( 7, COLS(),  12,  0 );
-	$Notes->{curses}{windows}{Errors}        = newwin( 7, COLS(), 21,  0 );
+	$Notes->{curses}{windows}{PID}           = newwin( 7, COLS(),  10,  0 );
+	$Notes->{curses}{windows}{Errors}        = newwin( 7, COLS(), 17,  0 );
 
 	foreach my $value ( values %{ $Notes->{curses}{windows} } )
 		{
@@ -66,10 +66,7 @@ sub do_interface
 		{
 		$Notes->{interface_callback}->();
 
-		_update_screen( $Notes );
-		
-		sleep 1;
-		
+		_update_screen( $Notes );		
 		}
 
 	}

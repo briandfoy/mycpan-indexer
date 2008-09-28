@@ -45,6 +45,15 @@ C<child_task> is a code reference that returns 1 and does nothing else.
 
 sub get_task { $_[1]->{child_task} = sub { 1 } }
 
+=item Storage class: get_storer( HASH_REF )
+
+C<get_storer> adds a C<reporter> key to HASH_REF. The value of
+C<reporter> is a code reference that returns 1 and does nothing else.
+
+=cut
+
+sub get_storer { $_[1]->{reporter} = sub { 1 } }
+
 =item Dispatcher class: get_dispatcher()
 
 C<get_dispatcher> adds a dispatcher key to HASH_REF. The value is an

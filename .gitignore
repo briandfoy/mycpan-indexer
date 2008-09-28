@@ -12,3 +12,4 @@ Makefile
 examples/backpan_indexer.config
 .DS_Store
 examples/*.config
+examples/test_use.db

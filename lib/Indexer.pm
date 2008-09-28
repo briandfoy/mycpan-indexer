@@ -699,6 +699,7 @@ sub find_tests
 	File::Find::find( $wanted, "t" );
 	
 	push @tests, $reporter->();
+	DEBUG( "Found tests [@tests]" );
 	
 	$_[0]->set_dist_info( 'tests', [ @tests ] );
 	
@@ -1001,7 +1002,6 @@ take the object and dump it in some way.
 
 sub report_dist_info
 	{
-	return 1;
 	TRACE( sub { get_caller_info } );
 
 	no warnings 'uninitialized';
