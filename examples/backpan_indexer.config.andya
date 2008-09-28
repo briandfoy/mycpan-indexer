@@ -33,11 +33,11 @@ queue_class MyCPAN::Indexer::Queue
 # the Perl class to use to hand out indexing jobs.
 dispatcher_class MyCPAN::Indexer::Dispatch::Parallel
 
-interface_class MyCPAN::Indexer::Interface::Curses
+interface_class MyCPAN::Indexer::Interface::Text
 
 worker_class MyCPAN::Indexer::Worker
 
 reporter_class  MyCPAN::Indexer::Reporter::AsYAML
 
 # The number of parallel jobs to run
-parallel_jobs 4
+parallel_jobs 1
