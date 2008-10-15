@@ -22,3 +22,5 @@ examples/tk.pl
 examples/steak.pl
 examples/curses.pl
 examples/backpan_indexer.log
+research
+.*\.log

@@ -1,15 +1,23 @@
 Changes
+examples/backpan_indexer.config.andya
 examples/backpan_indexer.config.dist
+examples/backpan_indexer.config.minicpan
+examples/backpan_indexer.config.test_census
 examples/backpan_indexer.pl
+lib/AsYAML.pm
+lib/Curses.pm
 lib/Indexer.pm
+lib/NullTester.pm
 lib/Parallel.pm
 lib/Queue.pm
+lib/TestCensus.pm
+lib/Text.pm
 lib/Tk.pm
 lib/Tutorial.pm
 lib/Worker.pm
 LICENSE
 Makefile.PL
-MANIFEST			This list of files
+MANIFEST
 README
 t/compile.t
 t/load.t
