@@ -2,10 +2,10 @@ package MyCPAN::Indexer::Interface::Tk;
 use strict;
 use warnings;
 
-use vars qw($VERSION);
+use vars qw($VERSION $logger);
 $VERSION = '1.16_01';
 
-use Log::Log4perl qw(:easy);
+use Log::Log4perl;
 use Tk;
 
 =head1 NAME
@@ -31,6 +31,10 @@ This class presents the information as the indexer runs, using Tk.
 
 
 =cut
+
+BEGIN {
+	$logger = Log::Log4perl->get_logger( 'Interface' );
+	}
 
 sub do_interface 
 	{

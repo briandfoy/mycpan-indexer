@@ -2,9 +2,14 @@ package MyCPAN::Indexer::NullTester;
 use strict;
 use warnings;
 
-use vars qw($VERSION);
+use vars qw($VERSION $logger);
 $VERSION = '1.16_01';
 
+use Log::Log4perl;
+
+BEGIN {
+	$logger = Log::Log4perl->get_logger( __PACKAGE__ );
+	}
 
 =head1 NAME
 

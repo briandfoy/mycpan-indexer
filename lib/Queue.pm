@@ -2,12 +2,16 @@ package MyCPAN::Indexer::Queue;
 use strict;
 use warnings;
 
-use vars qw($VERSION);
+use vars qw($VERSION $logger);
 $VERSION = '1.16_01';
 
 use File::Find;
 use File::Find::Closures qw( find_by_regex );
-use Log::Log4perl qw(:easy);
+use Log::Log4perl;
+
+BEGIN {
+	$logger = Log::Log4perl->get_logger( 'Queue' );
+	}
 
 =head1 NAME
 
@@ -45,14 +49,20 @@ sub get_queue
 	$Notes->{queue} = do {
 		if( @ARGV ) 
 			{
-			DEBUG( "Taking dists from command line" );
+			$logger->debug( "Taking dists from command line" );
 			[ @ARGV ]
 			}
 		else 
 			{
-			DEBUG( "Taking dists from " . $Notes->{config}->backpan_dir );
+			$logger->debug( "Taking dists from " . $Notes->{config}->backpan_dir );
 			my( $wanted, $reporter ) = find_by_regex( qr/\.(t?gz|zip)$/ );
 			
+			unless( -e $Notes->{config}->backpan_dir )
+				{
+				$logger->fatal( "Directory does not exist: " . $Notes->{config}->backpan_dir ); 
+				no warnings; [];
+				}
+				
 			find( $wanted, $Notes->{config}->backpan_dir );
 			[ $reporter->() ];
 			}

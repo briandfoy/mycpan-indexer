@@ -7,7 +7,7 @@ use warnings;
 no warnings;
 
 use subs qw(get_caller_info);
-use vars qw($VERSION);
+use vars qw($VERSION $logger);
 use base qw(MyCPAN::Indexer);
 
 $VERSION = '0.15_02';
@@ -34,7 +34,11 @@ You probably
 use Carp qw(croak);
 use Cwd qw(cwd);
 
-use Log::Log4perl qw(:easy);
+use Log::Log4perl;
+
+BEGIN {
+	$logger = Log::Log4perl->get_logger( __PACKAGE__ );
+	}
 
 __PACKAGE__->run( @ARGV ) unless caller;
 
@@ -65,11 +69,11 @@ sub examine_dist
 	foreach my $tuple ( @methods )
 		{
 		my( $method, $error, $die_on_error ) = @$tuple;
-		DEBUG( "examine_dist calling $method" );
+		$logger->debug( "examine_dist calling $method" );
 		
 		unless( $_[0]->$method() )
 			{
-			ERROR( $error );
+			$logger->error( $error );
 			if( $die_on_error ) # only if failure is fatal
 				{
 				ERROR( "Stopping: $error" );
@@ -83,7 +87,7 @@ sub examine_dist
 	my @file_info = ();
 	foreach my $file ( @{ $_[0]->dist_info( 'tests' ) } )
 		{
-		DEBUG( "Processing test $file" );
+		$logger->debug( "Processing test $file" );
 		my $hash = $_[0]->get_test_info( $file );
 		push @file_info, $hash;
 		}
@@ -138,7 +142,7 @@ sub setup_dist_info
 
 	my( $self, $dist ) = @_;
 
-	DEBUG( "Setting dist [$dist]\n" );
+	$logger->debug( "Setting dist [$dist]\n" );
 	$self->set_dist_info( 'dist_file',     $dist                   );
 		
 	return 1;
@@ -182,7 +186,7 @@ sub get_reporter
 		foreach my $test_file ( @$test_files )
 			{
 			my $uses = $test_file->{uses};
-			DEBUG( "Found test modules @$uses" );
+			$logger->debug( "Found test modules @$uses" );
 			
 			foreach my $used_module ( @$uses )
 				{
@@ -202,7 +206,7 @@ sub get_reporter
 sub final_words
 	{	
 	my( $class ); 
-	DEBUG( "Final words from the Reporter" );
+	$logger->debug( "Final words from the Reporter" );
 	
 	our %DBM;
 	dbmopen %DBM, "/Users/brian/Desktop/test_use", undef;

@@ -10,10 +10,11 @@ use Data::Dumper;
 use File::Basename;
 use File::Spec::Functions qw(catfile);
 use Getopt::Std;
-use Log::Log4perl qw(:easy);
+use Log::Log4perl;
 
 $|++;
 
+my $logger = Log::Log4perl->get_logger( 'backpan_indexer' );
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # Process the options
@@ -75,7 +76,7 @@ foreach my $tuple ( @components )
 	die "$directive [$class] does not implement $method()" 
 		unless $class->can( $method );
 		
-	DEBUG( "Calling $class->$method()" );
+	$logger->debug( "Calling $class->$method()" );
 	$class->$method( $Notes );
 	}
 
@@ -90,14 +91,14 @@ sub get_config
 
 	my $file = shift;
 	
-	DEBUG( "Conf file is $file" );
+	$logger->debug( "Conf file is $file" );
 	
 	my $Config = ConfigReader::Simple->new( $file,
 		[ qw(temp_dir backpan_dir report_dir alarm 
 			copy_bad_dists retry_errors indexer_class) ]
 		);
 		
-	FATAL( "Could not read config!" ) unless ref $Config;
+	$logger->fatal( "Could not read config!" ) unless ref $Config;
 	
 	$Config;
 	}
@@ -115,8 +116,8 @@ sub setup_dirs
 	my $yml_dir       = catfile( $Config->report_dir, "meta"        );
 	my $yml_error_dir = catfile( $Config->report_dir, "meta-errors" );
 	
-	DEBUG( "Value of retry is " . $Config->retry_errors );
-	DEBUG( "Value of copy_bad_dists is " . $Config->copy_bad_dists );
+	$logger->debug( "Value of retry is " . $Config->retry_errors );
+	$logger->debug( "Value of copy_bad_dists is " . $Config->copy_bad_dists );
 	
 	if( $Config->retry_errors )
 		{

@@ -2,13 +2,17 @@ package MyCPAN::Indexer::Reporter::AsYAML;
 use strict;
 use warnings;
 
-use vars qw($VERSION);
+use vars qw($VERSION $logger);
 $VERSION = '1.16_01';
 
 use File::Basename;
 use File::Spec::Functions qw(catfile);
-use Log::Log4perl qw(:easy);
+use Log::Log4perl;
 use YAML;
+
+BEGIN {
+	$logger = Log::Log4perl->get_logger( 'Reporter' );
+	}
 
 =head1 NAME
 

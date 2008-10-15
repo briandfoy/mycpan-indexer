@@ -2,12 +2,12 @@ package MyCPAN::Indexer::Worker;
 use strict;
 use warnings;
 
-use vars qw($VERSION);
+use vars qw($VERSION $logger);
 $VERSION = '1.16_01';
 
 use File::Basename;
 use File::Spec::Functions qw(catfile);
-use Log::Log4perl qw(:easy);
+use Log::Log4perl;
 use MyCPAN::Indexer;
 use YAML;
 
@@ -42,6 +42,10 @@ and should do.
 
 =cut
    
+BEGIN {
+	$logger = Log::Log4perl->get_logger( 'Worker' );
+	}
+	
 sub get_task
 	{
 	my( $class, $Notes ) = @_;
@@ -54,7 +58,7 @@ sub get_task
 		
 		my $Config = $Notes->{config};
 		
-		INFO( "Child [$$] processing $dist\n" );
+		$logger->warn( "Child [$$] processing $dist\n" );
 			
 		my $Indexer = $Config->indexer_class || 'MyCPAN::Indexer';
 		
@@ -62,7 +66,7 @@ sub get_task
 		
 		unless( chdir $Config->temp_dir )
 			{
-			ERROR( "Could not change to " . $Config->temp_dir . " : $!\n" );
+			$logger->error( "Could not change to " . $Config->temp_dir . " : $!\n" );
 			exit 255;
 			}
 		
@@ -72,12 +76,12 @@ sub get_task
 	
 		unless( defined $info )
 			{
-			ERROR( "run failed: $@" );
+			$logger->error( "run failed: $@" );
 			return;
 			}
 		elsif( ! eval { $info->run_info( 'completed' ) } )
 			{
-			ERROR( "$basename did not complete\n" );
+			$logger->error( "$basename did not complete\n" );
 			$class->_copy_bad_dist( $Notes, $info ) if $Config->copy_bad_dists;
 			}
 			
@@ -87,7 +91,7 @@ sub get_task
 		
 		$Notes->{reporter}->( $Notes, $info );
 		
-		DEBUG( "Child [$$] process done" );
+		$logger->debug( "Child [$$] process done" );
 		
 		1;
 		};
@@ -106,9 +110,22 @@ sub _copy_bad_dist
 		
 		unless( -e $new_name )
 			{
-			DEBUG( "Copying bad dist" );
-			open my($in), "<", $dist_file;
-			open my($out), ">", $new_name;
+			$logger->debug( "Copying bad dist" );
+			
+			my( $in, $out );
+			
+			unless( open $in, "<", $dist_file )
+				{
+				$logger->fatal( "Could not open bad dist to $dist_file: $!" );
+				return;
+				}
+
+			unless( open $out, ">", $new_name )
+				{
+				$logger->fatal( "Could not copy bad dist to $new_name: $!" );
+				return;
+				}
+				
 			while( <$in> ) { print { $out } $_ }
 			close $in;
 			close $out;
@@ -124,15 +141,15 @@ sub _check_for_previous_result
 	
 	( my $basename = basename( $dist ) ) =~ s/\.(tgz|tar\.gz|zip)$//;
 
-	my $yml_dir       = catfile( $Config->report_dir, "meta"        );
-	my $yml_error_dir = catfile( $Config->report_dir, "meta-errors" );
+	my $yml_dir        = catfile( $Config->report_dir, "meta"        );
+	my $yml_error_dir  = catfile( $Config->report_dir, "meta-errors" );
 	
 	my $yml_path       = catfile( $yml_dir,       "$basename.yml" );
 	my $yml_error_path = catfile( $yml_error_dir, "$basename.yml" );
 	
 	if( my @path = grep { -e } ( $yml_path, $yml_error_path ) )
 		{
-		DEBUG( "Found run output for $basename in $path[0]. Skipping...\n" );
+		$logger->debug( "Found run output for $basename in $path[0]. Skipping...\n" );
 		return;
 		}
 		

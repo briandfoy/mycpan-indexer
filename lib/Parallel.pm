@@ -2,10 +2,10 @@ package MyCPAN::Indexer::Dispatch::Parallel;
 use strict;
 use warnings;
 
-use vars qw($VERSION);
+use vars qw($VERSION $logger);
 $VERSION = '1.16_01';
 
-use Log::Log4perl qw(:easy);
+use Log::Log4perl;
 
 BEGIN {
 	# override since Tk overrides exit and this needs the real exit
@@ -25,6 +25,10 @@ BEGIN {
 	  return 0;
 	}
 }
+
+BEGIN {
+	$logger = Log::Log4perl->get_logger( 'Dispatcher' );
+	}
 
 =head1 NAME
 
@@ -133,7 +137,7 @@ sub _make_interface_callback
 			{ # child
 			$Notes->{child_task}( $item );
 			$Notes->{dispatcher}->finish;
-			ERROR( "The child [$$] is still running!" )
+			$logger->error( "The child [$$] is still running!" )
 			}
 	
 		1;

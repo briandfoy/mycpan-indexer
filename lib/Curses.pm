@@ -2,10 +2,10 @@ package MyCPAN::Indexer::Interface::Curses;
 use strict;
 use warnings;
 
-use Log::Log4perl qw(:easy);
+use Log::Log4perl;
 use Curses;
 
-use vars qw($VERSION);
+use vars qw($VERSION $logger);
 $VERSION = '1.16_01';
 
 =head1 NAME
@@ -34,10 +34,14 @@ This class presents the information as the indexer runs, using Curses.
 
 BEGIN { $SIG{INT} = sub { exit } }
 
+BEGIN {
+	$logger = Log::Log4perl->get_logger( 'Interface' );
+	}
+
 sub do_interface 
 	{
 	my( $class, $Notes ) = @_;
-	DEBUG "Calling do_interface";
+	$logger->debug( "Calling do_interface" );
 	
 	initscr();
 	noecho();

@@ -7,7 +7,7 @@ use warnings;
 no warnings;
 
 use subs qw(get_caller_info);
-use vars qw($VERSION);
+use vars qw($VERSION $logger);
 
 $VERSION = '0.15_02';
 
@@ -28,8 +28,12 @@ use Cwd;
 use Data::Dumper;
 use File::Basename;
 use File::Path;
-use Log::Log4perl qw(:easy);
+use Log::Log4perl;
 use Probe::Perl;
+
+BEGIN {
+	$logger = Log::Log4perl->get_logger( 'Indexer' );
+	}
 
 __PACKAGE__->run( @ARGV ) unless caller;
 
@@ -42,7 +46,7 @@ __PACKAGE__->run( @ARGV ) unless caller;
 
 sub run
 	{
-	TRACE( sub { get_caller_info } );
+	$logger->trace( sub { get_caller_info } );
 
 	my $class = shift;
 	
@@ -52,15 +56,15 @@ sub run
 
 	DIST: foreach my $dist ( @_ )
 		{
-		DEBUG( "Dist is $dist\n" );
+		$logger->debug( "Dist is $dist\n" );
 
 		unless( -e $dist )
 			{
-			ERROR( "Could not find [$dist]" );
+			$logger->error( "Could not find [$dist]" );
 			next;
 			}
 
-		INFO( "Processing $dist\n" );
+		$logger->info( "Processing $dist\n" );
 
 		$self->clear_dist_info;
 		$self->setup_dist_info( $dist ) or next DIST;
@@ -71,7 +75,7 @@ sub run
 		$self->set_run_info( 'run_end_time', time );
 
 		INFO( "Finished processing $dist\n" );
-		DEBUG( sub { Dumper( $self ) } );
+		$logger->debug( sub { Dumper( $self ) } );
 		}
 
 	$self;
@@ -98,7 +102,7 @@ my @methods = (
 
 sub examine_dist
 	{
-	TRACE( sub { get_caller_info } );
+	$logger->trace( sub { get_caller_info } );
 
 	foreach my $tuple ( @methods )
 		{
@@ -106,10 +110,10 @@ sub examine_dist
 
 		unless( $_[0]->$method() )
 			{
-			ERROR( $error );
+			$logger->error( $error );
 			if( $die_on_error ) # only if failure is fatal
 				{
-				ERROR( "Stopping: $error" );
+				$logger->error( "Stopping: $error" );
 				$_[0]->set_run_info( 'fatal_error', $error );
 				return;
 				}
@@ -120,7 +124,7 @@ sub examine_dist
 	my @file_info = ();
 	foreach my $file ( @{ $_[0]->dist_info( 'modules' ) } )
 		{
-		DEBUG( "Processing module $file" );
+		$logger->debug( "Processing module $file" );
 		my $hash = $_[0]->get_module_info( $file );
 		push @file_info, $hash;
 		}
@@ -132,7 +136,7 @@ sub examine_dist
 	my @file_info = ();
 	foreach my $file ( @{ $_[0]->dist_info( 'tests' ) } )
 		{
-		DEBUG( "Processing test $file" );
+		$logger->debug( "Processing test $file" );
 		my $hash = $_[0]->get_test_info( $file );
 		push @file_info, $hash;
 		}
@@ -152,8 +156,8 @@ Clear anything recorded about the run.
 
 sub clear_run_info
 	{
-	TRACE( sub { get_caller_info } );
-	DEBUG( "Clearing run_info\n" );
+	$logger->trace( sub { get_caller_info } );
+	$logger->debug( "Clearing run_info\n" );
 	$_[0]->{run_info} = {};
 	}
 
@@ -173,7 +177,7 @@ Sets these items in dist_info:
 
 sub setup_run_info
 	{
-	TRACE( sub { get_caller_info } );
+	$logger->trace( sub { get_caller_info } );
 
 	require Config;
 	
@@ -207,11 +211,11 @@ specific to the run. See C<set_dist_info> to record dist info.
 
 sub set_run_info
 	{
-	TRACE( sub { get_caller_info } );
+	$logger->trace( sub { get_caller_info } );
 
 	my( $self, $key, $value ) = @_;
 
-	DEBUG( "Setting run_info key [$key] to [$value]\n" );
+	$logger->debug( "Setting run_info key [$key] to [$value]\n" );
 	$self->{run_info}{$key} = $value;
 	}
 
@@ -223,11 +227,11 @@ Fetch some run info.
 
 sub run_info
 	{
-	TRACE( sub { get_caller_info } );
+	$logger->trace( sub { get_caller_info } );
 
 	my( $self, $key ) = @_;
 
-	DEBUG( "Run info for $key is " . $self->{run_info}{$key} );
+	$logger->debug( "Run info for $key is " . $self->{run_info}{$key} );
 	$self->{run_info}{$key};
 	}
 
@@ -239,8 +243,8 @@ Clear anything recorded about the distribution.
 
 sub clear_dist_info
 	{
-	TRACE( sub { get_caller_info } );
-	DEBUG( "Clearing dist_info\n" );
+	$logger->trace( sub { get_caller_info } );
+	$logger->debug( "Clearing dist_info\n" );
 	$_[0]->{dist_info} = {};
 	}
 
@@ -260,27 +264,27 @@ Sets these items in dist_info:
 
 sub setup_dist_info
 	{
-	TRACE( sub { get_caller_info } );
+	$logger->trace( sub { get_caller_info } );
 
 	my( $self, $dist ) = @_;
 
-	DEBUG( "Setting dist [$dist]\n" );
+	$logger->debug( "Setting dist [$dist]\n" );
 	$self->set_dist_info( 'dist_file',     $dist                   );
 	$self->set_dist_info( 'dist_size',     -s $dist                );
 	$self->set_dist_info( 'dist_basename', basename($dist)         );
 	$self->set_dist_info( 'dist_date',    (stat($dist))[9]         );
 	$self->set_dist_info( 'dist_md5',     $self->get_md5( $dist )  );
-	DEBUG( "dist size " . $self->dist_info( 'dist_size' ) .
+	$logger->debug( "dist size " . $self->dist_info( 'dist_size' ) .
 		" dist date " . $self->dist_info( 'dist_date' )
 		);
 
 	my( undef, undef, $author ) = $dist =~ m|/([A-Z])/\1([A-Z])/(\1\2[A-Z]+)/|;
 	$self->set_dist_info( 'dist_author', $author );
-	DEBUG( "dist author [$author]" );
+	$logger->debug( "dist author [$author]" );
 
 	unless( $self->dist_info( 'dist_size' ) )
 		{
-		ERROR( "Dist size was 0!" );
+		$logger->error( "Dist size was 0!" );
 		$self->set_run_info( 'fatal_error', "Dist size was 0!" );
 		return;
 		}
@@ -297,11 +301,11 @@ specific to the distribution. See C<set_run_info> to record run info.
 
 sub set_dist_info
 	{
-	TRACE( sub { get_caller_info } );
+	$logger->trace( sub { get_caller_info } );
 
 	my( $self, $key, $value ) = @_;
 
-	DEBUG( "Setting dist_info key [$key] to [$value]\n" );
+	$logger->debug( "Setting dist_info key [$key] to [$value]\n" );
 	$self->{dist_info}{$key} = $value;
 	}
 
@@ -313,11 +317,11 @@ Fetch some distribution info.
 
 sub dist_info
 	{
-	TRACE( sub { get_caller_info } );
+	$logger->trace( sub { get_caller_info } );
 
 	my( $self, $key ) = @_;
 
-	DEBUG( "dist info for $key is " . $self->{dist_info}{$key} );
+	$logger->debug( "dist info for $key is " . $self->{dist_info}{$key} );
 	$self->{dist_info}{$key};
 	}
 
@@ -337,23 +341,23 @@ Sets these items in dist_info:
 
 sub unpack_dist
 	{
-	TRACE( sub { get_caller_info } );
+	$logger->trace( sub { get_caller_info } );
 
 	require Archive::Extract;
 
 	my $self = shift;
 	my $dist = $self->dist_info( 'dist_file' );
-	DEBUG( "Unpacking dist $dist" );
+	$logger->debug( "Unpacking dist $dist" );
 	
 	return unless $self->get_unpack_dir;
 
 	my $extractor = eval {
-		Archive::Extract->new( archive => $dist )
+		Archive::Extract->new( archive => $dist );
 		};
 		
 	if( $extractor->type eq 'gz' )
 		{
-		ERROR( "Dist claims to be a gz, so try .tgz instead" );
+		$logger->error( "Dist claims to be a gz, so try .tgz instead" );
 	
 		$extractor = eval {
 			Archive::Extract->new( archive => $dist, type => 'tgz' )
@@ -362,7 +366,7 @@ sub unpack_dist
 
 	unless( $extractor )
 		{
-		ERROR( "Still could not unpack $dist [$@]" );
+		$logger->error( "Still could not unpack $dist [$@]" );
 		$self->set_dist_info( 'dist_archive_type', 'unknown' );
 		return;	
 		}
@@ -371,7 +375,7 @@ sub unpack_dist
 
 	my $rc = $extractor->extract( to => $self->dist_info( 'unpack_dir' ) );
 
-	DEBUG( "Archive::Extract returns [$rc]" );
+	$logger->debug( "Archive::Extract returns [$rc]" );
 	return unless( $rc );
 
 	$self->set_dist_info( 'dist_extract_path', $extractor->extract_path );
@@ -390,7 +394,7 @@ Sets these items in dist_info:
 
 sub get_unpack_dir
 	{
-	TRACE( sub { get_caller_info } );
+	$logger->trace( sub { get_caller_info } );
 
 	require File::Temp;
 	
@@ -398,7 +402,7 @@ sub get_unpack_dir
 
 	( my $prefix = __PACKAGE__ ) =~ s/::/-/g;
 
-	DEBUG( "Preparing temp dir in pid [$$]\n" );
+	$logger->debug( "Preparing temp dir in pid [$$]\n" );
 	my $unpack_dir = eval { File::Temp::tempdir(
 		$prefix . "-$$.XXXX",
 		DIR     => $self->run_info( 'root_working_dir' ),
@@ -407,14 +411,14 @@ sub get_unpack_dir
 
 	if( $@ )
 		{
-		DEBUG( "Temp dir error for pid [$$] [$@]" );
+		$logger->debug( "Temp dir error for pid [$$] [$@]" );
 		return;
 		}
 	
 	$self->set_dist_info( 'unpack_dir', $unpack_dir );
 
 
-	DEBUG( "Unpacking into directory [$unpack_dir]" );
+	$logger->debug( "Unpacking into directory [$unpack_dir]" );
 
 	1;
 	}
@@ -432,9 +436,9 @@ Sets these items in dist_info:
 
 sub find_dist_dir
 	{
-	TRACE( sub { get_caller_info } );
+	$logger->trace( sub { get_caller_info } );
 
-	DEBUG( "Cwd is " . $_[0]->dist_info( "unpack_dir" ) );
+	$logger->debug( "Cwd is " . $_[0]->dist_info( "unpack_dir" ) );
 
 	my @files = qw( MANIFEST Makefile.PL Build.PL META.yml );
 	
@@ -447,27 +451,27 @@ sub find_dist_dir
 	require File::Find::Closures;
 	require File::Find;
 
-	DEBUG( "Did not find dist directory at top level" );
+	$logger->debug( "Did not find dist directory at top level" );
 	my( $wanted, $reporter ) = 
 		File::Find::Closures::find_by_directory_contains( @files );
 
 	File::Find::find( $wanted, $_[0]->dist_info( "unpack_dir" ) );
 
 	my @found = $reporter->();
-	DEBUG( "Found files @found" );
+	$logger->debug( "Found files @found" );
 	
 	my( $first ) = $reporter->();
-	DEBUG( "Found dist file at $first" );
+	$logger->debug( "Found dist file at $first" );
 
 	unless( $first )
 		{
-		DEBUG( "Didn't find anything that looks like a module directory!" );
+		$logger->debug( "Didn't find anything that looks like a module directory!" );
 		return;
 		}
 
 	if( chdir $first )
 		{
-		DEBUG "Changed to $first";
+		$logger->debug( "Changed to $first" );
 		$_[0]->set_dist_info( 'dist_dir', $first );
 		return 1;
 		}
@@ -486,13 +490,13 @@ Sets these items in dist_info:
 
 sub get_file_list
 	{
-	TRACE( sub { get_caller_info } );
+	$logger->trace( sub { get_caller_info } );
 
-	DEBUG( "Cwd is " . cwd() );
+	$logger->debug( "Cwd is " . cwd() );
 	
 	unless( -e 'Makefile.PL' or -e 'Build.PL' )
 		{
-		ERROR( "No Makefile.PL or Build.PL" );
+		$logger->error( "No Makefile.PL or Build.PL" );
 		$_[0]->set_dist_info( 'manifest', [] );
 
 		return;
@@ -501,11 +505,11 @@ sub get_file_list
 	require ExtUtils::Manifest;
 
 	my $manifest = [ sort keys %{ ExtUtils::Manifest::manifind() } ];
-	DEBUG( "manifest is [ ", join( "|", @$manifest ), " ]" );
+	$logger->debug( "manifest is [ ", join( "|", @$manifest ), " ]" );
 	$_[0]->set_dist_info( 'manifest', [ @$manifest ] );
 
 	my @file_info = map { 
-		DEBUG( "Getting file info for $_" );
+		$logger->debug( "Getting file info for $_" );
 		$_[0]->get_file_info( $_ ) 
 		} @$manifest;
 
@@ -523,7 +527,7 @@ hash. Returns the hash reference.
 
 sub get_file_info
 	{
-	TRACE( sub { get_caller_info } );
+	$logger->trace( sub { get_caller_info } );
 	
 	my( $self, $file ) = @_;
 	
@@ -560,11 +564,11 @@ Sets these items in dist_info:
 
 sub get_blib_file_list
 	{
-	TRACE( sub { get_caller_info } );
+	$logger->trace( sub { get_caller_info } );
 
 	unless( -d 'blib/lib' )
 		{
-		ERROR( "No blib/lib found!" );
+		$logger->error( "No blib/lib found!" );
 		$_[0]->set_dist_info( 'blib', [] );
 
 		return;
@@ -584,7 +588,7 @@ sub get_blib_file_list
 
 sub look_in_lib
 	{
-	TRACE( sub { get_caller_info } );
+	$logger->trace( sub { get_caller_info } );
 
 	require File::Find::Closures;
 	require File::Find;
@@ -595,7 +599,7 @@ sub look_in_lib
 	my @modules = $reporter->();
 	unless( @modules )
 		{
-		DEBUG( "Did not find any modules in lib" );
+		$logger->debug( "Did not find any modules in lib" );
 		return;
 		}
 	
@@ -610,13 +614,13 @@ sub look_in_lib
 
 sub look_in_cwd
 	{
-	TRACE( sub { get_caller_info } );
+	$logger->trace( sub { get_caller_info } );
 	
 	my @modules = glob( "*.pm" );
 
 	unless( @modules )
 		{
-		DEBUG( "Did not find any modules in cwd" );
+		$logger->debug( "Did not find any modules in cwd" );
 		return;
 		}
 
@@ -636,7 +640,7 @@ Sets these items in dist_info:
 
 sub parse_meta_files
 	{
-	TRACE( sub { get_caller_info } );
+	$logger->trace( sub { get_caller_info } );
 
 	if( -e 'META.yml'  )
 		{
@@ -659,7 +663,7 @@ working directory.
 
 sub find_modules
 	{
-	TRACE( sub { get_caller_info } );
+	$logger->trace( sub { get_caller_info } );
 
 	my @methods = (
 		[ 'run_build_file', "Got from running build file"  ],
@@ -671,7 +675,7 @@ sub find_modules
 		{
 		my( $method, $message ) = @$tuple;
 		next unless $_[0]->$method();
-		DEBUG( $message );
+		$logger->debug( $message );
 		return 1;
 		}
 		
@@ -686,7 +690,7 @@ Find the test files. Look for C<test.pl> or C<.t> files under C<t/>.
 
 sub find_tests
 	{
-	TRACE( sub { get_caller_info } );
+	$logger->trace( sub { get_caller_info } );
 
 	require File::Find::Closures;
 	require File::Find;
@@ -699,7 +703,7 @@ sub find_tests
 	File::Find::find( $wanted, "t" );
 	
 	push @tests, $reporter->();
-	DEBUG( "Found tests [@tests]" );
+	$logger->debug( "Found tests [@tests]" );
 	
 	$_[0]->set_dist_info( 'tests', [ @tests ] );
 	
@@ -715,7 +719,7 @@ C<setup_build>, C<run_build>.
 
 sub run_build_file
 	{
-	TRACE( sub { get_caller_info } );
+	$logger->trace( sub { get_caller_info } );
 
 	foreach my $method ( qw( 
 		choose_build_file setup_build run_build get_blib_file_list ) )
@@ -724,7 +728,7 @@ sub run_build_file
 		}
 		
 	my @modules = grep /\.pm$/, @{ $_[0]->dist_info( 'blib' ) };
-	DEBUG( "Modules are @modules\n" );
+	$logger->debug( "Modules are @modules\n" );
 
 	$_[0]->set_dist_info( 'modules', [ @modules ] );
 	
@@ -742,7 +746,7 @@ Sets these items in dist_info:
 
 sub choose_build_file
 	{
-	TRACE( sub { get_caller_info } );
+	$logger->trace( sub { get_caller_info } );
 
 	require Distribution::Guess::BuildSystem;
 
@@ -756,11 +760,11 @@ sub choose_build_file
 		);
 
 	my $file = eval { $guesser->preferred_build_file };
-	DEBUG( "Build file is $file" );
-	DEBUG( "At is $@" ) if $@;
+	$logger->debug( "Build file is $file" );
+	$logger->debug( "At is $@" ) if $@;
 	unless( defined $file )
 		{
-		ERROR( "Did not find a build file" );
+		$logger->error( "Did not find a build file" );
 		return;
 		}
 
@@ -781,7 +785,7 @@ Sets these items in dist_info:
 
 sub setup_build
 	{
-	TRACE( sub { get_caller_info } );
+	$logger->trace( sub { get_caller_info } );
 
 	my $file = $_[0]->dist_info( 'build_file' );
 
@@ -801,7 +805,7 @@ Sets these items in dist_info:
 
 sub run_build
 	{
-	TRACE( sub { get_caller_info } );
+	$logger->trace( sub { get_caller_info } );
 
 	my $file = $_[0]->dist_info( 'build_file' );
 
@@ -820,13 +824,13 @@ COMMAND.
 
 sub run_something
 	{
-	TRACE( sub { get_caller_info } );
+	$logger->trace( sub { get_caller_info } );
 
 	my( $self, $command, $info_key ) = @_;
 
 	{
 	require IPC::Open2;
-	DEBUG( "Running $command" );
+	$logger->debug( "Running $command" );
 	my $pid = IPC::Open2::open2(
 		my $read,
 		my $write,
@@ -856,14 +860,14 @@ the hash, including the version and package information.
 
 sub get_module_info
 	{
-	TRACE( sub { get_caller_info } );
+	$logger->trace( sub { get_caller_info } );
 
 	require Module::Extract::VERSION;
 	require Module::Extract::Namespaces;
 	require Module::Extract::Use;
 	
 	my( $self, $file ) = @_;
-	DEBUG( "get_module_info called with [$file]\n" );
+	$logger->debug( "get_module_info called with [$file]\n" );
 
 	my $hash = $self->get_file_info( $file );
 	
@@ -893,12 +897,12 @@ the hash, including the version and package information.
 
 sub get_test_info
 	{
-	TRACE( sub { get_caller_info } );
+	$logger->trace( sub { get_caller_info } );
 
 	require Module::Extract::Use;
 	
 	my( $self, $file ) = @_;
-	DEBUG( "get_module_info called with [$file]\n" );
+	$logger->debug( "get_module_info called with [$file]\n" );
 
 	my $hash = $self->get_file_info( $file );
 
@@ -914,7 +918,7 @@ sub get_test_info
 
 sub count_lines
 	{
-	TRACE( sub { get_caller_info } );
+	$logger->trace( sub { get_caller_info } );
 
 	my( $self, $file ) = @_;
 
@@ -925,8 +929,8 @@ sub count_lines
 	$self->set_run_info( 'line_counter_class', $class );
 	$self->set_run_info( 'line_counter_version', $class->VERSION ); 
 	
-	DEBUG( "Counting lines in $file" );
-	ERROR( "File [$file] does not exist" ) unless -e $file;
+	$logger->debug( "Counting lines in $file" );
+	$logger->error( "File [$file] does not exist" ) unless -e $file;
 	
 	my $counter = $class->new;
 	$counter->count( $file );
@@ -947,7 +951,7 @@ Guesses and returns the MIME type for the file.
 
 sub file_magic
 	{
-	TRACE( sub { get_caller_info } );
+	$logger->trace( sub { get_caller_info } );
 	
 	my( $self, $file ) = @_;
 
@@ -979,7 +983,7 @@ cleans up its own files.
 
 sub cleanup
 	{
-	TRACE( sub { get_caller_info } );
+	$logger->trace( sub { get_caller_info } );
 
 	return 1;
 
@@ -1002,7 +1006,7 @@ take the object and dump it in some way.
 
 sub report_dist_info
 	{
-	TRACE( sub { get_caller_info } );
+	$logger->trace( sub { get_caller_info } );
 
 	no warnings 'uninitialized';
 
@@ -1018,7 +1022,7 @@ sub report_dist_info
 
 =item get_caller_info
 
-This method is mostly for the TRACE method in Log4perl. It figures out
+This method is mostly for the $logger->trace method in Log4perl. It figures out
 which information to report in the log message, acconting for all the
 levels or magic in between.
 
