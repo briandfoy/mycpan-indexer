@@ -1,6 +1,10 @@
 0.10_02 - Fri Aug 15 15:52:32 2008
 	* Initial release of my BackPAN Indexer
 
+1.16_02 - Wed Oct 15 17:12:58 2008
+	* Broke out the logging into categories so that you can
+	target the components that you want to inspect.
+
 0.15_01 - Mon Sep  8 23:25:15 2008
 	* Big changes to where everything is. I've decouple several
 	components into separate, pluggable classes. If you don't 
