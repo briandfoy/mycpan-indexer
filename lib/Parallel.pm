@@ -71,9 +71,9 @@ sub get_dispatcher
 	{
 	my( $class, $Notes ) = @_;
 		
-	$Notes->{Threads}             = $Notes->{config}->parallel_jobs;
-	$Notes->{dispatcher}          = $class->_make_forker( $Notes );
-	$Notes->{interface_callback } = $class->_make_interface_callback( $Notes );
+	$Notes->{Threads}            = $Notes->{config}->parallel_jobs;
+	$Notes->{dispatcher}         = $class->_make_forker( $Notes );
+	$Notes->{interface_callback} = $class->_make_interface_callback( $Notes );
 	}
 
 sub _make_forker

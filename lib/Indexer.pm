@@ -48,9 +48,9 @@ sub run
 	{
 	$logger->trace( sub { get_caller_info } );
 
-	my $class = shift;
+	my( $class ) = @_;
 	
-	my $self = bless {}, $class;
+	my $self = $class->new;
 
 	$self->setup_run_info;
 
@@ -74,12 +74,21 @@ sub run
 		$self->set_run_info( 'completed', 1 );
 		$self->set_run_info( 'run_end_time', time );
 
-		INFO( "Finished processing $dist\n" );
+		$logger->info( "Finished processing $dist\n" );
 		$logger->debug( sub { Dumper( $self ) } );
 		}
 
 	$self;
 	}
+
+=item new
+
+Create a new Indexer object. If you call C<run>, this is done for
+you.
+
+=cut
+
+sub new { bless {}, $_[0] }
 
 =item examine_dist
 
@@ -357,7 +366,7 @@ sub unpack_dist
 		
 	if( $extractor->type eq 'gz' )
 		{
-		$logger->error( "Dist claims to be a gz, so try .tgz instead" );
+		$logger->error( "Dist $dist claims to be a gz, so try .tgz instead" );
 	
 		$extractor = eval {
 			Archive::Extract->new( archive => $dist, type => 'tgz' )
@@ -375,7 +384,7 @@ sub unpack_dist
 
 	my $rc = $extractor->extract( to => $self->dist_info( 'unpack_dir' ) );
 
-	$logger->debug( "Archive::Extract returns [$rc]" );
+	$logger->debug( "Archive::Extract returns [$rc] for $dist" );
 	return unless( $rc );
 
 	$self->set_dist_info( 'dist_extract_path', $extractor->extract_path );
@@ -402,7 +411,7 @@ sub get_unpack_dir
 
 	( my $prefix = __PACKAGE__ ) =~ s/::/-/g;
 
-	$logger->debug( "Preparing temp dir in pid [$$]\n" );
+	$logger->debug( "Preparing temp dir\n" );
 	my $unpack_dir = eval { File::Temp::tempdir(
 		$prefix . "-$$.XXXX",
 		DIR     => $self->run_info( 'root_working_dir' ),
@@ -411,7 +420,7 @@ sub get_unpack_dir
 
 	if( $@ )
 		{
-		$logger->debug( "Temp dir error for pid [$$] [$@]" );
+		$logger->error( "Temp dir error: $@" );
 		return;
 		}
 	
@@ -656,7 +665,7 @@ sub parse_meta_files
 =item find_modules
 
 Find the module files. First, look in C<blib/>. IF there are no files in 
-C<blib/>, look in C<lib/>. IF there are still none, look in the currnet
+C<blib/>, look in C<lib/>. IF there are still none, look in the current
 working directory.
 
 =cut

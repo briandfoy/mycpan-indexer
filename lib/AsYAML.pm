@@ -5,6 +5,7 @@ use warnings;
 use vars qw($VERSION $logger);
 $VERSION = '1.16_02';
 
+use Carp;
 use File::Basename;
 use File::Spec::Functions qw(catfile);
 use Log::Log4perl;
@@ -56,6 +57,8 @@ sub get_reporter
 	$Notes->{reporter} = sub {
 		my( $Notes, $info ) = @_;
 
+		carp "info is undefined!" unless defined $info;
+		
 		my $dist = $info->dist_info( 'dist_file' );
 		
 		( my $basename = basename( $dist ) ) =~ s/\.(tgz|tar\.gz|zip)$//;
@@ -67,6 +70,9 @@ sub get_reporter
 		open my($fh), ">", $out_path or FATAL( "Could not open $out_path: $!" );
 		print $fh Dump( $info );
 		
+		$logger->ERROR( "$basename.yml is missing!" ) unless -e $out_path;
+		
+		1;
 		};
 		
 	1;

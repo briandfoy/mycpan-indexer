@@ -13,19 +13,32 @@ use YAML;
 
 =head1 NAME
 
-MyCPAN::Indexer::Worker - Do the indexing
+MyCPAN::Indexer::CPANMiniInject - Do the indexing, and put the dists in a MiniCPAN
 
 =head1 SYNOPSIS
 
 Use this in backpan_indexer.pl by specifying it as the queue class:
 
 	# in backpan_indexer.config
-	worker_class  MyCPAN::Indexer::Worker
+	worker_class  MyCPAN::Indexer::CPANMiniInject
 
 =head1 DESCRIPTION
 
-This class takes a distribution and analyses it. This is what the dispatcher
-hands a disribution to for the actual indexing.
+This class takes a distribution and analyses it. Once it knows the modules
+inside the distribution, it adds the distribution to a CPAN::Mini::Inject
+staging repository. This portion specifically does not inject the modules
+into the MiniCPAN. The injection has to happen after all of the workers
+have finished.
+
+=head2 Configuration
+
+=over 4
+
+=item minicpan_inject_config
+
+The location of the configuration file for CPAN::Mini::Config
+
+=cut
 
 =head2 Methods
 
@@ -58,7 +71,7 @@ sub get_task
 		
 		my $Config = $Notes->{config};
 		
-		$logger->info( "Child process for $basename starting\n" );
+		$logger->info( "Child [$$] processing $dist\n" );
 			
 		my $Indexer = $Config->indexer_class || 'MyCPAN::Indexer';
 		
@@ -70,16 +83,14 @@ sub get_task
 			exit 255;
 			}
 		
-		local $SIG{ALRM} = sub { die "alarm rang for $basename!\n" };
+		local $SIG{ALRM} = sub { die "alarm\n" };
 		alarm( $Config->alarm || 15 );
 		my $info = eval { $Indexer->run( $dist ) };
 	
 		unless( defined $info )
 			{
-			$logger->error( "run failed for $basename: $@" );
-			$info = bless {}, $Indexer;
-			$info->set_run_info( qw(completed 0) );
-			$info->set_run_info( error => $@ );
+			$logger->error( "run failed: $@" );
+			return;
 			}
 		elsif( ! eval { $info->run_info( 'completed' ) } )
 			{
@@ -93,7 +104,7 @@ sub get_task
 		
 		$Notes->{reporter}->( $Notes, $info );
 		
-		$logger->debug( "Child process for $basename done" );
+		$logger->debug( "Child [$$] process done" );
 		
 		1;
 		};

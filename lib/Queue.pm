@@ -40,6 +40,10 @@ sets it to a copy of @ARGV, or finds all of the tarballs or zip
 archives in under the directory named in C<backpan_dir> in the
 configuration. 
 
+It specifically skips files that end in C<.txt.gz> or C<.data.gz>
+since PAUSE creates those meta files near the actual module
+installations.
+
 =cut
 
 sub get_queue
@@ -64,7 +68,7 @@ sub get_queue
 				}
 				
 			find( $wanted, $Notes->{config}->backpan_dir );
-			[ $reporter->() ];
+			[ grep ! /.(data|txt).gz$/, $reporter->() ];
 			}
 		};
 		

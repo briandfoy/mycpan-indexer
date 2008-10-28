@@ -8,7 +8,9 @@ use blib;
 use Cwd qw(cwd);
 use Data::Dumper;
 use File::Basename;
+use File::Path qw(mkpath);
 use File::Spec::Functions qw(catfile);
+use File::Temp;
 use Getopt::Std;
 use Log::Log4perl;
 
@@ -91,11 +93,11 @@ sub get_config
 
 	my $file = shift;
 	
-	$logger->debug( "Conf file is $file" );
+	$logger->debug( "Config file is $file" );
+	$logger->fatal( "Config file does not exist!" ) unless -e $file;
 	
 	my $Config = ConfigReader::Simple->new( $file,
-		[ qw(temp_dir backpan_dir report_dir alarm 
-			copy_bad_dists retry_errors indexer_class) ]
+		[ qw(temp_dir backpan_dir report_dir alarm) ]
 		);
 		
 	$logger->fatal( "Could not read config!" ) unless ref $Config;
@@ -109,9 +111,14 @@ sub setup_dirs
 	
 	my $cwd = cwd();
 	
-	mkdir $Config->temp_dir unless -d $Config->temp_dir;
+	my $temp_dir = $Config->temp_dir || tempdir( CLEANUP => 1 );
+	$logger->debug( "temp_dir is [$temp_dir] [" . $Config->temp_dir . "]" );
+	
+	mkpath( $temp_dir ) unless -d $temp_dir;
+	$logger->fatal( "temp_dir does not exist!" ) unless -d $temp_dir;
+	
 	chdir $Config->temp_dir or 
-		die "Could not change to [" . $Config->temp_dir . "]: $!\n";
+		$logger->fatal( "Could not change to [" . $Config->temp_dir . "]: $!" );
 	
 	my $yml_dir       = catfile( $Config->report_dir, "meta"        );
 	my $yml_error_dir = catfile( $Config->report_dir, "meta-errors" );

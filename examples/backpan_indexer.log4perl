@@ -1,23 +1,23 @@
 # trace debug info warn error fatal
-log4perl.rootLogger        =    FATAL, Screen
+log4perl.rootLogger               =    FATAL, Null
 
-log4perl.logger.backpan_indexer   =    DEBUG, Screen
+log4perl.logger.backpan_indexer   =    ERROR, File
 
-log4perl.logger.Indexer           =    ERROR, Screen
-log4perl.logger.Worker            =    DEBUG, Screen
+log4perl.logger.Indexer           =    FATAL, File
+log4perl.logger.Worker            =    ERROR, File
 
-log4perl.logger.Interface         =    DEBUG, Screen
+log4perl.logger.Interface         =    FATAL, File
 
-log4perl.logger.Dispatcher        =    DEBUG, Screen
-log4perl.logger.Queue             =    ERROR, Screen
+log4perl.logger.Dispatcher        =    DEBUG, File
+log4perl.logger.Queue             =    FATAL, File
 
-log4perl.logger.Reporter          =    DEBUG, Screen
+log4perl.logger.Reporter          =    INFO, File
 
 
 log4perl.appender.Screen            = Log::Log4perl::Appender::ScreenColoredLevels::UsingMyColors
 log4perl.appender.Screen.stderr     = 0
 log4perl.appender.Screen.layout     = PatternLayout
-log4perl.appender.Screen.layout.ConversionPattern=%c => [%p] l.%L %m%n
+log4perl.appender.Screen.layout.ConversionPattern=[%p|%c|%P|l%L] %m%n
 log4perl.appender.Screen.color.debug = yellow
 log4perl.appender.Screen.color.trace = red on_yellow
 log4perl.appender.Screen.color.error = magenta 
@@ -30,4 +30,11 @@ log4perl.appender.File.autoflush = 1
 log4perl.appender.File.filename  = backpan_indexer.log
 log4perl.appender.File.mode      = append
 log4perl.appender.File.layout     = PatternLayout
-log4perl.appender.File.layout.ConversionPattern=%c => [%p] l.:%L %m%n
+log4perl.appender.File.layout.ConversionPattern=[%p|%c|%P|l%L] %m%n
+
+log4perl.appender.Null           = Log::Log4perl::Appender::File
+log4perl.appender.Null.autoflush = 1
+log4perl.appender.Null.filename  = /dev/null
+log4perl.appender.Null.mode      = append
+log4perl.appender.Null.layout     = PatternLayout
+log4perl.appender.Null.layout.ConversionPattern=[%p|%c|%P|l%L] %m%n
