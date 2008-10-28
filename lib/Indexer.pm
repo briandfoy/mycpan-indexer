@@ -352,8 +352,11 @@ sub unpack_dist
 	{
 	$logger->trace( sub { get_caller_info } );
 
+	require Archive::Tar;
 	require Archive::Extract;
-
+	local $Archive::Extract::WARN = 0;
+	local $Archive::Tar::WARN = $Archive::Extract::WARN; # sent in patch for this rt.cpan.org #40472
+	
 	my $self = shift;
 	my $dist = $self->dist_info( 'dist_file' );
 	$logger->debug( "Unpacking dist $dist" );
@@ -363,6 +366,7 @@ sub unpack_dist
 	my $extractor = eval {
 		Archive::Extract->new( archive => $dist );
 		};
+	local $Archive::Tar::WARN = 0;
 		
 	if( $extractor->type eq 'gz' )
 		{
@@ -375,7 +379,7 @@ sub unpack_dist
 
 	unless( $extractor )
 		{
-		$logger->error( "Still could not unpack $dist [$@]" );
+		$logger->error( "Could create Archive::Extract object for $dist [$@]" );
 		$self->set_dist_info( 'dist_archive_type', 'unknown' );
 		return;	
 		}
@@ -383,9 +387,14 @@ sub unpack_dist
 	$self->set_dist_info( 'dist_archive_type', $extractor->type );
 
 	my $rc = $extractor->extract( to => $self->dist_info( 'unpack_dir' ) );
-
 	$logger->debug( "Archive::Extract returns [$rc] for $dist" );
-	return unless( $rc );
+
+	unless( $rc )
+		{
+		$logger->error( "Archive::Extract could not extract $dist: " . $extractor->error(1) );
+		$self->set_dist_info( 'extraction_error', $extractor->error(1) );
+		return;
+		}
 
 	$self->set_dist_info( 'dist_extract_path', $extractor->extract_path );
 

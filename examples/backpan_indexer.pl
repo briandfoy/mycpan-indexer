@@ -2,7 +2,6 @@
 use strict;
 use warnings;
 no warnings 'uninitialized';
-use vars qw( %Options );
 
 use blib;
 use Cwd qw(cwd);
@@ -18,71 +17,78 @@ $|++;
 
 my $logger = Log::Log4perl->get_logger( 'backpan_indexer' );
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-# Process the options
-{
-my $run_dir = dirname( $0 );
-( my $script  = basename( $0 ) ) =~ s/\.\w+$//;
+__PACKAGE__->run() unless caller;
 
-getopts('i:f:', \%Options); 
-
-$Options{f} ||= catfile( $run_dir, "$script.conf" );
-$Options{i} ||= catfile( $run_dir, "$script.log4perl" );
-}
-
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-# Minutely control the environment
-{
-my %pass_through = map { $_, 1 } qw( DISPLAY USER HOME PWD TERM );
-
-foreach my $key ( keys %ENV ) 
-	{ 
-	delete $ENV{$key} unless exists $pass_through{$key} 
-	}
-
-$ENV{AUTOMATED_TESTING}++;
-}
-
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-# The set up
-Log::Log4perl->init_and_watch( $Options{i}, 30 );
-
-my $Config = get_config( $Options{f} );
-
-setup_dirs( $Config );
-
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-# Load classes and check that they do the right thing
-my $Notes = { 
-	config     => $Config,
-	UUID       => get_uuid(),
-	};
-
-{
-my @components = (
-	[ qw( queue_class      MyCPAN::Indexer::Queue             get_queue      ) ],
-	[ qw( dispatcher_class MyCPAN::Indexer::Parallel          get_dispatcher ) ],
-	[ qw( reporter_class   MyCPAN::Indexer::Reporter::AsYAML  get_reporter   ) ],
-	[ qw( worker_class     MyCPAN::Indexer::Worker            get_task       ) ],
-	[ qw( interface_class  MyCPAN::Indexer::Interface::Curses do_interface   ) ],
-	[ qw( reporter_class   MyCPAN::Indexer::Interface::Curses final_words    ) ],
-	);
-
-foreach my $tuple ( @components )
+sub run
 	{
-	my( $directive, $default_class, $method ) = @$tuple;
-	
-	my $class = $Config->get( $directive) || $default_class;
-	
-	eval "require $class" or die "$@\n";
-	die "$directive [$class] does not implement $method()" 
-		unless $class->can( $method );
-		
-	$logger->debug( "Calling $class->$method()" );
-	$class->$method( $Notes );
+	use vars qw( %Options );
+
+	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+	# Process the options
+	{
+	my $run_dir = dirname( $0 );
+	( my $script  = basename( $0 ) ) =~ s/\.\w+$//;
+
+	getopts('i:f:', \%Options); 
+
+	$Options{f} ||= catfile( $run_dir, "$script.conf" );
+	$Options{i} ||= catfile( $run_dir, "$script.log4perl" );
 	}
 
-}
+	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+	# Minutely control the environment
+	{
+	my %pass_through = map { $_, 1 } qw( DISPLAY USER HOME PWD TERM );
+
+	foreach my $key ( keys %ENV ) 
+		{ 
+		delete $ENV{$key} unless exists $pass_through{$key} 
+		}
+
+	$ENV{AUTOMATED_TESTING}++;
+	}
+
+	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+	# The set up
+	Log::Log4perl->init_and_watch( $Options{i}, 30 );
+
+	my $Config = get_config( $Options{f} );
+
+	setup_dirs( $Config );
+
+	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+	# Load classes and check that they do the right thing
+	my $Notes = { 
+		config     => $Config,
+		UUID       => get_uuid(),
+		};
+
+	{
+	my @components = (
+		[ qw( queue_class      MyCPAN::Indexer::Queue             get_queue      ) ],
+		[ qw( dispatcher_class MyCPAN::Indexer::Parallel          get_dispatcher ) ],
+		[ qw( reporter_class   MyCPAN::Indexer::Reporter::AsYAML  get_reporter   ) ],
+		[ qw( worker_class     MyCPAN::Indexer::Worker            get_task       ) ],
+		[ qw( interface_class  MyCPAN::Indexer::Interface::Curses do_interface   ) ],
+		[ qw( reporter_class   MyCPAN::Indexer::Interface::Curses final_words    ) ],
+		);
+
+	foreach my $tuple ( @components )
+		{
+		my( $directive, $default_class, $method ) = @$tuple;
+	
+		my $class = $Config->get( $directive) || $default_class;
+	
+		eval "require $class" or die "$@\n";
+		die "$directive [$class] does not implement $method()" 
+			unless $class->can( $method );
+		
+		$logger->debug( "Calling $class->$method()" );
+		$class->$method( $Notes );
+		}
+
+	}
+	}
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 

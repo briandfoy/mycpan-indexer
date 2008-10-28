@@ -197,9 +197,10 @@ and should do.
 =cut
 
 sub final_words
-	{	
+	{
 	# This is where I want to write 02packages and CHECKSUMS
 	my( $class, $Notes ) = @_; 
+	
 	$reporter_logger->debug( "Final words from the DPAN Reporter" );
 	
 	#print Dumper( $Notes ); use Data::Dumper;
@@ -220,6 +221,7 @@ sub final_words
 	require version;
 	foreach my $file ( readdir( $dh ) )
 		{
+		next if $file =~ /^.{1,2}\z/;
 		$reporter_logger->debug( "Processing output file $file" );
 		my $yaml = eval { YAML::LoadFile( catfile( $report_dir, $file ) ) } or do {
 			$reporter_logger->error( "$file: $@" );

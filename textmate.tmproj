@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>currentDocument</key>
-	<string>examples/backpan_indexer.config.dpan</string>
+	<string>examples/dpan.pl</string>
 	<key>documents</key>
 	<array>
 		<dict>
@@ -35,20 +35,6 @@
 			<key>firstVisibleLine</key>
 			<integer>0</integer>
 		</dict>
-		<key>examples/backpan_indexer.config.minicpan</key>
-		<dict>
-			<key>caret</key>
-			<dict>
-				<key>column</key>
-				<integer>0</integer>
-				<key>line</key>
-				<integer>0</integer>
-			</dict>
-			<key>firstVisibleColumn</key>
-			<integer>0</integer>
-			<key>firstVisibleLine</key>
-			<integer>0</integer>
-		</dict>
 		<key>examples/backpan_indexer.log4perl</key>
 		<dict>
 			<key>caret</key>
@@ -68,14 +54,28 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>44</integer>
+				<integer>0</integer>
 				<key>line</key>
-				<integer>99</integer>
+				<integer>24</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>79</integer>
+			<integer>0</integer>
+		</dict>
+		<key>examples/dpan.pl</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>0</integer>
+				<key>line</key>
+				<integer>2</integer>
+			</dict>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>0</integer>
 		</dict>
 		<key>lib/AsYAML.pm</key>
 		<dict>
@@ -89,7 +89,7 @@
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>0</integer>
+			<integer>61</integer>
 		</dict>
 		<key>lib/CPANMiniInject.pm</key>
 		<dict>
@@ -124,44 +124,14 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>12</integer>
-				<key>line</key>
-				<integer>66</integer>
-			</dict>
-			<key>columnSelection</key>
-			<false/>
-			<key>firstVisibleColumn</key>
-			<integer>0</integer>
-			<key>firstVisibleLine</key>
-			<integer>46</integer>
-			<key>selectFrom</key>
-			<dict>
-				<key>column</key>
-				<integer>4</integer>
-				<key>line</key>
-				<integer>66</integer>
-			</dict>
-			<key>selectTo</key>
-			<dict>
-				<key>column</key>
 				<integer>16</integer>
 				<key>line</key>
-				<integer>66</integer>
-			</dict>
-		</dict>
-		<key>lib/Indexer.pm</key>
-		<dict>
-			<key>caret</key>
-			<dict>
-				<key>column</key>
-				<integer>14</integer>
-				<key>line</key>
-				<integer>50</integer>
+				<integer>114</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>40</integer>
+			<integer>104</integer>
 		</dict>
 		<key>lib/Queue.pm</key>
 		<dict>
@@ -213,17 +183,16 @@
 		<string>examples/backpan_indexer.log4perl</string>
 		<string>examples/backpan_indexer.config.dpan</string>
 		<string>lib/AsYAML.pm</string>
+		<string>examples/dpan.pl</string>
 		<string>lib/Queue.pm</string>
 		<string>lib/Tutorial.pm</string>
 		<string>lib/CPANMiniInject.pm</string>
 		<string>lib/Curses.pm</string>
 		<string>lib/DPAN.pm</string>
-		<string>examples/backpan_indexer.config.minicpan</string>
-		<string>lib/Indexer.pm</string>
 	</array>
 	<key>showFileHierarchyDrawer</key>
 	<true/>
 	<key>windowFrame</key>
-	<string>{{-1244, 177}, {816, 991}}</string>
+	<string>{{138, 23}, {816, 991}}</string>
 </dict>
 </plist>
