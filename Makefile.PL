@@ -14,6 +14,7 @@ WriteMakefile(
 	
 	'PREREQ_PM'    => { 
 		'Archive::Extract'                 => '0',
+		'Archive::Tar'                     => '0',
 		'Distribution::Guess::BuildSystem' => '0',
 		'File::Find'                       => '0',
 		'File::Find::Closures'             => '0',
@@ -31,6 +32,7 @@ WriteMakefile(
 		'YAML::Syck'                       => '0',
 		'YAML'                             => '0',
 		'Curses'                           => '0',
+		'CPAN::PackageDetails'             => '0',
 		},
 
 	'PM'           => {
