@@ -24,3 +24,4 @@ examples/curses.pl
 examples/backpan_indexer.log
 research
 .*\.log
+tmproj
