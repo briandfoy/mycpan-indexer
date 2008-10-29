@@ -73,11 +73,14 @@ sub get_task
 		local $SIG{ALRM} = sub { die "alarm rang for $basename!\n" };
 		alarm( $Config->alarm || 15 );
 		my $info = eval { $Indexer->run( $dist ) };
-	
+		alarm 0;
+
 		unless( defined $info )
 			{
 			$logger->error( "run failed for $basename: $@" );
-			$info = bless {}, $Indexer;
+			$info = bless {}, $Indexer; # XXX TODO make this a real class
+			$info->setup_dist_info( $dist );
+			$info->setup_run_info;
 			$info->set_run_info( qw(completed 0) );
 			$info->set_run_info( error => $@ );
 			}
@@ -86,9 +89,7 @@ sub get_task
 			$logger->error( "$basename did not complete\n" );
 			$class->_copy_bad_dist( $Notes, $info ) if $Config->copy_bad_dists;
 			}
-			
-		alarm 0;
-				
+
 		$class->_add_run_info( $info, $Notes );
 		
 		$Notes->{reporter}->( $Notes, $info );

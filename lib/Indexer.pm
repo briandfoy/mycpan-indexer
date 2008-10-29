@@ -96,34 +96,47 @@ Given a distribution, unpack it, look at it, and report the findings.
 It does everything except the looking right now, so it merely croaks.
 Most of this needs to move out of run and into this method.
 
+=item examine_dist_steps
+
+Return a list of 3-element anonymous arrays that tell C<examine_dists>
+what to do. The elements of each anonymous array are:
+
+	1) the method to call (must be in indexing class or its parents)
+	2) a text description of the method
+	3) if a failure in that step should stop the exam: true or false
+	
 =cut
 
-{
-my @methods = (
-	#    method                error message                  fatal
-	[ 'unpack_dist',        "Could not unpack distribtion!",     1 ],
-	[ 'find_dist_dir',      "Did not find distro directory!",    1 ],
-	[ 'get_file_list',      'Could not get file list',           1 ],
-	[ 'parse_meta_files',   "Could not parse META.yml!",         0 ],
-	[ 'find_modules',       "Could not find modules!",           1 ],
-	[ 'find_tests',         "Could not find tests!",             0 ],
-	);
+sub examine_dist_steps
+	{
+	my @methods = (
+		#    method                error message                  fatal
+		[ 'unpack_dist',        "Could not unpack distribtion!",     1 ],
+		[ 'find_dist_dir',      "Did not find distro directory!",    1 ],
+		[ 'get_file_list',      'Could not get file list',           1 ],
+		[ 'parse_meta_files',   "Could not parse META.yml!",         0 ],
+		[ 'find_modules',       "Could not find modules!",           1 ],
+		[ 'find_tests',         "Could not find tests!",             0 ],
+		);
+	}
 
 sub examine_dist
 	{
 	$logger->trace( sub { get_caller_info } );
-
-	foreach my $tuple ( @methods )
+	my( $self ) = @_;
+	
+	foreach my $tuple ( $self->examine_dist_steps )
 		{
-		my( $method, $error, $die_on_error ) = @$tuple;
+		my( $method, $error_msg, $die_on_error ) = @$tuple;
 
-		unless( $_[0]->$method() )
+		unless( $self->$method() )
 			{
-			$logger->error( $error );
+			$logger->error( $error_msg );
+			$self->set_run_info( 'fatal_error', $error_msg );
+
 			if( $die_on_error ) # only if failure is fatal
 				{
-				$logger->error( "Stopping: $error" );
-				$_[0]->set_run_info( 'fatal_error', $error );
+				$logger->error( "Fatal error, stopping: $error_msg" );
 				return;
 				}
 			}
@@ -131,31 +144,30 @@ sub examine_dist
 
 	{
 	my @file_info = ();
-	foreach my $file ( @{ $_[0]->dist_info( 'modules' ) } )
+	foreach my $file ( @{ $self->dist_info( 'modules' ) } )
 		{
 		$logger->debug( "Processing module $file" );
-		my $hash = $_[0]->get_module_info( $file );
+		my $hash = $self->get_module_info( $file );
 		push @file_info, $hash;
 		}
 
-	$_[0]->set_dist_info( 'module_info', [ @file_info ] );
+	$self->set_dist_info( 'module_info', [ @file_info ] );
 	}
 	
 	{
 	my @file_info = ();
-	foreach my $file ( @{ $_[0]->dist_info( 'tests' ) } )
+	foreach my $file ( @{ $self->dist_info( 'tests' ) || [] } )
 		{
 		$logger->debug( "Processing test $file" );
-		my $hash = $_[0]->get_test_info( $file );
+		my $hash = $self->get_test_info( $file );
 		push @file_info, $hash;
 		}
 
-	$_[0]->set_dist_info( 'test_info', [ @file_info ] );
+	$self->set_dist_info( 'test_info', [ @file_info ] );
 	}
 
 	return 1;
 	}
-}
 
 =item clear_run_info
 
@@ -602,6 +614,8 @@ sub get_blib_file_list
 
 =item look_in_lib
 
+Look in the lib/ directory for .pm files.
+
 =cut
 
 sub look_in_lib
@@ -628,6 +642,9 @@ sub look_in_lib
 	
 =item look_in_cwd
 
+Look for .pm files in the current workign directory (and not
+in sub-directories). This is more common in older Perl modules.
+
 =cut
 
 sub look_in_cwd
@@ -642,6 +659,77 @@ sub look_in_cwd
 		return;
 		}
 
+	$_[0]->set_dist_info( 'modules', [ @modules ] );
+	
+	return 1;
+	}
+
+=item look_in_meta_yml_provides
+
+As an almost-last-ditch effort, decide to beleive META.yml if it
+has a provides entry. There's no reason to trust that the 
+module author has told the truth since he is only interested in
+advertising the parts he wants you to use.
+
+=cut
+
+sub look_in_meta_yml_provides
+	{
+	$logger->trace( sub { get_caller_info } );
+
+	unless( -e 'META.yml' )
+		{
+		$logger->debug( "Did not find a META.yml, so can't check provides" );
+		return;
+		}
+
+	require YAML;
+	my $yaml = YAML::LoadFile( 'META.yml' );
+	unless( exists $yaml->{provides} )
+		{
+		$logger->debug( "Did not find a provides in META.yml" );
+		return;
+		}
+	
+	my $provides = $yaml->{provides};
+
+	my @modules = ();
+	foreach my $key ( keys %$provides )
+		{
+		my( $namespace, $file, $version ) = 
+			( $key, @{$provides->{$key}}{qw(file version)} );
+			
+		push @modules, $file;
+		}
+
+	$_[0]->set_dist_info( 'modules', [ @modules ] );
+
+	return 1;
+	}
+=item look_for_pm
+
+This is a last ditch effort to find modules by looking everywhere, starting
+in the current working directory.
+
+=cut
+
+sub look_for_pm
+	{
+	$logger->trace( sub { get_caller_info } );
+
+	require File::Find::Closures;
+	require File::Find;
+	
+	my( $wanted, $reporter ) = File::Find::Closures::find_by_regex( qr/\.pm\z/ );
+	File::Find::find( $wanted, cwd() );
+	
+	my @modules = $reporter->();
+	unless( @modules )
+		{
+		$logger->debug( "Did not find any modules in lib" );
+		return;
+		}
+	
 	$_[0]->set_dist_info( 'modules', [ @modules ] );
 	
 	return 1;
@@ -671,6 +759,28 @@ sub parse_meta_files
 	return;
 	}
 
+=item find_module_techniques
+
+Returns a list of 2-element anonymous arrays that lists method names 
+and string descriptions of the way that the C<find_modules>
+should look for module files.
+
+If you don't like the techniques, such as C<run_build_file>, you can
+overload this and return a different set of techniques.
+
+=cut
+
+sub find_module_techniques
+	{
+	my @methods = (
+		[ 'run_build_file', "Got from running build file"  ],
+		[ 'look_in_lib',    "Guessed from looking in lib/" ],
+		[ 'look_in_cwd',    "Guessed from looking in cwd"  ],
+		[ 'look_in_meta_yml_provides',    "Guessed from looking in META.yml"  ],
+		[ 'look_for_pm',    "Guessed from looking in cwd"  ],
+		);
+	}
+
 =item find_modules
 
 Find the module files. First, look in C<blib/>. IF there are no files in 
@@ -683,11 +793,7 @@ sub find_modules
 	{
 	$logger->trace( sub { get_caller_info } );
 
-	my @methods = (
-		[ 'run_build_file', "Got from running build file"  ],
-		[ 'look_in_lib',    "Guessed from looking in lib/" ],
-		[ 'look_in_cwd',    "Guessed from looking in cwd"  ],
-		);
+	my @methods = $_[0]->find_module_techniques;
 	
 	foreach my $tuple ( @methods )
 		{
@@ -899,7 +1005,14 @@ sub get_module_info
 	$hash->{packages} = [ @packages ];
 	$hash->{primary_package} = $first_package;
 
-	my @uses = Module::Extract::Use->get_modules( $file );
+	my $use_extractor = Module::Extract::Use->new;
+	
+	my @uses = $use_extractor->get_modules( $file );
+	if( $use_extractor->error )
+		{
+		$logger->error( "Could not extract uses for [$file]: " . $use_extractor->error );
+		}
+		
 	$hash->{uses} = [ @uses ];
 	
 	$hash;
@@ -916,15 +1029,16 @@ the hash, including the version and package information.
 sub get_test_info
 	{
 	$logger->trace( sub { get_caller_info } );
-
-	require Module::Extract::Use;
 	
 	my( $self, $file ) = @_;
 	$logger->debug( "get_module_info called with [$file]\n" );
 
 	my $hash = $self->get_file_info( $file );
 
-	my @uses = Module::Extract::Use->get_modules( $file );
+	require Module::Extract::Use;
+	my $extractor = Module::Extract::Use->new;
+	my @uses = $extractor->get_modules( $file );
+
 	$hash->{uses} = [ @uses ];
 	
 	$hash;

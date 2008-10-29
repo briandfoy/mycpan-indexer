@@ -3,3 +3,5 @@ load.t
 compile.t
 pod.t
 pod_coverage.t
+app/backpan.t
+app/dpan.t

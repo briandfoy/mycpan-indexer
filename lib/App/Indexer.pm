@@ -20,8 +20,55 @@ my $logger = Log::Log4perl->get_logger( 'backpan_indexer' );
 
 __PACKAGE__->run() unless caller;
 
+BEGIN {
+my $cwd = cwd();
+
+my %Defaults = (
+	report_dir       => catfile( $cwd, 'indexer_reports' ),
+	temp_dir         => catfile( $cwd, 'temp' ),
+	alarm            => 15,
+	copy_bad_dists   => 0,
+	retry_errors     => 1,
+	indexer_id       => 'Joe Example <joe@example.com>',
+	system_id        => 'an unnamed system',
+	indexer_class    => 'MyCPAN::Indexer',
+	queue_class      => 'MyCPAN::Indexer::Queue',
+	dispatcher_class => 'MyCPAN::Indexer::Dispatch::Parallel',
+	interface_class  => 'MyCPAN::Indexer::Interface::Text',
+	worker_class     => 'MyCPAN::Indexer::Worker',
+	reporter_class   => 'MyCPAN::Indexer::Reporter::AsYAML',
+	parallel_jobs    => 1,
+	);
+
+sub default { $Defaults{$_[1]} }
+
+sub config_class { 'ConfigReader::Simple' }
+
+sub get_config
+	{
+	my( $self, $file ) = @_;
+
+	eval "require " . $self->config_class . "; 1";
+
+	$logger->debug( "Config file is $file" );
+	$logger->debug( "Config file does not exist!" ) unless -e $file;
+
+	my $Config = $self->config_class->new( defined $file ? $file : () );
+	$logger->fatal( "Could not create config object!" ) unless ref $Config;
+
+	foreach my $key ( keys %Defaults )
+		{
+		next if $Config->exists( $key );
+		$Config->set( $key, $self->default( $key ) );
+		}
+	
+	$Config;
+	}
+}
+	
 sub run
 	{
+	my( $self, %args ) = @_;
 	use vars qw( %Options );
 
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
@@ -30,10 +77,10 @@ sub run
 	my $run_dir = dirname( $0 );
 	( my $script  = basename( $0 ) ) =~ s/\.\w+$//;
 
-	getopts('i:f:', \%Options); 
+	getopts('l:f:', \%Options); 
 
 	$Options{f} ||= catfile( $run_dir, "$script.conf" );
-	$Options{i} ||= catfile( $run_dir, "$script.log4perl" );
+	$Options{l} ||= catfile( $run_dir, "$script.log4perl" );
 	}
 
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
@@ -51,11 +98,18 @@ sub run
 
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 	# The set up
-	Log::Log4perl->init_and_watch( $Options{i}, 30 );
+	if( -e $Options{l} )
+		{
+		Log::Log4perl->init_and_watch( $Options{l}, 30 );
+		}
+	else
+		{
+		Log::Log4perl->init( '' );
+		}
+	
+	my $Config = $self->get_config( $Options{f} );
 
-	my $Config = get_config( $Options{f} );
-
-	setup_dirs( $Config );
+	$self->setup_dirs( $Config );
 
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 	# Load classes and check that they do the right thing
@@ -65,20 +119,13 @@ sub run
 		};
 
 	{
-	my @components = (
-		[ qw( queue_class      MyCPAN::Indexer::Queue             get_queue      ) ],
-		[ qw( dispatcher_class MyCPAN::Indexer::Parallel          get_dispatcher ) ],
-		[ qw( reporter_class   MyCPAN::Indexer::Reporter::AsYAML  get_reporter   ) ],
-		[ qw( worker_class     MyCPAN::Indexer::Worker            get_task       ) ],
-		[ qw( interface_class  MyCPAN::Indexer::Interface::Curses do_interface   ) ],
-		[ qw( reporter_class   MyCPAN::Indexer::Interface::Curses final_words    ) ],
-		);
+	my @components = $self->components;
 
 	foreach my $tuple ( @components )
 		{
 		my( $directive, $default_class, $method ) = @$tuple;
 	
-		my $class = $Config->get( $directive) || $default_class;
+		my $class = $Config->get( $directive ) || $default_class;
 	
 		eval "require $class" or die "$@\n";
 		die "$directive [$class] does not implement $method()" 
@@ -91,30 +138,21 @@ sub run
 	}
 	}
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
- # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-sub get_config
+sub components
 	{
-	require ConfigReader::Simple;
-
-	my $file = shift;
-	
-	$logger->debug( "Config file is $file" );
-	$logger->fatal( "Config file does not exist!" ) unless -e $file;
-	
-	my $Config = ConfigReader::Simple->new( $file,
-		[ qw(temp_dir backpan_dir report_dir alarm) ]
-		);
-		
-	$logger->fatal( "Could not read config!" ) unless ref $Config;
-	
-	$Config;
+	(
+	[ qw( queue_class      MyCPAN::Indexer::Queue             get_queue      ) ],
+	[ qw( dispatcher_class MyCPAN::Indexer::Parallel          get_dispatcher ) ],
+	[ qw( reporter_class   MyCPAN::Indexer::Reporter::AsYAML  get_reporter   ) ],
+	[ qw( worker_class     MyCPAN::Indexer::Worker            get_task       ) ],
+	[ qw( interface_class  MyCPAN::Indexer::Interface::Curses do_interface   ) ],
+	[ qw( reporter_class   MyCPAN::Indexer::Interface::Curses final_words    ) ],
+	)
 	}
 
 sub setup_dirs
 	{
-	my $Config = shift;
+	my( $self, $Config ) = @_;
 	
 	my $cwd = cwd();
 	

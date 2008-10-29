@@ -51,83 +51,39 @@ __PACKAGE__->run( @ARGV ) unless caller;
 
 =over 4
 
-=item examine_dist
+=item examine_dist_steps
 
-Given a distribution, unpack it, look at it, and report the findings.
-It does everything except the looking right now, so it merely croaks.
-Most of this needs to move out of run and into this method.
+Returns the list of techniques that C<examine_dist> should use
+to index distributions. See the documentation in
+C<MyCPAN::Indexer::examine_dist_steps>.
 
-=cut
-
-{
-my @methods = (
-	#    method                error message                  fatal
-	[ 'unpack_dist',        "Could not unpack distribtion!",     1 ],
-	[ 'find_dist_dir',      "Did not find distro directory!",    1 ],
-	[ 'find_modules',       "Could not find modules!",           1 ],
-	);
-
-sub examine_dist
-	{
-	$indexer_logger->trace( sub { get_caller_info } );
-
-	foreach my $tuple ( @methods )
-		{
-		my( $method, $error, $die_on_error ) = @$tuple;
-
-		unless( $_[0]->$method() )
-			{
-			$indexer_logger->error( $error );
-			if( $die_on_error ) # only if failure is fatal
-				{
-				$indexer_logger->error( "Stopping: $error" );
-				$_[0]->set_run_info( 'fatal_error', $error );
-				return;
-				}
-			}
-		}
-
-	{
-	my @file_info = ();
-	foreach my $file ( @{ $_[0]->dist_info( 'modules' ) } )
-		{
-		$indexer_logger->debug( "Processing module $file" );
-		my $hash = $_[0]->get_module_info( $file );
-		push @file_info, $hash;
-		}
-
-	$_[0]->set_dist_info( 'module_info', [ @file_info ] );
-	}
-
-	return 1;
-	}
-}
-
-=item find_modules
-
-Find the module files. This version does not run the build file. It
-looks first in the directory C<lib>. 
+For DPAN, unpack the dist, ensure you are in the dist directory,
+the find the modules.
 
 =cut
 
-sub find_modules
+sub examine_dist_steps
 	{
-	$indexer_logger->trace( sub { get_caller_info } );
-
 	my @methods = (
-		[ 'look_in_lib',    "Guessed from looking in lib/" ],
-		[ 'look_in_cwd',    "Guessed from looking in cwd"  ],
+		#    method                error message                  fatal
+		[ 'unpack_dist',        "Could not unpack distribtion!",     1 ],
+		[ 'find_dist_dir',      "Did not find distro directory!",    1 ],
+		[ 'find_modules',       "Could not find modules!",           1 ],
 		);
-	
-	foreach my $tuple ( @methods )
-		{
-		my( $method, $message ) = @$tuple;
-		next unless $_[0]->$method();
-		$indexer_logger->debug( $message );
-		return 1;
-		}
-		
-	return;
+	}
+
+=item find_modules_techniques
+
+Returns the list of techniques that C<find_modules> should use
+to look for Perl module files. See the documentation in
+C<MyCPAN::Indexer::find_modules>.
+
+=cut
+
+sub find_modules_techniques
+	{
+	grep { ! $_->[0] eq 'run_build_file' } 
+		$_[0]->SUPER::find_modules_techniques;
 	}
 
 =item setup_run_info

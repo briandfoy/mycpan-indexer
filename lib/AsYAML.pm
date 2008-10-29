@@ -57,24 +57,30 @@ sub get_reporter
 	$Notes->{reporter} = sub {
 		my( $Notes, $info ) = @_;
 
-		carp "info is undefined!" unless defined $info;
+		unless( defined $info )
+			{
+			$logger->error( "info is undefined!" );
+			return;
+			}
 		
 		my $dist = $info->dist_info( 'dist_file' );
-		
+		$logger->error( "Info doesn't have dist_name! WTF?" ) unless $dist;
+
+		no warnings 'uninitialized';
 		( my $basename = basename( $dist ) ) =~ s/\.(tgz|tar\.gz|zip)$//;
-		
+
 		my $out_dir  = $info->run_info( 'completed' ) ? $yml_dir : $yml_error_dir;
-		
+
 		my $out_path = catfile( $out_dir, "$basename.yml" );
 
 		open my($fh), ">", $out_path or FATAL( "Could not open $out_path: $!" );
 		print $fh Dump( $info );
-		
+
 		$logger->ERROR( "$basename.yml is missing!" ) unless -e $out_path;
-		
+
 		1;
 		};
-		
+
 	1;
 	}
 
