@@ -1,6 +1,10 @@
 0.10_02 - Fri Aug 15 15:52:32 2008
 	* Initial release of my BackPAN Indexer
 
+1.17_02 - Wed Oct 29 16:48:30 2008
+	* Fixed the missing UUIDs in the reports. It was just a
+	programming mixup. 
+
 1.16_02 - Wed Oct 15 17:12:58 2008
 	* Broke out the logging into categories so that you can
 	target the components that you want to inspect.
