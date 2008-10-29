@@ -115,7 +115,7 @@ sub run
 	# Load classes and check that they do the right thing
 	my $Notes = { 
 		config     => $Config,
-		UUID       => get_uuid(),
+		UUID       => $self->get_uuid(),
 		};
 
 	{

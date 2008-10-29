@@ -170,7 +170,7 @@ sub _add_run_info
 	$info->set_run_info( $_, $Config->get( $_ ) ) 
 		foreach ( $Config->directives );
 	
-	$info->set_run_info( 'uuid', $Config->UUID ); 
+	$info->set_run_info( 'uuid', $Notes->{UUID} ); 
 
 	$info->set_run_info( 'child_pid',  $$ ); 
 	$info->set_run_info( 'parent_pid', getppid ); 

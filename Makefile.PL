@@ -15,6 +15,7 @@ WriteMakefile(
 	'PREREQ_PM'    => { 
 		'Archive::Extract'                 => '0',
 		'Archive::Tar'                     => '0',
+		'Data::UUID'                       => '0',
 		'Distribution::Guess::BuildSystem' => '0.11',
 		'File::Find'                       => '0',
 		'File::Find::Closures'             => '0',
