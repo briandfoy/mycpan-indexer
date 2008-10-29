@@ -1,10 +1,16 @@
-0.10_02 - Fri Aug 15 15:52:32 2008
-	* Initial release of my BackPAN Indexer
+# Changes for MyCPAN::Indexer
 
 1.17_02 - Wed Oct 29 16:48:30 2008
 	* Fixed the missing UUIDs in the reports. It was just a
 	programming mixup. 
 
+1.17_01
+	* It's easier to write applications now. You can override
+	find_modules_techniques and examine_dist_techniques to
+	return just the part of the process that you want to do.
+	For instance, if you don't want to run build files, don't
+	return an item for 'run_build_files'.
+	
 1.16_02 - Wed Oct 15 17:12:58 2008
 	* Broke out the logging into categories so that you can
 	target the components that you want to inspect.
@@ -25,3 +31,5 @@
 	* Adds more run info for operating system, perl version,
 	and so on
 
+0.10_02 - Fri Aug 15 15:52:32 2008
+	* Initial release of my BackPAN Indexer

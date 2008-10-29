@@ -1,4 +1,3 @@
-# $Id: load.t,v 1.2 2004/09/08 00:25:42 comdog Exp $
 use File::Spec::Functions qw(catfile);
 use Test::Output;
 
