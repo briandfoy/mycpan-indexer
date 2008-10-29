@@ -1,8 +1,11 @@
 package MyCPAN::App::DPAN;
 use base qw( MyCPAN::App::BackPAN::Indexer );
+use vars qw($VERSION);
 
 use Cwd qw(cwd);
 use File::Spec::Functions qw(catfile);
+
+$VERSION = '1.17_02';
 
 BEGIN {
 my $cwd = cwd();

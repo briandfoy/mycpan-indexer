@@ -9,7 +9,7 @@ no warnings;
 use subs qw(get_caller_info);
 use vars qw($VERSION $logger);
 
-$VERSION = '1.17_01';
+$VERSION = '1.17_02';
 
 =head1 NAME
 

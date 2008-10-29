@@ -4,7 +4,8 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use blib;
+use vars qw($VERSION);
+
 use Cwd qw(cwd);
 use Data::Dumper;
 use File::Basename;
@@ -13,6 +14,8 @@ use File::Spec::Functions qw(catfile);
 use File::Temp;
 use Getopt::Std;
 use Log::Log4perl;
+
+$VERSION = '1.17_02';
 
 $|++;
 
