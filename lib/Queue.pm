@@ -36,9 +36,8 @@ indexer to process.
 =item get_queue( $Notes )
 
 C<get_queue> sets the key C<queue> in C<$Notes> hash reference. It
-sets it to a copy of @ARGV, or finds all of the tarballs or zip
-archives in under the directory named in C<backpan_dir> in the
-configuration. 
+finds all of the tarballs or zip archives in under the directories 
+named in C<backpan_dir> in the configuration. 
 
 It specifically skips files that end in C<.txt.gz> or C<.data.gz>
 since PAUSE creates those meta files near the actual module
@@ -50,27 +49,23 @@ sub get_queue
 	{
 	my( $class, $Notes ) = @_;
 	
-	$Notes->{queue} = do {
-		if( @ARGV ) 
-			{
-			$logger->debug( "Taking dists from command line" );
-			[ @ARGV ]
-			}
-		else 
-			{
-			$logger->debug( "Taking dists from " . $Notes->{config}->backpan_dir );
-			my( $wanted, $reporter ) = find_by_regex( qr/\.(t?gz|zip)$/ );
-			
-			unless( -e $Notes->{config}->backpan_dir )
-				{
-				$logger->fatal( "Directory does not exist: " . $Notes->{config}->backpan_dir ); 
-				no warnings; [];
-				}
-				
-			find( $wanted, $Notes->{config}->backpan_dir );
-			[ grep ! /.(data|txt).gz$/, $reporter->() ];
-			}
+	my @dirs = do {
+		my $item = $Notes->{config}->backpan_dir;
+		ref $item ? @$item : $item;
 		};
+
+	foreach my $dir ( @dirs )
+		{
+		$logger->error( "backpan_dir directory does not exist: [$dir]" )
+			unless -e $dir; 
+		}
+
+	$logger->debug( "Taking dists from [@dirs]" );
+	my( $wanted, $reporter ) = find_by_regex( qr/\.(t?gz|zip)$/ );
+	
+	find( $wanted, @dirs );
+
+	$Notes->{queue} = [ grep ! /.(data|txt).gz$/, $reporter->() ];
 		
 	1;
 	}

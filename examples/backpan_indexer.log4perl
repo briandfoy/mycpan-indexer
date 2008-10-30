@@ -9,7 +9,7 @@ log4perl.logger.Worker            =    ERROR, File
 log4perl.logger.Interface         =    FATAL, File
 
 log4perl.logger.Dispatcher        =    DEBUG, File
-log4perl.logger.Queue             =    FATAL, File
+log4perl.logger.Queue             =    DEBUG, File
 
 log4perl.logger.Reporter          =    INFO, File
 

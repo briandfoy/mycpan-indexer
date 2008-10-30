@@ -16,3 +16,4 @@ isa_ok( $config, $class->config_class );
 is( $config->indexer_class, 'MyCPAN::Indexer::DPAN' );
 
 can_ok( $class, 'run' );
+

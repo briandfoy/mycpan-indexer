@@ -71,7 +71,7 @@ sub get_config
 	
 sub run
 	{
-	my( $self, %args ) = @_;
+	my( $self, @argv ) = @_;
 	use vars qw( %Options );
 
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
@@ -80,7 +80,10 @@ sub run
 	my $run_dir = dirname( $0 );
 	( my $script  = basename( $0 ) ) =~ s/\.\w+$//;
 
+	{
+	local @ARGV = @argv;
 	getopts('l:f:', \%Options); 
+	}
 
 	$Options{f} ||= catfile( $run_dir, "$script.conf" );
 	$Options{l} ||= catfile( $run_dir, "$script.log4perl" );
@@ -111,6 +114,13 @@ sub run
 		}
 	
 	my $Config = $self->get_config( $Options{f} );
+	
+	# set the directories to index
+	unless( $Config->exists( 'backpan_dir') )
+		{
+		$Config->set( 'backpan_dir', [ @ARGV ? @ARGV : cwd() ] );
+		$logger->debug( 'Going to index [' . $Config->backpan_dir . ']' );
+		}
 
 	$self->setup_dirs( $Config );
 
