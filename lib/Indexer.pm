@@ -48,13 +48,13 @@ sub run
 	{
 	$logger->trace( sub { get_caller_info } );
 
-	my( $class ) = @_;
+	my( $class, @args ) = @_;
 	
 	my $self = $class->new;
 
 	$self->setup_run_info;
 
-	DIST: foreach my $dist ( @_ )
+	DIST: foreach my $dist ( @args )
 		{
 		$logger->debug( "Dist is $dist\n" );
 
@@ -74,7 +74,7 @@ sub run
 		$self->set_run_info( 'completed', 1 );
 		$self->set_run_info( 'run_end_time', time );
 
-		$logger->info( "Finished processing $dist\n" );
+		$logger->info( "Finished processing $dist" );
 		$logger->debug( sub { Dumper( $self ) } );
 		}
 

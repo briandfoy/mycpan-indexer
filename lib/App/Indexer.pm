@@ -110,7 +110,7 @@ sub run
 		}
 	else
 		{
-		Log::Log4perl->init( '' );
+		Log::Log4perl->easy_init( $Log::Log4perl::ERROR );
 		}
 	
 	my $Config = $self->get_config( $Options{f} );
@@ -165,6 +165,7 @@ sub components
 
 sub setup_dirs
 	{
+	# XXX big ugly mess to clean up
 	my( $self, $Config ) = @_;
 	
 	my $cwd = cwd();
@@ -173,14 +174,22 @@ sub setup_dirs
 	$logger->debug( "temp_dir is [$temp_dir] [" . $Config->temp_dir . "]" );
 	
 	mkpath( $temp_dir ) unless -d $temp_dir;
-	$logger->fatal( "temp_dir does not exist!" ) unless -d $temp_dir;
+	$logger->fatal( "temp_dir [$temp_dir] does not exist!" ) unless -d $temp_dir;
 	
 	chdir $Config->temp_dir or 
 		$logger->fatal( "Could not change to [" . $Config->temp_dir . "]: $!" );
 	
-	my $yml_dir       = catfile( $Config->report_dir, "meta"        );
-	my $yml_error_dir = catfile( $Config->report_dir, "meta-errors" );
+	my $report_dir    = $Config->report_dir || tempdir( CLEANUP => 1 );
+	$Config->set( 'report_dir', $report_dir );
+	my $yml_dir       = catfile( $report_dir, "meta"        );
+	my $yml_error_dir = catfile( $report_dir, "meta-errors" );
 	
+	foreach my $dir ( $yml_dir, $yml_error_dir )
+		{
+		mkpath( $dir ) unless -d $dir;
+		$logger->fatal( "report_dir [$report_dir] does not exist!" ) unless -d $dir;
+		}
+
 	$logger->debug( "Value of retry is " . $Config->retry_errors );
 	$logger->debug( "Value of copy_bad_dists is " . $Config->copy_bad_dists );
 	

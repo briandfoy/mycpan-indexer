@@ -80,10 +80,14 @@ C<MyCPAN::Indexer::find_modules>.
 
 =cut
 
-sub find_modules_techniques
+sub find_module_techniques
 	{
-	grep { ! $_->[0] eq 'run_build_file' } 
-		$_[0]->SUPER::find_modules_techniques;
+	my @methods = (
+		[ 'look_in_lib',    "Guessed from looking in lib/" ],
+		[ 'look_in_cwd',    "Guessed from looking in cwd"  ],
+		[ 'look_in_meta_yml_provides',    "Guessed from looking in META.yml"  ],
+		[ 'look_for_pm',    "Guessed from looking in cwd"  ],
+		);
 	}
 
 =item setup_run_info
@@ -203,7 +207,12 @@ sub final_words
 			}
 		}
 		
-	( my $packages_dir = $Notes->{config}->backpan_dir ) =~ s/authors.id.*//;
+	my $dir = do {
+		my $d = $Notes->{config}->backpan_dir;
+		ref $d ? $d->[0] : $d;
+	};
+	
+	( my $packages_dir = $dir ) =~ s/authors.id.*//;
 	$reporter_logger->debug( "package details directory is [$packages_dir]");
 
 	my $packages_file = catfile( $packages_dir, qw(modules 02packages.details.txt.gz) );
