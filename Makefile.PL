@@ -31,7 +31,6 @@ WriteMakefile(
 		'Tk::ProgressBar'                  => '0',
 		'YAML::Syck'                       => '0',
 		'YAML'                             => '0',
-		'Curses'                           => '0',
 		'CPAN::PackageDetails'             => '0',
 		},
 

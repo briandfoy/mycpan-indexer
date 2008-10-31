@@ -2,8 +2,12 @@ package MyCPAN::Indexer::Interface::Curses;
 use strict;
 use warnings;
 
-use Log::Log4perl;
-use Curses;
+BEGIN {
+	my $rc = eval { require Curses; 1 };
+	
+	die "You need to install the Curses module to use MyCPAN::Indexer::Interface::Curses";
+	Curses->import;	
+}
 
 use vars qw($VERSION $logger);
 $VERSION = '1.17_02';
@@ -35,6 +39,7 @@ This class presents the information as the indexer runs, using Curses.
 BEGIN { $SIG{INT} = sub { exit } }
 
 BEGIN {
+	use Log::Log4perl;
 	$logger = Log::Log4perl->get_logger( 'Interface' );
 	}
 
