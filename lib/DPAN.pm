@@ -111,7 +111,7 @@ sub setup_run_info
 	$_[0]->set_run_info( 'run_start_time',   time    );
 	$_[0]->set_run_info( 'completed',        0       );
 	$_[0]->set_run_info( 'pid',              $$      );
-	$_[0]->set_run_info( 'ppid',             getppid );
+	$_[0]->set_run_info( 'ppid',             $_[0]->getppid );
 
 	$_[0]->set_run_info( 'indexer',          ref $_[0] );
 	$_[0]->set_run_info( 'indexer_versions', $_[0]->VERSION );

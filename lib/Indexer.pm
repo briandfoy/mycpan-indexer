@@ -208,7 +208,7 @@ sub setup_run_info
 	$_[0]->set_run_info( 'run_start_time',   time    );
 	$_[0]->set_run_info( 'completed',        0       );
 	$_[0]->set_run_info( 'pid',              $$      );
-	$_[0]->set_run_info( 'ppid',             getppid );
+	$_[0]->set_run_info( 'ppid',             $_[0]->getppid );
 
 	$_[0]->set_run_info( 'indexer',          ref $_[0] );
 	$_[0]->set_run_info( 'indexer_versions', $_[0]->VERSION );
@@ -1185,6 +1185,19 @@ sub get_md5
 	my $context = MD5->new;
 	$context->add( $_[1] );
 	$context->hexdigest;
+	}
+
+=item getppid
+
+Get the parent process ID. This is a method because I have to do
+special things for Windows. For Windows, just return -1 for now.
+
+=cut
+
+sub getppid
+	{
+	unless( $^O =~ /Win32/ ) { return CORE::getppid }
+	-1;
 	}
 	
 =back

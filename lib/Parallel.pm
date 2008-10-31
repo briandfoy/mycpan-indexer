@@ -137,7 +137,7 @@ sub _make_interface_callback
 			{ # child
 			$Notes->{child_task}( $item );
 			$Notes->{dispatcher}->finish;
-			$logger->error( "The child [$$] is still running!" )
+			$logger->error( "The child is still running!" )
 			}
 	
 		1;

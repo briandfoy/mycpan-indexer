@@ -173,7 +173,7 @@ sub _add_run_info
 	$info->set_run_info( 'uuid', $Notes->{UUID} ); 
 
 	$info->set_run_info( 'child_pid',  $$ ); 
-	$info->set_run_info( 'parent_pid', getppid ); 
+	$info->set_run_info( 'parent_pid', eval { $Config->indexer_class->getppid } ); 
 
 	$info->set_run_info( 'ENV', \%ENV ); 
 	
