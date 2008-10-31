@@ -3,10 +3,11 @@ use strict;
 use warnings;
 
 use vars qw($VERSION $logger);
-$VERSION = '1.17_02';
+$VERSION = '1.17_03';
 
 use File::Find;
 use File::Find::Closures qw( find_by_regex );
+use File::Spec::Functions qw( rel2abs );
 use Log::Log4perl;
 
 BEGIN {
@@ -65,7 +66,11 @@ sub get_queue
 	
 	find( $wanted, @dirs );
 
-	$Notes->{queue} = [ grep ! /.(data|txt).gz$/, $reporter->() ];
+	$Notes->{queue} = [ 
+		map  { rel2abs($_) }
+		grep { ! /.(data|txt).gz$/ }
+		$reporter->() 
+		];
 		
 	1;
 	}

@@ -7,7 +7,6 @@ no warnings 'uninitialized';
 use vars qw($VERSION);
 
 use Cwd qw(cwd);
-use Data::Dumper;
 use File::Basename;
 use File::Path qw(mkpath);
 use File::Spec::Functions qw(catfile);
@@ -15,13 +14,13 @@ use File::Temp qw(tempdir);
 use Getopt::Std;
 use Log::Log4perl;
 
-$VERSION = '1.17_02';
+$VERSION = '1.17_03';
 
 $|++;
 
 my $logger = Log::Log4perl->get_logger( 'backpan_indexer' );
 
-__PACKAGE__->run() unless caller;
+__PACKAGE__->run( @ARGV ) unless caller;
 
 BEGIN {
 my $cwd = cwd();
@@ -80,11 +79,10 @@ sub run
 	my $run_dir = dirname( $0 );
 	( my $script  = basename( $0 ) ) =~ s/\.\w+$//;
 
-	{
 	local @ARGV = @argv;
 	getopts('l:f:', \%Options); 
-	}
-
+	@argv = @ARGV; # XXX: yuck
+	
 	$Options{f} ||= catfile( $run_dir, "$script.conf" );
 	$Options{l} ||= catfile( $run_dir, "$script.log4perl" );
 	}
@@ -118,7 +116,7 @@ sub run
 	# set the directories to index
 	unless( $Config->exists( 'backpan_dir') )
 		{
-		$Config->set( 'backpan_dir', [ @ARGV ? @ARGV : cwd() ] );
+		$Config->set( 'backpan_dir', [ @argv ? @argv : cwd() ] );
 		$logger->debug( 'Going to index [' . $Config->backpan_dir . ']' );
 		}
 
@@ -170,7 +168,7 @@ sub setup_dirs
 	
 	my $cwd = cwd();
 	
-	my $temp_dir = $Config->temp_dir || tempdir( CLEANUP => 1 );
+	my $temp_dir = $Config->temp_dir || tempdir( CLEANUP => 1, DIR => cwd() );
 	$Config->set( 'temp_dir', $temp_dir );
 	$logger->debug( "temp_dir is [$temp_dir] [" . $Config->temp_dir . "]" );
 	
@@ -180,7 +178,7 @@ sub setup_dirs
 	chdir $temp_dir or 
 		$logger->fatal( "Could not change to [" . $Config->temp_dir . "]: $!" );
 	
-	my $report_dir    = $Config->report_dir || tempdir( CLEANUP => 1 );
+	my $report_dir    = $Config->report_dir || tempdir( CLEANUP => 1, DIR => cwd() );
 	$Config->set( 'report_dir', $report_dir );
 	my $yml_dir       = catfile( $report_dir, "meta"        );
 	my $yml_error_dir = catfile( $report_dir, "meta-errors" );

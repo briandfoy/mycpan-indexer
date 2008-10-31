@@ -15,7 +15,7 @@ use File::Spec::Functions qw(catfile);
 use File::Path;
 use YAML;
 
-$VERSION = '1.17_02';
+$VERSION = '1.17_03';
 
 =head1 NAME
 
@@ -163,8 +163,6 @@ sub final_words
 	my( $class, $Notes ) = @_; 
 	
 	$reporter_logger->debug( "Final words from the DPAN Reporter" );
-	
-	#print Dumper( $Notes ); use Data::Dumper;
 	
 	my $report_dir = catfile( $Notes->{config}->report_dir, 'meta' );
 	

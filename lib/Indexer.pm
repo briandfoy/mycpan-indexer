@@ -9,7 +9,7 @@ no warnings;
 use subs qw(get_caller_info);
 use vars qw($VERSION $logger);
 
-$VERSION = '1.17_02';
+$VERSION = '1.17_03';
 
 =head1 NAME
 
@@ -25,7 +25,6 @@ MyCPAN::Indexer - Index a Perl distribution
 
 use Carp qw(croak);
 use Cwd;
-use Data::Dumper;
 use File::Basename;
 use File::Path;
 use Log::Log4perl;
