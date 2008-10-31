@@ -61,7 +61,7 @@ sub get_queue
 		}
 
 	$logger->debug( "Taking dists from [@dirs]" );
-	my( $wanted, $reporter ) = find_by_regex( qr/\.(t?gz|zip)$/ );
+	my( $wanted, $reporter ) = File::Find::Closures::find_by_regex( qr/\.(t?gz|zip)$/ );
 	
 	find( $wanted, @dirs );
 

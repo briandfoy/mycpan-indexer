@@ -48,7 +48,7 @@ and F<03modlist.data.gz>.
 
 Where to store the distribution reports.
 
-Default: a temp directory in the current working directory
+Default: a directory named F<indexer_reports> in the current working directory
 	
 =item temp_dir
 

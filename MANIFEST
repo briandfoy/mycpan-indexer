@@ -7,7 +7,7 @@ examples/backpan_indexer.config.inject
 examples/backpan_indexer.config.minicpan
 examples/backpan_indexer.config.test_census
 examples/backpan_indexer.pl
-examples/dpan.pl
+examples/dpan
 examples/minicpan_inject.config
 lib/App/DPAN.pm
 lib/App/Indexer.pm

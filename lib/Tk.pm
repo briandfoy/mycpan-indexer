@@ -2,11 +2,26 @@ package MyCPAN::Indexer::Interface::Tk;
 use strict;
 use warnings;
 
+BEGIN {
+	my $rc = eval { 
+		require Tk; 
+		require Tk::ProgressBar;
+		
+		Tk->import;
+		Tk::ProgressBar->import;
+		1 };
+	
+	die "You need to install the Tk and Tk::ProgressBar modules ".
+		" to use MyCPAN::Indexer::Interface::Tk" if $@;
+}
+
 use vars qw($VERSION $logger);
 $VERSION = '1.17_02';
 
 use Log::Log4perl;
 use Tk;
+'Tk'                               => '0',
+'Tk::ProgressBar'                  => '0',
 
 =head1 NAME
 

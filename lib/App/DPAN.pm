@@ -12,7 +12,7 @@ my $cwd = cwd();
 
 my %Defaults = (
 	report_dir       => catfile( $cwd, 'indexer_reports' ),
-	temp_dir         => catfile( $cwd, 'temp' ),
+#	temp_dir         => catfile( $cwd, 'temp' ),
 	alarm            => 15,
 	copy_bad_dists   => 0,
 	retry_errors     => 1,

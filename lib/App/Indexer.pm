@@ -11,7 +11,7 @@ use Data::Dumper;
 use File::Basename;
 use File::Path qw(mkpath);
 use File::Spec::Functions qw(catfile);
-use File::Temp;
+use File::Temp qw(tempdir);
 use Getopt::Std;
 use Log::Log4perl;
 
@@ -28,7 +28,7 @@ my $cwd = cwd();
 
 my %Defaults = (
 	report_dir       => catfile( $cwd, 'indexer_reports' ),
-	temp_dir         => catfile( $cwd, 'temp' ),
+#	temp_dir         => catfile( $cwd, 'temp' ),
 	alarm            => 15,
 	copy_bad_dists   => 0,
 	retry_errors     => 1,
@@ -171,12 +171,13 @@ sub setup_dirs
 	my $cwd = cwd();
 	
 	my $temp_dir = $Config->temp_dir || tempdir( CLEANUP => 1 );
+	$Config->set( 'temp_dir', $temp_dir );
 	$logger->debug( "temp_dir is [$temp_dir] [" . $Config->temp_dir . "]" );
 	
 	mkpath( $temp_dir ) unless -d $temp_dir;
 	$logger->fatal( "temp_dir [$temp_dir] does not exist!" ) unless -d $temp_dir;
 	
-	chdir $Config->temp_dir or 
+	chdir $temp_dir or 
 		$logger->fatal( "Could not change to [" . $Config->temp_dir . "]: $!" );
 	
 	my $report_dir    = $Config->report_dir || tempdir( CLEANUP => 1 );

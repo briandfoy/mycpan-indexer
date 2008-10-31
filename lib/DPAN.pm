@@ -12,6 +12,7 @@ use base qw(MyCPAN::Indexer MyCPAN::Indexer::Reporter::AsYAML);
 
 use File::Basename;
 use File::Spec::Functions qw(catfile);
+use File::Path;
 use YAML;
 
 $VERSION = '1.17_02';
@@ -215,7 +216,10 @@ sub final_words
 	( my $packages_dir = $dir ) =~ s/authors.id.*//;
 	$reporter_logger->debug( "package details directory is [$packages_dir]");
 
-	my $packages_file = catfile( $packages_dir, qw(modules 02packages.details.txt.gz) );
+	my $index_dir     = catfile( $packages_dir, 'modules' );
+	mkpath( $index_dir );
+	
+	my $packages_file = catfile( $index_dir, '02packages.details.txt.gz' );
 	$reporter_logger->debug( "package details file is [$packages_file]");
 		
 	$package_details->write_file( $packages_file );
@@ -233,11 +237,10 @@ sub final_words
  			} );
 		}
 	
-	my $module_list_file = catfile( $packages_dir, qw(modules 03modlist.data.gz) );
+	my $module_list_file = catfile( $index_dir, '03modlist.data.gz' );
 	$reporter_logger->debug( "modules list file is [$module_list_file]");
 	
-	use PerlIO::gzip;
-	open my($fh), ">:gzip", $module_list_file;
+	my $fh = IO::Compress::Gzip->new( $module_list_file );
 	print $fh "This is just a placeholder so CPAN.pm is happy\n\t\t-- $0\n";
 	close $fh;
 	}
