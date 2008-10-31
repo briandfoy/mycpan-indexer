@@ -37,8 +37,8 @@ indexer to process.
 =item get_queue( $Notes )
 
 C<get_queue> sets the key C<queue> in C<$Notes> hash reference. It
-finds all of the tarballs or zip archives in under the directories 
-named in C<backpan_dir> in the configuration. 
+finds all of the tarballs or zip archives in under the directories
+named in C<backpan_dir> in the configuration.
 
 It specifically skips files that end in C<.txt.gz> or C<.data.gz>
 since PAUSE creates those meta files near the actual module
@@ -49,7 +49,7 @@ installations.
 sub get_queue
 	{
 	my( $class, $Notes ) = @_;
-	
+
 	my @dirs = do {
 		my $item = $Notes->{config}->backpan_dir;
 		ref $item ? @$item : $item;
@@ -58,23 +58,23 @@ sub get_queue
 	foreach my $dir ( @dirs )
 		{
 		$logger->error( "backpan_dir directory does not exist: [$dir]" )
-			unless -e $dir; 
+			unless -e $dir;
 		}
 
 	$logger->debug( "Taking dists from [@dirs]" );
 	my( $wanted, $reporter ) = File::Find::Closures::find_by_regex( qr/\.(t?gz|zip)$/ );
-	
+
 	find( $wanted, @dirs );
 
-	$Notes->{queue} = [ 
+	$Notes->{queue} = [
 		map  { rel2abs($_) }
 		grep { ! /.(data|txt).gz$/ }
-		$reporter->() 
+		$reporter->()
 		];
-		
+
 	1;
 	}
-	
+
 1;
 
 =back

@@ -29,7 +29,7 @@ MyCPAN::Indexer::DPAN - Create a D(ark)PAN out of the indexed distributions
 
 This module implements the indexer_class and reporter_class components
 to allow C<backpan_indexer.pl> to count the test modules used in the
-indexed distributions. 
+indexed distributions.
 
 It runs through the indexing and prints a report at the end of the run.
 You probably
@@ -94,7 +94,7 @@ sub find_module_techniques
 =item setup_run_info
 
 Like C<setup_run_info> in C<MyCPAN::Indexer>, but it remembers fewer
-things. The DarkPAN census really just cares about finding packages, 
+things. The DarkPAN census really just cares about finding packages,
 so the details about the run aren't as interesting.
 
 =cut
@@ -104,9 +104,9 @@ sub setup_run_info
 #	TRACE( sub { get_caller_info } );
 
 	require Config;
-	
+
 	my $perl = Probe::Perl->new;
-	
+
 	$_[0]->set_run_info( 'root_working_dir', cwd()   );
 	$_[0]->set_run_info( 'run_start_time',   time    );
 	$_[0]->set_run_info( 'completed',        0       );
@@ -136,7 +136,7 @@ sub setup_dist_info
 
 	$indexer_logger->debug( "Setting dist [$dist]\n" );
 	$self->set_dist_info( 'dist_file',     $dist                   );
-		
+
 	return 1;
 	}
 
@@ -160,23 +160,23 @@ and should do.
 sub final_words
 	{
 	# This is where I want to write 02packages and CHECKSUMS
-	my( $class, $Notes ) = @_; 
-	
+	my( $class, $Notes ) = @_;
+
 	$reporter_logger->debug( "Final words from the DPAN Reporter" );
-	
+
 	my $report_dir = catfile( $Notes->{config}->report_dir, 'meta' );
-	
+
 	$reporter_logger->debug( "Report dir is $report_dir" );
 	opendir my($dh), $report_dir or
 		$reporter_logger->fatal( "Could not open directory [$report_dir]: $!");
-	
+
 	my %dirs_needing_checksums;
-	
+
 	require CPAN::PackageDetails;
 	my $package_details = CPAN::PackageDetails->new(
-		
+
 		);
-	
+
 	require version;
 	foreach my $file ( readdir( $dh ) )
 		{
@@ -186,7 +186,7 @@ sub final_words
 			$reporter_logger->error( "$file: $@" );
 			next;
 			};
-			
+
 		$dirs_needing_checksums{ dirname( $yaml->{dist_info}{dist_file} ) }++;
 
 		foreach my $module ( @{ $yaml->{dist_info}{module_info} }  )
@@ -194,50 +194,50 @@ sub final_words
 			my $packages = $module->{packages};
 			my $version  = $module->{version};
 			$version = $version->numify if eval { $version->can('numify') };
-			
+
 			foreach my $package ( @$packages )
 				{
 				$package_details->add_entry(
 					'package name' => $package,
 					version        => $version,
-					path           => $yaml->{dist_info}{dist_file},		
+					path           => $yaml->{dist_info}{dist_file},
 					);
 				}
 			}
 		}
-		
+
 	my $dir = do {
 		my $d = $Notes->{config}->backpan_dir;
 		ref $d ? $d->[0] : $d;
 	};
-	
+
 	( my $packages_dir = $dir ) =~ s/authors.id.*//;
 	$reporter_logger->debug( "package details directory is [$packages_dir]");
 
 	my $index_dir     = catfile( $packages_dir, 'modules' );
 	mkpath( $index_dir );
-	
+
 	my $packages_file = catfile( $index_dir, '02packages.details.txt.gz' );
 	$reporter_logger->debug( "package details file is [$packages_file]");
-		
+
 	$package_details->write_file( $packages_file );
-			
+
 	require CPAN::Checksums;
 	foreach my $dir ( keys %dirs_needing_checksums )
 		{
         my $rc = eval{ CPAN::Checksums::updatedir( $dir ) };
 		$reporter_logger->error( "Couldn't create CHECKSUMS for $dir: $@") unless $rc;
-		$reporter_logger->info( 
+		$reporter_logger->info(
 			do {
 				if( $rc == 1 )    { "Valid CHECKSUMS file is already present in $dir: skipping" }
 				elsif( $rc == 2 ) { "Wrote new CHECKSUMS file in $dir" }
 				else              { "updatedir unexpectedly returned true [$rc] for $dir" }
  			} );
 		}
-	
+
 	my $module_list_file = catfile( $index_dir, '03modlist.data.gz' );
 	$reporter_logger->debug( "modules list file is [$module_list_file]");
-	
+
 	my $fh = IO::Compress::Gzip->new( $module_list_file );
 	print $fh "This is just a placeholder so CPAN.pm is happy\n\t\t-- $0\n";
 	close $fh;

@@ -37,32 +37,32 @@ BEGIN {
 	$logger = Log::Log4perl->get_logger( 'Interface' );
 	}
 
-sub do_interface 
+sub do_interface
 	{
 	my( $class, $Notes ) = @_;
 	$logger->debug( "Calling do_interface" );
-	
-	print "BackPAN Indexer 1.00\n";	
+
+	print "BackPAN Indexer 1.00\n";
 
 	print 'Processing ' . @{ $Notes->{queue} } . " distributions\n";
 	print "One * = 1 distribution\n";
-	
+
 	my $count = 0;
 	while( 1 )
 		{
 		last if $Notes->{Left} <= 0;
-	
+
 		local $|;
 		$|++;
-		
+
 		print "*";
 		print "\n" unless ++$count % 70;
-		
+
 		$Notes->{interface_callback}->();
 		}
 
 	print "\n";
-	
+
 	}
 
 

@@ -24,7 +24,7 @@ MyCPAN::Indexer::TestCensus - Count the Test modules used in test suites
 
 This module implements the indexer_class and reporter_class components
 to allow C<backpan_indexer.pl> to count the test modules used in the
-indexed distributions. 
+indexed distributions.
 
 It runs through the indexing and prints a report at the end of the run.
 You probably
@@ -70,7 +70,7 @@ sub examine_dist
 		{
 		my( $method, $error, $die_on_error ) = @$tuple;
 		$logger->debug( "examine_dist calling $method" );
-		
+
 		unless( $_[0]->$method() )
 			{
 			$logger->error( $error );
@@ -82,7 +82,7 @@ sub examine_dist
 				}
 			}
 		}
-	
+
 	{
 	my @file_info = ();
 	foreach my $file ( @{ $_[0]->dist_info( 'tests' ) } )
@@ -112,9 +112,9 @@ sub setup_run_info
 #	TRACE( sub { get_caller_info } );
 
 	require Config;
-	
+
 	my $perl = Probe::Perl->new;
-	
+
 	$_[0]->set_run_info( 'root_working_dir', cwd()   );
 	$_[0]->set_run_info( 'run_start_time',   time    );
 	$_[0]->set_run_info( 'completed',        0       );
@@ -144,7 +144,7 @@ sub setup_dist_info
 
 	$logger->debug( "Setting dist [$dist]\n" );
 	$self->set_dist_info( 'dist_file',     $dist                   );
-		
+
 	return 1;
 	}
 
@@ -174,11 +174,11 @@ sub get_reporter
 	my( $class, $Notes ) = @_;
 
 	unlink "/Users/brian/Desktop/test_use";
-	
+
 	$Notes->{reporter} = sub {
 
 		my( $Notes, $info ) = @_;
-		
+
 		my $test_files = $info->{dist_info}{test_info};
 
 		dbmopen my %DBM, "/Users/brian/Desktop/test_use", 0755 or die "$!";
@@ -187,27 +187,27 @@ sub get_reporter
 			{
 			my $uses = $test_file->{uses};
 			$logger->debug( "Found test modules @$uses" );
-			
+
 			foreach my $used_module ( @$uses )
 				{
 				$DBM{$used_module}++;
 				}
 			}
-		
+
 		dbmclose %DBM;
 
 		};
-		
+
 	1;
 	}
 
 }
 
 sub final_words
-	{	
-	my( $class ); 
+	{
+	my( $class );
 	$logger->debug( "Final words from the Reporter" );
-	
+
 	our %DBM;
 	dbmopen %DBM, "/Users/brian/Desktop/test_use", undef;
 
@@ -219,22 +219,22 @@ sub final_words
 		next unless $module =~ m/^Test\b/;
 		printf "%6d %s\n", $DBM{$module}, $module;
 		}
-	
+
 	dbmclose %DBM;
 	}
-	
+
 =pod
 
 foreach my $file ( glob "*.yml" )
 	{
 	my $yaml = LoadFile( $file );
-	
+
 	my $test_files = $yaml->{dist_info}{test_info};
-	
+
 	foreach my $test_file ( @$test_files )
 		{
 		my $uses = $test_file->{uses};
-		
+
 		foreach my $used_module ( @$uses )
 			{
 			$Seen{$used_module}++;

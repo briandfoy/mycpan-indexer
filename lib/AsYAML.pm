@@ -63,7 +63,7 @@ sub get_reporter
 			$logger->error( "info is undefined!" );
 			return;
 			}
-		
+
 		my $dist = $info->dist_info( 'dist_file' );
 		$logger->error( "Info doesn't have dist_name! WTF?" ) unless $dist;
 

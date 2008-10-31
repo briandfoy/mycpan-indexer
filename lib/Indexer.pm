@@ -48,7 +48,7 @@ sub run
 	$logger->trace( sub { get_caller_info } );
 
 	my( $class, @args ) = @_;
-	
+
 	my $self = $class->new;
 
 	$self->setup_run_info;
@@ -103,7 +103,7 @@ what to do. The elements of each anonymous array are:
 	1) the method to call (must be in indexing class or its parents)
 	2) a text description of the method
 	3) if a failure in that step should stop the exam: true or false
-	
+
 =cut
 
 sub examine_dist_steps
@@ -123,7 +123,7 @@ sub examine_dist
 	{
 	$logger->trace( sub { get_caller_info } );
 	my( $self ) = @_;
-	
+
 	foreach my $tuple ( $self->examine_dist_steps )
 		{
 		my( $method, $error_msg, $die_on_error ) = @$tuple;
@@ -152,7 +152,7 @@ sub examine_dist
 
 	$self->set_dist_info( 'module_info', [ @file_info ] );
 	}
-	
+
 	{
 	my @file_info = ();
 	foreach my $file ( @{ $self->dist_info( 'tests' ) || [] } )
@@ -200,9 +200,9 @@ sub setup_run_info
 	$logger->trace( sub { get_caller_info } );
 
 	require Config;
-	
+
 	my $perl = Probe::Perl->new;
-	
+
 	$_[0]->set_run_info( 'root_working_dir', cwd()   );
 	$_[0]->set_run_info( 'run_start_time',   time    );
 	$_[0]->set_run_info( 'completed',        0       );
@@ -215,7 +215,7 @@ sub setup_run_info
 	$_[0]->set_run_info( 'perl_version',     $perl->perl_version );
 	$_[0]->set_run_info( 'perl_path',        $perl->find_perl_interpreter );
 	$_[0]->set_run_info( 'perl_config',      \%Config::Config );
-	
+
 	$_[0]->set_run_info( 'operating_system', $^O );
 	$_[0]->set_run_info( 'operating_system_type', $perl->os_type );
 
@@ -308,7 +308,7 @@ sub setup_dist_info
 		$self->set_run_info( 'fatal_error', "Dist size was 0!" );
 		return;
 		}
-		
+
 	return 1;
 	}
 
@@ -356,7 +356,7 @@ Sets these items in run_info:
 Sets these items in dist_info:
 	dist_archive_type
 	dist_extract_path
-	
+
 =cut
 
 sub unpack_dist
@@ -367,22 +367,22 @@ sub unpack_dist
 	require Archive::Extract;
 	local $Archive::Extract::WARN = 0;
 	local $Archive::Tar::WARN = $Archive::Extract::WARN; # sent in patch for this rt.cpan.org #40472
-	
+
 	my $self = shift;
 	my $dist = $self->dist_info( 'dist_file' );
 	$logger->debug( "Unpacking dist $dist" );
-	
+
 	return unless $self->get_unpack_dir;
 
 	my $extractor = eval {
 		Archive::Extract->new( archive => $dist );
 		};
 	local $Archive::Tar::WARN = 0;
-		
+
 	if( $extractor->type eq 'gz' )
 		{
 		$logger->error( "Dist $dist claims to be a gz, so try .tgz instead" );
-	
+
 		$extractor = eval {
 			Archive::Extract->new( archive => $dist, type => 'tgz' )
 			};
@@ -392,9 +392,9 @@ sub unpack_dist
 		{
 		$logger->error( "Could create Archive::Extract object for $dist [$@]" );
 		$self->set_dist_info( 'dist_archive_type', 'unknown' );
-		return;	
+		return;
 		}
-		
+
 	$self->set_dist_info( 'dist_archive_type', $extractor->type );
 
 	my $rc = $extractor->extract( to => $self->dist_info( 'unpack_dir' ) );
@@ -414,7 +414,7 @@ sub unpack_dist
 
 =item get_unpack_dir
 
-Get a directory where you can unpack the archive. 
+Get a directory where you can unpack the archive.
 
 Sets these items in dist_info:
 	unpack_dir
@@ -426,7 +426,7 @@ sub get_unpack_dir
 	$logger->trace( sub { get_caller_info } );
 
 	require File::Temp;
-	
+
 	my $self = shift;
 
 	( my $prefix = __PACKAGE__ ) =~ s/::/-/g;
@@ -443,7 +443,7 @@ sub get_unpack_dir
 		$logger->error( "Temp dir error: $@" );
 		return;
 		}
-	
+
 	$self->set_dist_info( 'unpack_dir', $unpack_dir );
 
 
@@ -451,7 +451,7 @@ sub get_unpack_dir
 
 	1;
 	}
-	
+
 =item find_dist_dir
 
 Looks at dist_info's unpack_dir and guesses where the module distribution
@@ -470,7 +470,7 @@ sub find_dist_dir
 	$logger->debug( "Cwd is " . $_[0]->dist_info( "unpack_dir" ) );
 
 	my @files = qw( MANIFEST Makefile.PL Build.PL META.yml );
-	
+
 	if( grep { -e } @files )
 		{
 		$_[0]->set_dist_info( $_[0]->dist_info( "unpack_dir" ) );
@@ -481,14 +481,14 @@ sub find_dist_dir
 	require File::Find;
 
 	$logger->debug( "Did not find dist directory at top level" );
-	my( $wanted, $reporter ) = 
+	my( $wanted, $reporter ) =
 		File::Find::Closures::find_by_directory_contains( @files );
 
 	File::Find::find( $wanted, $_[0]->dist_info( "unpack_dir" ) );
 
 	my @found = $reporter->();
 	$logger->debug( "Found files @found" );
-	
+
 	my( $first ) = $reporter->();
 	$logger->debug( "Found dist file at $first" );
 
@@ -504,6 +504,7 @@ sub find_dist_dir
 		$_[0]->set_dist_info( 'dist_dir', $first );
 		return 1;
 		}
+
 	exit;
 	return;
 	}
@@ -522,7 +523,7 @@ sub get_file_list
 	$logger->trace( sub { get_caller_info } );
 
 	$logger->debug( "Cwd is " . cwd() );
-	
+
 	unless( -e 'Makefile.PL' or -e 'Build.PL' )
 		{
 		$logger->error( "No Makefile.PL or Build.PL" );
@@ -537,13 +538,13 @@ sub get_file_list
 	$logger->debug( "manifest is [ ", join( "|", @$manifest ), " ]" );
 	$_[0]->set_dist_info( 'manifest', [ @$manifest ] );
 
-	my @file_info = map { 
+	my @file_info = map {
 		$logger->debug( "Getting file info for $_" );
-		$_[0]->get_file_info( $_ ) 
+		$_[0]->get_file_info( $_ )
 		} @$manifest;
 
 	$_[0]->set_dist_info( 'manifest_file_info', [ @file_info ] );
-	
+
 	$manifest;
 	}
 
@@ -557,9 +558,9 @@ hash. Returns the hash reference.
 sub get_file_info
 	{
 	$logger->trace( sub { get_caller_info } );
-	
+
 	my( $self, $file ) = @_;
-	
+
 	# get file name as key
 	my $hash = { name => $file };
 
@@ -571,16 +572,16 @@ sub get_file_info
 
 	# file size
 	$hash->{bytesize} = -s _;
-	
+
 	# file magic
 	$hash->{file_mime_type} = $self->file_magic( $file );
-	
+
 	# line count signature
 	$hash->{line_count} = $self->count_lines( $file );
-	
+
 	$hash;
 	}
-	
+
 =item get_blib_file_list
 
 Returns as an array reference the list of files in blib. You need to call
@@ -623,22 +624,22 @@ sub look_in_lib
 
 	require File::Find::Closures;
 	require File::Find;
-	
+
 	my( $wanted, $reporter ) = File::Find::Closures::find_by_regex( qr/\.pm\z/ );
 	File::Find::find( $wanted, 'lib' );
-	
+
 	my @modules = $reporter->();
 	unless( @modules )
 		{
 		$logger->debug( "Did not find any modules in lib" );
 		return;
 		}
-	
+
 	$_[0]->set_dist_info( 'modules', [ @modules ] );
-	
+
 	return 1;
 	}
-	
+
 =item look_in_cwd
 
 Look for .pm files in the current workign directory (and not
@@ -649,7 +650,7 @@ in sub-directories). This is more common in older Perl modules.
 sub look_in_cwd
 	{
 	$logger->trace( sub { get_caller_info } );
-	
+
 	my @modules = glob( "*.pm" );
 
 	unless( @modules )
@@ -659,14 +660,14 @@ sub look_in_cwd
 		}
 
 	$_[0]->set_dist_info( 'modules', [ @modules ] );
-	
+
 	return 1;
 	}
 
 =item look_in_meta_yml_provides
 
 As an almost-last-ditch effort, decide to beleive META.yml if it
-has a provides entry. There's no reason to trust that the 
+has a provides entry. There's no reason to trust that the
 module author has told the truth since he is only interested in
 advertising the parts he wants you to use.
 
@@ -689,15 +690,15 @@ sub look_in_meta_yml_provides
 		$logger->debug( "Did not find a provides in META.yml" );
 		return;
 		}
-	
+
 	my $provides = $yaml->{provides};
 
 	my @modules = ();
 	foreach my $key ( keys %$provides )
 		{
-		my( $namespace, $file, $version ) = 
+		my( $namespace, $file, $version ) =
 			( $key, @{$provides->{$key}}{qw(file version)} );
-			
+
 		push @modules, $file;
 		}
 
@@ -718,22 +719,22 @@ sub look_for_pm
 
 	require File::Find::Closures;
 	require File::Find;
-	
+
 	my( $wanted, $reporter ) = File::Find::Closures::find_by_regex( qr/\.pm\z/ );
 	File::Find::find( $wanted, cwd() );
-	
+
 	my @modules = $reporter->();
 	unless( @modules )
 		{
 		$logger->debug( "Did not find any modules in lib" );
 		return;
 		}
-	
+
 	$_[0]->set_dist_info( 'modules', [ @modules ] );
-	
+
 	return 1;
 	}
-	
+
 =item parse_meta_files
 
 Parses the META.yml and returns the YAML object.
@@ -760,7 +761,7 @@ sub parse_meta_files
 
 =item find_module_techniques
 
-Returns a list of 2-element anonymous arrays that lists method names 
+Returns a list of 2-element anonymous arrays that lists method names
 and string descriptions of the way that the C<find_modules>
 should look for module files.
 
@@ -782,7 +783,7 @@ sub find_module_techniques
 
 =item find_modules
 
-Find the module files. First, look in C<blib/>. IF there are no files in 
+Find the module files. First, look in C<blib/>. IF there are no files in
 C<blib/>, look in C<lib/>. IF there are still none, look in the current
 working directory.
 
@@ -793,7 +794,7 @@ sub find_modules
 	$logger->trace( sub { get_caller_info } );
 
 	my @methods = $_[0]->find_module_techniques;
-	
+
 	foreach my $tuple ( @methods )
 		{
 		my( $method, $message ) = @$tuple;
@@ -801,7 +802,7 @@ sub find_modules
 		$logger->debug( $message );
 		return 1;
 		}
-		
+
 	return;
 	}
 
@@ -817,22 +818,22 @@ sub find_tests
 
 	require File::Find::Closures;
 	require File::Find;
-	
+
 	my @tests;
-	
+
 	push @tests, 'test.pl' if -e 'test.pl';
-	
+
 	my( $wanted, $reporter ) = File::Find::Closures::find_by_regex( qr/\.t$/ );
 	File::Find::find( $wanted, "t" );
-	
+
 	push @tests, $reporter->();
 	$logger->debug( "Found tests [@tests]" );
-	
+
 	$_[0]->set_dist_info( 'tests', [ @tests ] );
-	
+
 	return scalar @tests;
 	}
-	
+
 =item run_build_file
 
 This method is one stop shopping for calls to C<choose_build_file>,
@@ -844,17 +845,17 @@ sub run_build_file
 	{
 	$logger->trace( sub { get_caller_info } );
 
-	foreach my $method ( qw( 
+	foreach my $method ( qw(
 		choose_build_file setup_build run_build get_blib_file_list ) )
 		{
 		$_[0]->$method() or return;
 		}
-		
+
 	my @modules = grep /\.pm$/, @{ $_[0]->dist_info( 'blib' ) };
 	$logger->debug( "Modules are @modules\n" );
 
 	$_[0]->set_dist_info( 'modules', [ @modules ] );
-	
+
 	return 1;
 	}
 
@@ -975,8 +976,8 @@ sub run_something
 
 =item get_module_info( FILE )
 
-Collect meta informantion and package information about a module 
-file. It starts by calling C<get_file_info>, then adds more to 
+Collect meta informantion and package information about a module
+file. It starts by calling C<get_file_info>, then adds more to
 the hash, including the version and package information.
 
 =cut
@@ -988,12 +989,12 @@ sub get_module_info
 	require Module::Extract::VERSION;
 	require Module::Extract::Namespaces;
 	require Module::Extract::Use;
-	
+
 	my( $self, $file ) = @_;
 	$logger->debug( "get_module_info called with [$file]\n" );
 
 	my $hash = $self->get_file_info( $file );
-	
+
 	# version
 	$hash->{version} = Module::Extract::VERSION->parse_version_safely( $file );
 
@@ -1005,22 +1006,22 @@ sub get_module_info
 	$hash->{primary_package} = $first_package;
 
 	my $use_extractor = Module::Extract::Use->new;
-	
+
 	my @uses = $use_extractor->get_modules( $file );
 	if( $use_extractor->error )
 		{
 		$logger->error( "Could not extract uses for [$file]: " . $use_extractor->error );
 		}
-		
+
 	$hash->{uses} = [ @uses ];
-	
+
 	$hash;
 	}
 
 =item get_test_info( FILE )
 
-Collect meta informantion and package information about a test 
-file. It starts by calling C<get_file_info>, then adds more to 
+Collect meta informantion and package information about a test
+file. It starts by calling C<get_file_info>, then adds more to
 the hash, including the version and package information.
 
 =cut
@@ -1028,7 +1029,7 @@ the hash, including the version and package information.
 sub get_test_info
 	{
 	$logger->trace( sub { get_caller_info } );
-	
+
 	my( $self, $file ) = @_;
 	$logger->debug( "get_module_info called with [$file]\n" );
 
@@ -1039,7 +1040,7 @@ sub get_test_info
 	my @uses = $extractor->get_modules( $file );
 
 	$hash->{uses} = [ @uses ];
-	
+
 	$hash;
 	}
 
@@ -1054,48 +1055,48 @@ sub count_lines
 	my( $self, $file ) = @_;
 
 	my $class = 'SourceCode::LineCounter::Perl';
-	
+
 	eval { eval "require $class" } or return;
-	
+
 	$self->set_run_info( 'line_counter_class', $class );
-	$self->set_run_info( 'line_counter_version', $class->VERSION ); 
-	
+	$self->set_run_info( 'line_counter_version', $class->VERSION );
+
 	$logger->debug( "Counting lines in $file" );
 	$logger->error( "File [$file] does not exist" ) unless -e $file;
-	
+
 	my $counter = $class->new;
 	$counter->count( $file );
-	
+
 	my $hash = {
 		map { $_ => $counter->$_() }
 		qw( total code comment documentation blank )
 		};
-		
+
 	return $hash;
 	}
 
 =item file_magic( FILE )
 
-Guesses and returns the MIME type for the file. 
+Guesses and returns the MIME type for the file.
 
 =cut
 
 sub file_magic
 	{
 	$logger->trace( sub { get_caller_info } );
-	
+
 	my( $self, $file ) = @_;
 
 	my $class = "File::MMagic";
-	
+
 	eval { eval "require $class" } or return;
 
 	$self->set_run_info( 'file_magic_class',   $class );
-	$self->set_run_info( 'file_magic_version', $class->VERSION ); 
-	
+	$self->set_run_info( 'file_magic_version', $class->VERSION );
+
 	$class->new->checktype_filename( $file );
 	}
-	
+
 =back
 
 =head2 Utility functions
@@ -1162,17 +1163,17 @@ levels or magic in between.
 sub get_caller_info
 	{
 	require File::Basename;
-	
+
 	my(
 		$package, $filename, $line, $subroutine, $hasargs,
 		$wantarray, $evaltext, $is_require, $hints, $bitmask
 		) = caller(4);
-	
+
 	$filename = File::Basename::basename( $filename );
-	
+
 	return join " : ", $package, $filename, $line, $subroutine;
 	}
-	
+
 =item get_md5
 
 =cut
@@ -1180,7 +1181,7 @@ sub get_caller_info
 sub get_md5
 	{
 	require MD5;
-	
+
 	my $context = MD5->new;
 	$context->add( $_[1] );
 	$context->hexdigest;
@@ -1198,7 +1199,7 @@ sub getppid
 	unless( $^O =~ /Win32/ ) { return CORE::getppid }
 	-1;
 	}
-	
+
 =back
 
 =head1 TO DO

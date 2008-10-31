@@ -13,7 +13,7 @@ BEGIN {
 	use Parallel::ForkManager;
 
 	package Parallel::ForkManager;
-	
+
 	sub finish { my ($s, $x)=@_;
 	  if ( $s->{in_child} ) {
 		CORE::exit ($x || 0);
@@ -44,7 +44,7 @@ Use this in backpan_indexer.pl by specifying it as the queue class:
 =head1 DESCRIPTION
 
 This class takes the list of ditributions to process and passes them
-out to the code that will do the work. 
+out to the code that will do the work.
 
 =head2 Methods
 
@@ -53,8 +53,8 @@ out to the code that will do the work.
 =item get_dispatcher( $Vars )
 
 Takes the $Vars hash and adds the C<dispatcher> key with a code
-reference. This module uses C<Parallel::ForkManager> to run 
-jobs in parallel, and looks at the 
+reference. This module uses C<Parallel::ForkManager> to run
+jobs in parallel, and looks at the
 
 It also sets up keys for PID, whose value is an anonymous array
 of process IDs. That array matches up with the one in the key
@@ -70,7 +70,7 @@ It adds:
 sub get_dispatcher
 	{
 	my( $class, $Notes ) = @_;
-		
+
 	$Notes->{Threads}            = $Notes->{config}->parallel_jobs;
 	$Notes->{dispatcher}         = $class->_make_forker( $Notes );
 	$Notes->{interface_callback} = $class->_make_interface_callback( $Notes );
@@ -79,8 +79,8 @@ sub get_dispatcher
 sub _make_forker
 	{
 	my( $self, $Notes ) = @_;
-	
-	my $forker = Parallel::ForkManager->new( 
+
+	my $forker = Parallel::ForkManager->new(
 		$Notes->{config}->parallel_jobs || 1 );
 
 	$forker;
@@ -89,7 +89,7 @@ sub _make_forker
 sub _make_interface_callback
 	{
 	my( $class, $Notes ) = @_;
-	
+
 	foreach my $key ( qw(PID recent errors ) )
 		{
 		$Notes->{$key} = [ qw() ];
@@ -100,9 +100,9 @@ sub _make_interface_callback
 	$Notes->{Errors}       = 0;
 	$Notes->{Done}         = 0;
 	$Notes->{Started}      = scalar localtime;
-	
+
 	$Notes->{queue_cursor} = 0;
-	
+
 	$Notes->{interface_callback} = sub {
 		$class->_remove_old_processes( $Notes );
 
@@ -116,22 +116,22 @@ sub _make_interface_callback
 
 		$Notes->{_elapsed} = time - $Notes->{_started};
 		$Notes->{Elapsed}  = _elapsed( $Notes->{_elapsed} );
-	
+
 		my $item = ${ $Notes->{queue} }[ $Notes->{queue_cursor}++ ];
 
 		if( my $pid = $Notes->{dispatcher}->start )
 			{ #parent
-			
+
 			unshift @{ $Notes->{PID} }, $pid;
 			unshift @{ $Notes->{recent} }, $item;
-			
+
 			$Notes->{Done}++;
 			$Notes->{Left} = $Notes->{Total} - $Notes->{Done};
-			
+
 			no warnings;
-			$Notes->{Rate} = sprintf "%.2f / sec ", 
+			$Notes->{Rate} = sprintf "%.2f / sec ",
 				eval { $Notes->{Done} / $Notes->{_elapsed} };
-			
+
 			}
 		else
 			{ # child
@@ -139,42 +139,42 @@ sub _make_interface_callback
 			$Notes->{dispatcher}->finish;
 			$logger->error( "The child is still running!" )
 			}
-	
+
 		1;
 		};
-	}	
+	}
 
 sub _remove_old_processes
 	{
 	my( $class, $Notes ) = @_;
-	
-	my @delete_indices = grep 
-		{ ! kill 0, $Notes->{PID}[$_] } 
+
+	my @delete_indices = grep
+		{ ! kill 0, $Notes->{PID}[$_] }
 		0 .. $#{ $Notes->{PID} };
-		
+
 	foreach my $index ( reverse @delete_indices )
 		{
 		splice @{ $Notes->{recent} }, $index, 1;
 		splice @{ $Notes->{PID} }, $index, 1;
 		}
 	}
-	
+
 BEGIN {
 my %hash = ( days => 864000, hours => 3600, minutes => 60 );
 
 sub _elapsed
 	{
 	my $seconds = shift;
-	
+
 	my @v;
 	foreach my $key ( qw(days hours minutes) )
 		{
 		push @v, int( $seconds / $hash{$key} );
 		$seconds -= $v[-1] * $hash{$key}
 		}
-		
+
 	push @v, $seconds;
-	
+
 	sprintf "%dd %02dh %02dm %02ds", @v;
 	}
 }

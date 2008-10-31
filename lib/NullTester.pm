@@ -25,8 +25,8 @@ want to do nothing:
 
 =head1 DESCRIPTION
 
-This class implements all of the methods needed by all of the 
-component classes. The 
+This class implements all of the methods needed by all of the
+component classes. The
 
 =head2 Methods
 
@@ -69,14 +69,14 @@ a code reference that returns 1 and does nothing else.
 =cut
 
 BEGIN {
-	package MyCPAN::Indexer::NullTester::Dispatcher;	
+	package MyCPAN::Indexer::NullTester::Dispatcher;
 	sub new { bless '', $_[0] }
 	sub start  { 1 };
 	sub finish { 1 };
 	}
-	
-sub get_dispatcher 
-	{ 
+
+sub get_dispatcher
+	{
 	$_[1]->{child_task} = MyCPAN::Indexer::NullTester::Dispatcher->new;
 	$_[1]->{interface_callback} = sub { 1 }
 	}
@@ -89,7 +89,7 @@ C<do_interface> simly returns 1.
 
 sub do_interface { 1 }
 
-=back 
+=back
 
 =head1 SEE ALSO
 

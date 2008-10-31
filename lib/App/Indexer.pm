@@ -63,44 +63,44 @@ sub get_config
 		next if $Config->exists( $key );
 		$Config->set( $key, $self->default( $key ) );
 		}
-	
+
 	$Config;
 	}
 }
-	
+
 sub run
 	{
 	my( $self, @argv ) = @_;
 	use vars qw( %Options );
 
-	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 	# Process the options
 	{
 	my $run_dir = dirname( $0 );
 	( my $script  = basename( $0 ) ) =~ s/\.\w+$//;
 
 	local @ARGV = @argv;
-	getopts('l:f:', \%Options); 
+	getopts('l:f:', \%Options);
 	@argv = @ARGV; # XXX: yuck
-	
+
 	$Options{f} ||= catfile( $run_dir, "$script.conf" );
 	$Options{l} ||= catfile( $run_dir, "$script.log4perl" );
 	}
 
-	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 	# Minutely control the environment
 	{
 	my %pass_through = map { $_, 1 } qw( DISPLAY USER HOME PWD TERM );
 
-	foreach my $key ( keys %ENV ) 
-		{ 
-		delete $ENV{$key} unless exists $pass_through{$key} 
+	foreach my $key ( keys %ENV )
+		{
+		delete $ENV{$key} unless exists $pass_through{$key}
 		}
 
 	$ENV{AUTOMATED_TESTING}++;
 	}
 
-	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 	# The set up
 	if( -e $Options{l} )
 		{
@@ -110,9 +110,9 @@ sub run
 		{
 		Log::Log4perl->easy_init( $Log::Log4perl::ERROR );
 		}
-	
+
 	my $Config = $self->get_config( $Options{f} );
-	
+
 	# set the directories to index
 	unless( $Config->exists( 'backpan_dir') )
 		{
@@ -122,9 +122,9 @@ sub run
 
 	$self->setup_dirs( $Config );
 
-	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 	# Load classes and check that they do the right thing
-	my $Notes = { 
+	my $Notes = {
 		config     => $Config,
 		UUID       => $self->get_uuid(),
 		};
@@ -135,13 +135,13 @@ sub run
 	foreach my $tuple ( @components )
 		{
 		my( $directive, $default_class, $method ) = @$tuple;
-	
+
 		my $class = $Config->get( $directive ) || $default_class;
-	
+
 		eval "require $class" or die "$@\n";
-		die "$directive [$class] does not implement $method()" 
+		die "$directive [$class] does not implement $method()"
 			unless $class->can( $method );
-		
+
 		$logger->debug( "Calling $class->$method()" );
 		$class->$method( $Notes );
 		}
@@ -165,24 +165,26 @@ sub setup_dirs
 	{
 	# XXX big ugly mess to clean up
 	my( $self, $Config ) = @_;
-	
-	my $cwd = cwd();
-	
-	my $temp_dir = $Config->temp_dir || tempdir( CLEANUP => 1, DIR => cwd() );
+
+	my $starting_dir = cwd();
+
+	my $temp_dir = $Config->temp_dir || 
+		tempdir( CLEANUP => 0, DIR => $starting_dir );
 	$Config->set( 'temp_dir', $temp_dir );
 	$logger->debug( "temp_dir is [$temp_dir] [" . $Config->temp_dir . "]" );
-	
+
 	mkpath( $temp_dir ) unless -d $temp_dir;
 	$logger->fatal( "temp_dir [$temp_dir] does not exist!" ) unless -d $temp_dir;
-	
-	chdir $temp_dir or 
+
+	chdir $temp_dir or
 		$logger->fatal( "Could not change to [" . $Config->temp_dir . "]: $!" );
-	
-	my $report_dir    = $Config->report_dir || tempdir( CLEANUP => 1, DIR => cwd() );
+
+	my $report_dir    = $Config->report_dir || 
+		tempdir( CLEANUP => 0, DIR => $starting_dir );
 	$Config->set( 'report_dir', $report_dir );
 	my $yml_dir       = catfile( $report_dir, "meta"        );
 	my $yml_error_dir = catfile( $report_dir, "meta-errors" );
-	
+
 	foreach my $dir ( $yml_dir, $yml_error_dir )
 		{
 		mkpath( $dir ) unless -d $dir;
@@ -191,26 +193,26 @@ sub setup_dirs
 
 	$logger->debug( "Value of retry is " . $Config->retry_errors );
 	$logger->debug( "Value of copy_bad_dists is " . $Config->copy_bad_dists );
-	
+
 	if( $Config->retry_errors )
 		{
 		my $glob = catfile( $yml_error_dir, "*.yml" );
 		$glob =~ s/ /\\ /g;
-	
+
 		unlink glob( $glob );
 		}
-		
+
 	mkdir $yml_dir,       0755 unless -d $yml_dir;
 	mkdir $yml_error_dir, 0755 unless -d $yml_error_dir;
 	
-	chdir $cwd;
+	chdir $starting_dir;
 	}
-	
+
 sub get_uuid
 	{
-	my $UUID = do { 
+	my $UUID = do {
 		require Data::UUID;
-		my $ug = Data::UUID->new; 
+		my $ug = Data::UUID->new;
 		my $uuid = $ug->create;
 		$ug->to_string( $uuid );
 		};

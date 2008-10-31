@@ -11,7 +11,7 @@ MyCPAN::Indexer::Tutorial - How the backpan_indexer.pl pieces fit together
 
 =head1 DESCRIPTION
 
-The MyCPAN::Indexer system lets you plug in different engines to 
+The MyCPAN::Indexer system lets you plug in different engines to
 control major portions of the process. It's up to each class to
 obey the interface and do that parts the other portions it expects
 it to do. The idea is to decouple some of these bits as much as
@@ -38,7 +38,7 @@ Perl distribution.
 Implements:
 
 	get_queue( $Notes )
-	
+
 Creates in C<$Notes>:
 
 	queue - a reference to the array reference returned by get_queue.
@@ -46,7 +46,7 @@ Creates in C<$Notes>:
 Expects in C<$Notes>:
 
 	config - the configuration object
-	
+
 To Do: The Queue class should really be an iterator of some sort. Instead
 of returning an array (which it can't change), return an iterator.
 
@@ -58,7 +58,7 @@ actual indexing work, including saving the results.
 C<backpan_indexer.pl> calls C<get_task> with a reference to its
 C<$Notes> hash.
 
-Implements: 
+Implements:
 
 	get_task( $Notes )
 
@@ -82,18 +82,18 @@ C<$Notes> hash.
 Implements:
 
 	get_reporter( $Notes, $info )
-	
+
 Creates in C<$Notes>:
 
 	reporter - the code ref to handle storing the information
-	
+
 Expects in C<$Notes>:
 
 	config
-	
+
 Expects in config:
 
-	
+
 =head1 The Dispatcher class
 
 The Dispatcher class implements the bits to hand out work to the
@@ -103,18 +103,18 @@ the interface_callback code ref the Dispatcher class provides.
 Implements:
 
 	get_dispatcher( $Notes )
-	
+
 Creates in C<$Notes>
 
 	dispatcher - the dispatcher object, with start and finish methods
 	interface_callback - a code ref to call repeatedly in the Interface class
-	
+
 Expects in C<$Notes>
 
 	config     - the configuration object
 	child_task - the code ref that handles indexing a single dist
 	queue      - the array ref of dist paths
-	
+
 =head1 The Interface class
 
 The Interface class really has two jobs. It makes the live reporting
@@ -124,7 +124,7 @@ the dispatcher to start new work.
 Implements:
 
 	do_interface( $Notes )
-	
+
 Creates in C<$Notes>
 
 Expects in C<$Notes>
