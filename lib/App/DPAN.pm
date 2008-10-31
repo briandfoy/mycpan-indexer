@@ -5,14 +5,14 @@ use vars qw($VERSION);
 use Cwd qw(cwd);
 use File::Spec::Functions qw(catfile);
 
-$VERSION = '1.17_03';
+$VERSION = '1.17_04';
 
 BEGIN {
 my $cwd = cwd();
 
 my %Defaults = (
 	report_dir       => catfile( $cwd, 'indexer_reports' ),
-	temp_dir         => catfile( $cwd, 'temp' ),
+#	temp_dir         => catfile( $cwd, 'temp' ),
 	alarm            => 15,
 	copy_bad_dists   => 0,
 	retry_errors     => 1,

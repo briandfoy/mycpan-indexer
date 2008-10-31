@@ -14,7 +14,7 @@ use File::Temp qw(tempdir);
 use Getopt::Std;
 use Log::Log4perl;
 
-$VERSION = '1.17_03';
+$VERSION = '1.17_04';
 
 $|++;
 
@@ -169,7 +169,7 @@ sub setup_dirs
 	my $starting_dir = cwd();
 
 	my $temp_dir = $Config->temp_dir || 
-		tempdir( CLEANUP => 0, DIR => $starting_dir );
+		tempdir( CLEANUP => 1, DIR => $starting_dir );
 	$Config->set( 'temp_dir', $temp_dir );
 	$logger->debug( "temp_dir is [$temp_dir] [" . $Config->temp_dir . "]" );
 
@@ -180,7 +180,7 @@ sub setup_dirs
 		$logger->fatal( "Could not change to [" . $Config->temp_dir . "]: $!" );
 
 	my $report_dir    = $Config->report_dir || 
-		tempdir( CLEANUP => 0, DIR => $starting_dir );
+		tempdir( CLEANUP => 1, DIR => $starting_dir );
 	$Config->set( 'report_dir', $report_dir );
 	my $yml_dir       = catfile( $report_dir, "meta"        );
 	my $yml_error_dir = catfile( $report_dir, "meta-errors" );
