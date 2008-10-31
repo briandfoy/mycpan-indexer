@@ -25,6 +25,7 @@ MyCPAN::Indexer - Index a Perl distribution
 
 use Carp qw(croak);
 use Cwd;
+use Data::Dumper;
 use File::Basename;
 use File::Path;
 use Log::Log4perl;
@@ -124,6 +125,8 @@ sub examine_dist
 	$logger->trace( sub { get_caller_info } );
 	my( $self ) = @_;
 
+	$self->set_run_info( 'examine_start_time', time );
+	
 	foreach my $tuple ( $self->examine_dist_steps )
 		{
 		my( $method, $error_msg, $die_on_error ) = @$tuple;
@@ -164,6 +167,11 @@ sub examine_dist
 
 	$self->set_dist_info( 'test_info', [ @file_info ] );
 	}
+
+	$self->set_run_info( 'examine_end_time', time );
+	$self->set_run_info( 'examine_time', 
+		$self->run_info('examine_end_time') - $self->run_info('examine_start_time')
+		);
 
 	return 1;
 	}
@@ -486,22 +494,22 @@ sub find_dist_dir
 
 	File::Find::find( $wanted, $_[0]->dist_info( "unpack_dir" ) );
 
-	my @found = $reporter->();
+	# we want the shortest path
+	my @found = sort { length $a <=> length $b } $reporter->();
 	$logger->debug( "Found files @found" );
 
-	my( $first ) = $reporter->();
-	$logger->debug( "Found dist file at $first" );
+	$logger->debug( "Found dist file at $found[0]" );
 
-	unless( $first )
+	unless( $found[0] )
 		{
 		$logger->debug( "Didn't find anything that looks like a module directory!" );
 		return;
 		}
 
-	if( chdir $first )
+	if( chdir $found[0] )
 		{
-		$logger->debug( "Changed to $first" );
-		$_[0]->set_dist_info( 'dist_dir', $first );
+		$logger->debug( "Changed to $found[0]" );
+		$_[0]->set_dist_info( 'dist_dir', $found[0] );
 		return 1;
 		}
 
@@ -974,6 +982,29 @@ sub run_something
 
 	}
 
+=item get_module_info_tasks
+
+Returns a list of anonymous arrays that tell C<get_module_info> what
+to do. Each anonymous array holds:
+
+	0. method to call
+	1. description of technique
+
+The default list includes C<extract_module_namespaces>, C<exract_module_version>, 
+and C<extract_module_dependencies>. If you don't like that list, you can prune
+or expand it in a subclass.
+
+=cut
+
+sub get_module_info_tasks
+	{
+	(
+	[ 'extract_module_namespaces',   'Extract the namespaces a file declares' ],
+	[ 'extract_module_version',      'Extract the version of the module'      ],
+	[ 'extract_module_dependencies', 'Extract module dependencies'            ],	
+	)
+	}
+	
 =item get_module_info( FILE )
 
 Collect meta informantion and package information about a module
@@ -986,24 +1017,54 @@ sub get_module_info
 	{
 	$logger->trace( sub { get_caller_info } );
 
-	require Module::Extract::VERSION;
-	require Module::Extract::Namespaces;
-	require Module::Extract::Use;
-
 	my( $self, $file ) = @_;
-	$logger->debug( "get_module_info called with [$file]\n" );
 
 	my $hash = $self->get_file_info( $file );
 
-	# version
+	$logger->debug( "get_module_info called with [$file]\n" );
+
+	my @tasks = $self->get_module_info_tasks;
+	
+	foreach my $task ( @tasks )
+		{
+		my( $method, $description ) = @$task;
+		$logger->debug( "get_module_info calling [$method]\n" );
+		$self->$method( $file, $hash );
+		}
+
+	$hash;
+	}
+	
+sub extract_module_namespaces
+	{
+	my( $self, $file, $hash ) = @_;
+	
+	require Module::Extract::Namespaces;
+	
+	my @packages             = Module::Extract::Namespaces->from_file( $file );
+
+	$hash->{packages}        = [ @packages ];
+	$hash->{primary_package} = $packages[0];
+	
+	1;
+	}
+	
+sub extract_module_version
+	{
+	my( $self, $file, $hash ) = @_;
+
+	require Module::Extract::VERSION;
+
 	$hash->{version} = Module::Extract::VERSION->parse_version_safely( $file );
+	
+	1;
+	}
 
-	# packages
-	my @packages      = Module::Extract::Namespaces->from_file( $file );
-	my $first_package = Module::Extract::Namespaces->from_file( $file );
+sub extract_module_dependencies
+	{
+	my( $self, $file, $hash ) = @_;
 
-	$hash->{packages} = [ @packages ];
-	$hash->{primary_package} = $first_package;
+	require Module::Extract::Use;
 
 	my $use_extractor = Module::Extract::Use->new;
 
@@ -1014,10 +1075,10 @@ sub get_module_info
 		}
 
 	$hash->{uses} = [ @uses ];
-
-	$hash;
+	
+	1;	
 	}
-
+	
 =item get_test_info( FILE )
 
 Collect meta informantion and package information about a test
@@ -1031,7 +1092,6 @@ sub get_test_info
 	$logger->trace( sub { get_caller_info } );
 
 	my( $self, $file ) = @_;
-	$logger->debug( "get_module_info called with [$file]\n" );
 
 	my $hash = $self->get_file_info( $file );
 

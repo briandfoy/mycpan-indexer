@@ -29,10 +29,12 @@ MyCPAN::Indexer::DPAN - Create a D(ark)PAN out of the indexed distributions
 
 This module implements the indexer_class and reporter_class components
 to allow C<backpan_indexer.pl> to count the test modules used in the
-indexed distributions.
+indexed distributions. This application of MyCPAN::Indexer is 
+specifically aimed at creating a 02packages.details file, so it 
+strives to collect a minimum of information.
 
 It runs through the indexing and prints a report at the end of the run.
-You probably
+
 
 =cut
 
@@ -84,13 +86,26 @@ C<MyCPAN::Indexer::find_modules>.
 sub find_module_techniques
 	{
 	my @methods = (
-		[ 'look_in_lib',    "Guessed from looking in lib/" ],
-		[ 'look_in_cwd',    "Guessed from looking in cwd"  ],
-		[ 'look_in_meta_yml_provides',    "Guessed from looking in META.yml"  ],
-		[ 'look_for_pm',    "Guessed from looking in cwd"  ],
+		[ 'look_in_lib',               "Guessed from looking in lib/"      ],
+		[ 'look_in_cwd',               "Guessed from looking in cwd"       ],
+		[ 'look_in_meta_yml_provides', "Guessed from looking in META.yml"  ],
+		[ 'look_for_pm',               "Guessed from looking in cwd"       ],
 		);
 	}
 
+=item get_module_info_tasks
+
+
+=cut
+
+sub get_module_info_tasks
+	{
+	(
+	[ 'extract_module_namespaces',   'Extract the namespaces a file declares' ],
+	[ 'extract_module_version',       'Extract the version of the module'     ],
+	)
+	}
+	
 =item setup_run_info
 
 Like C<setup_run_info> in C<MyCPAN::Indexer>, but it remembers fewer
@@ -147,6 +162,10 @@ sub setup_dist_info
 =over 4
 
 =item get_reporter( $Notes )
+
+Inherited for MyCPAN::App::BackPAN::Indexer
+
+=item final_words( $Notes )
 
 C<get_reporter> sets the C<reporter> key in the C<$Notes> hash reference. The
 value is a code reference that takes the information collected about a distribution
