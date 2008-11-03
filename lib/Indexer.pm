@@ -410,9 +410,11 @@ sub unpack_dist
 
 	unless( $rc )
 		{
-		$logger->error( "Archive::Extract could not extract $dist: " . $extractor->error(1) );
-		$self->set_dist_info( 'extraction_error', $extractor->error(1) );
-		return;
+		$logger->error( "Archive::Extract could not extract $dist: " . $extractor->error(0) );
+		$self->set_dist_info( 'extraction_error', $extractor->error(0) );
+		# I should fail here, but Archive::Extract 0.26 on Windows fails 
+		# even when it succeeds, so just log the error and keep going
+		# return;
 		}
 
 	$self->set_dist_info( 'dist_extract_path', $extractor->extract_path );

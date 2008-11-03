@@ -24,7 +24,7 @@ my %Defaults = (
 	interface_class  => 'MyCPAN::Indexer::Interface::Text',
 	worker_class     => 'MyCPAN::Indexer::Worker',
 	reporter_class   => 'MyCPAN::Indexer::DPAN',
-	parallel_jobs    => 1,
+	parallel_jobs    => 4,
 	);
 
 sub default { $Defaults{$_[1]} }
