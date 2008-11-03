@@ -16,7 +16,7 @@ BEGIN {
 }
 
 use vars qw($VERSION $logger);
-$VERSION = '1.17_04';
+$VERSION = '1.17_05';
 
 use Log::Log4perl;
 use Tk;
