@@ -3,7 +3,7 @@ use strict;
 use warnings;
 
 use vars qw($VERSION $logger);
-$VERSION = '1.17_05';
+$VERSION = '1.17_06';
 
 use File::Basename;
 use File::Spec::Functions qw(catfile);

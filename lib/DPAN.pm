@@ -15,7 +15,7 @@ use File::Spec::Functions qw(catfile);
 use File::Path;
 use YAML;
 
-$VERSION = '1.17_05';
+$VERSION = '1.17_06';
 
 =head1 NAME
 
@@ -206,7 +206,10 @@ sub final_words
 			next;
 			};
 
-		$dirs_needing_checksums{ dirname( $yaml->{dist_info}{dist_file} ) }++;
+		my $dist_file = $yaml->{dist_info}{dist_file};
+		my $dist_dir = dirname( $dist_file );
+		
+		$dirs_needing_checksums{ $dist_dir }++;
 
 		foreach my $module ( @{ $yaml->{dist_info}{module_info} }  )
 			{
@@ -216,35 +219,37 @@ sub final_words
 
 			foreach my $package ( @$packages )
 				{
+				( my $path = $dist_file ) =~ s/.*authors.id.//g;
+				
 				$package_details->add_entry(
 					'package name' => $package,
 					version        => $version,
-					path           => $yaml->{dist_info}{dist_file},
+					path           => $path,
 					);
 				}
 			}
 		}
+
+	my $dir = do {
+		my $d = $Notes->{config}->backpan_dir;
+		ref $d ? $d->[0] : $d;
+		};
+
+	( my $packages_dir = $dir ) =~ s/authors.id.*//;
+	$reporter_logger->debug( "package details directory is [$packages_dir]");
+
+	my $index_dir     = catfile( $packages_dir, 'modules' );
+	mkpath( $index_dir );
 
 	my $packages_file = catfile( $index_dir, '02packages.details.txt.gz' );
 	$reporter_logger->debug( "package details file is [$packages_file]");
 
 	$package_details->write_file( $packages_file );
 
-	my $dir = do {
-		my $d = $Notes->{config}->backpan_dir;
-		ref $d ? $d->[0] : $d;
-	};
+	$class->create_modlist( $index_dir );
 
+	$class->create_checksums( [ keys %dirs_needing_checksums ] );
 
-	( my $index_root = $dir ) =~ s/authors.id.*//;
-	$reporter_logger->debug( "package details directory is [$packages_dir]");
-
-	my $index_dir     = catfile( $index_root, 'modules' );
-	mkpath( $index_dir );
-
-	$self->create_package_details( $index_dir );
-	$self->create_checksums( [ keys %dirs_needing_checksums ] );
-	$self->create_modlist( $index_dir );
 	}
 
 =item create_package_details

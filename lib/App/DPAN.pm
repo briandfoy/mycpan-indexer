@@ -5,7 +5,7 @@ use vars qw($VERSION);
 use Cwd qw(cwd);
 use File::Spec::Functions qw(catfile);
 
-$VERSION = '1.17_05';
+$VERSION = '1.17_06';
 
 BEGIN {
 my $cwd = cwd();

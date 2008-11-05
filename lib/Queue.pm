@@ -3,7 +3,7 @@ use strict;
 use warnings;
 
 use vars qw($VERSION $logger);
-$VERSION = '1.17_05';
+$VERSION = '1.17_06';
 
 use File::Find;
 use File::Find::Closures qw( find_by_regex );
