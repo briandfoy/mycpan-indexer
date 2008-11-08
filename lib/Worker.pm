@@ -145,22 +145,20 @@ sub _check_for_previous_result
 	{
 	my( $class, $dist, $Notes ) = @_;
 
-	my $Config = $Notes->{config};
-
 	( my $basename = basename( $dist ) ) =~ s/\.(tgz|tar\.gz|zip)$//;
 
-	my $yml_dir        = catfile( $Config->report_dir, "meta"        );
-	my $yml_error_dir  = catfile( $Config->report_dir, "meta-errors" );
-
-	my $yml_path       = catfile( $yml_dir,       "$basename.yml" );
-	my $yml_error_path = catfile( $yml_error_dir, "$basename.yml" );
-
-	if( my @path = grep { -e } ( $yml_path, $yml_error_path ) )
+	foreach my $key ( qw(success_report_subdir error_report_subdir) )
 		{
-		$logger->debug( "Found run output for $basename in $path[0]. Skipping...\n" );
-		return;
+		my $dir  = $Notes->{config}->$key();
+		my $file = catfile( $dir , "$basename.yml" );
+	
+		if( -e $file )
+			{
+			$logger->debug( "Found run output for $basename in $dir. Skipping...\n" );
+			return;
+			}
 		}
-
+		
 	return $basename;
 	}
 

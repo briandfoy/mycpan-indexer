@@ -1045,6 +1045,8 @@ sub extract_module_namespaces
 	
 	my @packages             = Module::Extract::Namespaces->from_file( $file );
 
+	$logger->warn( "Didn't find any packages in $file" ) unless @packages;
+	
 	$hash->{packages}        = [ @packages ];
 	$hash->{primary_package} = $packages[0];
 	

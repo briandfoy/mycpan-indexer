@@ -51,10 +51,6 @@ sub get_reporter
 
 	my( $class, $Notes ) = @_;
 
-	# XXX: These subdirs need not not be literals
-	my $yml_dir       = catfile( $Notes->{config}->report_dir, "meta"        );
-	my $yml_error_dir = catfile( $Notes->{config}->report_dir, "meta-errors" );
-
 	$Notes->{reporter} = sub {
 		my( $Notes, $info ) = @_;
 
@@ -70,9 +66,12 @@ sub get_reporter
 		no warnings 'uninitialized';
 		( my $basename = basename( $dist ) ) =~ s/\.(tgz|tar\.gz|zip)$//;
 
-		my $out_dir  = $info->run_info( 'completed' ) ? $yml_dir : $yml_error_dir;
+		my $out_dir_key  = $info->run_info( 'completed' ) ? 'success' : 'error';
 
-		my $out_path = catfile( $out_dir, "$basename.yml" );
+		my $out_path = catfile( 
+			$Notes->{config}->get( "${out_dir_key}_report_subdir" ), 
+			"$basename.yml" 
+			);
 
 		open my($fh), ">", $out_path or $logger->fatal( "Could not open $out_path: $!" );
 		print $fh Dump( $info );

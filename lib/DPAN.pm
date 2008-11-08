@@ -181,10 +181,9 @@ sub final_words
 	# This is where I want to write 02packages and CHECKSUMS
 	my( $class, $Notes ) = @_;
 
-	$reporter_logger->debug( "Final words from the DPAN Reporter" );
+	$reporter_logger->trace( "Final words from the DPAN Reporter" );
 
-	my $report_dir = catfile( $Notes->{config}->report_dir, 'meta' );
-
+	my $report_dir = $Notes->{config}->success_report_subdir;
 	$reporter_logger->debug( "Report dir is $report_dir" );
 
 	opendir my($dh), $report_dir or
@@ -275,6 +274,12 @@ sub create_modlist
 	my $module_list_file = catfile( $index_dir, '03modlist.data.gz' );
 	$reporter_logger->debug( "modules list file is [$module_list_file]");
 
+	if( -e $module_list_file )
+		{
+		$reporter_logger->debug( "File [$module_list_file] already exists" );
+		return 1;
+		}
+		
 	my $fh = IO::Compress::Gzip->new( $module_list_file );
 	print $fh "This is just a placeholder so CPAN.pm is happy\n\t\t-- $0\n";
 	close $fh;
