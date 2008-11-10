@@ -4,7 +4,7 @@ blib
 pm_to_blib
 examples/backpan_indexer.log
 .DS_Store
-MyCPAN*
+MyCPAN-*
 cover_db
 blib
 *.log
