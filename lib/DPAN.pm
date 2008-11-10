@@ -198,7 +198,7 @@ sub final_words
 	require version;
 	foreach my $file ( readdir( $dh ) )
 		{
-		next if $file =~ /^.{1,2}\z/;
+		next unless $file =~ /\.yml\z/;
 		$reporter_logger->debug( "Processing output file $file" );
 		my $yaml = eval { YAML::LoadFile( catfile( $report_dir, $file ) ) } or do {
 			$reporter_logger->error( "$file: $@" );
@@ -207,14 +207,14 @@ sub final_words
 
 		my $dist_file = $yaml->{dist_info}{dist_file};
 		
-		print STDERR "Dist file is $dist_file\n";
+		#print STDERR "Dist file is $dist_file\n";
 		
 		# some files may be left over from earlier runs, even though the
 		# original distribution has disappeared. Only index distributions
 		# that are still there
 		my @backpan_dirs = @{ $Notes->{config}->backpan_dir };
 		# check that dist file is in one of these directories
-		next unless -e $dist_file && $dist_file =~ m/^\Q$backpan_dir/;
+		next unless -e $dist_file; # && $dist_file =~ m/^\Q$backpan_dir/;
 		
 		my $dist_dir = dirname( $dist_file );
 		
@@ -228,6 +228,8 @@ sub final_words
 
 			foreach my $package ( @$packages )
 				{
+				# broken crap that works on Unix and Windows to make cpanp
+				# happy.
 				( my $path = $dist_file ) =~ s/.*authors.id.//g;
 				
 				$package_details->add_entry(
