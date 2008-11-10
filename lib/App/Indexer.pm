@@ -35,6 +35,7 @@ my %Defaults = (
 	success_report_subdir => catfile( $report_dir, 'success' ),
 	error_report_subdir   => catfile( $report_dir, 'errors'  ),
 	alarm                 => 15,
+	log_file_watch_time   => 30,
 	copy_bad_dists        => 0,
 	retry_errors          => 1,
 	indexer_id            => 'Joe Example <joe@example.com>',
@@ -58,11 +59,7 @@ sub get_config
 
 	eval "require " . $self->config_class . "; 1";
 
-	$logger->debug( "Config file is $file" );
-	$logger->debug( "Config file does not exist!" ) unless -e $file;
-
 	my $Config = $self->config_class->new( defined $file ? $file : () );
-	$logger->fatal( "Could not create config object!" ) unless ref $Config;
 
 	foreach my $key ( keys %Defaults )
 		{
@@ -100,7 +97,6 @@ sub run
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 	# The set up
 
-	$self->setup_logging( $Options{l} );
 	
 	my $Config = $self->get_config( $Options{f} );
 
@@ -108,7 +104,6 @@ sub run
 	unless( $Config->exists( 'backpan_dir') )
 		{
 		$Config->set( 'backpan_dir', [ @argv ? @argv : cwd() ] );
-		$logger->debug( 'Going to index [' . $Config->backpan_dir . ']' );
 		}
 
 
@@ -118,8 +113,10 @@ sub run
 		config     => $Config,
 		UUID       => $self->get_uuid(),
 		tempdirs   => [],
+		log_file   => $Options{l},
 		};
 
+	$self->setup_logging( $Notes );
 
 	$self->setup_dirs( $Notes );
 
@@ -160,11 +157,14 @@ sub setup_environment
 	
 sub setup_logging
 	{
-	my( $self, $log_file ) = @_;
+	my( $self, $Notes ) = @_;
 	
-	if( -e $log_file )
+	if( -e $Notes->{log_file} )
 		{
-		Log::Log4perl->init_and_watch( $log_file, 30 );
+		Log::Log4perl->init_and_watch( 
+			$Notes->{log_file}, 
+			$Notes->{config}->get( 'log_file_watch_time' )
+			);
 		}
 	else
 		{
@@ -191,7 +191,7 @@ sub cleanup_and_exit
 	require File::Path;
 	
 	my @dirs = @{ $Notes->{tempdirs} }, $Notes->{config}->get('temp_dir');
-	print STDERR "Dirs to remove are @dirs\n";
+	$logger->debug( "Dirs to remove are @dirs" );
 	
 	eval {
 		no warnings;
