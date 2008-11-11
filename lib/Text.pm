@@ -5,7 +5,7 @@ use warnings;
 use Log::Log4perl;
 
 use vars qw($VERSION $logger);
-$VERSION = '1.17_06';
+$VERSION = '1.17_07';
 
 =head1 NAME
 

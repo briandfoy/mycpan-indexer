@@ -15,7 +15,7 @@ use File::Spec::Functions qw(catfile);
 use File::Path;
 use YAML;
 
-$VERSION = '1.17_06';
+$VERSION = '1.17_07';
 
 =head1 NAME
 
