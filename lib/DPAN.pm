@@ -232,6 +232,8 @@ sub final_words
 				# happy.
 				( my $path = $dist_file ) =~ s/.*authors.id.//g;
 				
+				$path =~ s|\\+|/|g; # no windows paths.
+				
 				$package_details->add_entry(
 					'package name' => $package,
 					version        => $version,

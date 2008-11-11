@@ -17,9 +17,98 @@
 		<key>ExpandedItems:brian</key>
 		<array>
 			<string>315012E6-A22B-4F11-8C6D-C763D3AD7E6F</string>
+			<dict>
+				<key>AliasData</key>
+				<data>
+				AAAAAAFYAAIAAQdMZW9wYXJkAAAAAAAAAAAAAAAAAAAA
+				AAAAAADDUpoMSCsAAABpQH0DbGliAAAAAAAAAAAAAAAA
+				AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+				AAAAAAAAAAAAAAAAAAAAAGlCLcU9VjIAAAAAAAAAAP//
+				//8AAAkgAAAAAAAAAAAAAAAAAAAADk15Q1BBTi1JbmRl
+				eGVyABAACAAAw1LgXAAAABEACAAAxT2qkgAAAAEAEABp
+				QH0AChQdAAYqmgAAeYcAAgAqTGVvcGFyZDpVc2Vyczpi
+				cmlhbjpEZXY6TXlDUEFOLUluZGV4ZXI6bGliAA4ACAAD
+				AGwAaQBiAA8AEAAHAEwAZQBvAHAAYQByAGQAEgAiVXNl
+				cnMvYnJpYW4vRGV2L015Q1BBTi1JbmRleGVyL2xpYgAT
+				AAEvAAAVAAIADP//AAA=
+				</data>
+				<key>FileURL</key>
+				<string>file://localhost/Users/brian/Dev/MyCPAN-Indexer/lib/</string>
+				<key>TypeID</key>
+				<string>_CFileLocator</string>
+				<key>Version</key>
+				<integer>1</integer>
+			</dict>
+			<dict>
+				<key>AliasData</key>
+				<data>
+				AAAAAAFQAAIAAQdMZW9wYXJkAAAAAAAAAAAAAAAAAAAA
+				AAAAAADDUpoMSCsAAABpQH0BdAAAAAAAAAAAAAAAAAAA
+				AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+				AAAAAAAAAAAAAAAAAAAAAGlCSsU9VjIAAAAAAAAAAP//
+				//8AAAkgAAAAAAAAAAAAAAAAAAAADk15Q1BBTi1JbmRl
+				eGVyABAACAAAw1LgXAAAABEACAAAxT2qkgAAAAEAEABp
+				QH0AChQdAAYqmgAAeYcAAgAoTGVvcGFyZDpVc2Vyczpi
+				cmlhbjpEZXY6TXlDUEFOLUluZGV4ZXI6dAAOAAQAAQB0
+				AA8AEAAHAEwAZQBvAHAAYQByAGQAEgAgVXNlcnMvYnJp
+				YW4vRGV2L015Q1BBTi1JbmRleGVyL3QAEwABLwAAFQAC
+				AAz//wAA
+				</data>
+				<key>FileURL</key>
+				<string>file://localhost/Users/brian/Dev/MyCPAN-Indexer/t/</string>
+				<key>TypeID</key>
+				<string>_CFileLocator</string>
+				<key>Version</key>
+				<integer>1</integer>
+			</dict>
 		</array>
 		<key>OpenDocuments:brian</key>
 		<array>
+			<dict>
+				<key>AliasData</key>
+				<data>
+				AAAAAAFqAAIAAAdMZW9wYXJkAAAAAAAAAAAAAAAAAAAA
+				AAAAAADDUpoMSCsAAABpQi0HRFBBTi5wbQAAAAAAAAAA
+				AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+				AAAAAAAAAAAAAAAAAAAAAGlCOcU9VjJURVhUAAAAAP//
+				//8AAAkgAAAAAAAAAAAAAAAAAAAAA2xpYgAAEAAIAADD
+				UuBcAAAAEQAIAADFPaqSAAAAAQAUAGlCLQBpQH0AChQd
+				AAYqmgAAeYcAAgAyTGVvcGFyZDpVc2VyczpicmlhbjpE
+				ZXY6TXlDUEFOLUluZGV4ZXI6bGliOkRQQU4ucG0ADgAQ
+				AAcARABQAEEATgAuAHAAbQAPABAABwBMAGUAbwBwAGEA
+				cgBkABIAKlVzZXJzL2JyaWFuL0Rldi9NeUNQQU4tSW5k
+				ZXhlci9saWIvRFBBTi5wbQATAAEvAAAVAAIADP//AAA=
+				</data>
+				<key>FileURL</key>
+				<string>file://localhost/Users/brian/Dev/MyCPAN-Indexer/lib/DPAN.pm</string>
+				<key>TypeID</key>
+				<string>_CFileLocator</string>
+				<key>Version</key>
+				<integer>1</integer>
+			</dict>
+			<dict>
+				<key>AliasData</key>
+				<data>
+				AAAAAAGCAAIAAAdMZW9wYXJkAAAAAAAAAAAAAAAAAAAA
+				AAAAAADDUpoMSCsAAABpQkoOcG9kX2NvdmVyYWdlLnQA
+				AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+				AAAAAAAAAAAAAAAAAAAAAGlCUcU9VjIAAAAAAAAAAP//
+				//8AAAkgAAAAAAAAAAAAAAAAAAAAAXQAABAACAAAw1Lg
+				XAAAABEACAAAxT2qkgAAAAEAFABpQkoAaUB9AAoUHQAG
+				KpoAAHmHAAIAN0xlb3BhcmQ6VXNlcnM6YnJpYW46RGV2
+				Ok15Q1BBTi1JbmRleGVyOnQ6cG9kX2NvdmVyYWdlLnQA
+				AA4AHgAOAHAAbwBkAF8AYwBvAHYAZQByAGEAZwBlAC4A
+				dAAPABAABwBMAGUAbwBwAGEAcgBkABIAL1VzZXJzL2Jy
+				aWFuL0Rldi9NeUNQQU4tSW5kZXhlci90L3BvZF9jb3Zl
+				cmFnZS50AAATAAEvAAAVAAIADP//AAA=
+				</data>
+				<key>FileURL</key>
+				<string>file://localhost/Users/brian/Dev/MyCPAN-Indexer/t/pod_coverage.t</string>
+				<key>TypeID</key>
+				<string>_CFileLocator</string>
+				<key>Version</key>
+				<integer>1</integer>
+			</dict>
 			<dict>
 				<key>AliasData</key>
 				<data>
@@ -38,28 +127,6 @@
 				</data>
 				<key>FileURL</key>
 				<string>file://localhost/Users/brian/Dev/MyCPAN-Indexer/Makefile.PL</string>
-				<key>TypeID</key>
-				<string>_CFileLocator</string>
-				<key>Version</key>
-				<integer>1</integer>
-			</dict>
-			<dict>
-				<key>AliasData</key>
-				<data>
-				AAAAAAFqAAIAAAdMZW9wYXJkAAAAAAAAAAAAAAAAAAAA
-				AAAAAADDUpoMSCsAAABpQi0HRFBBTi5wbQAAAAAAAAAA
-				AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-				AAAAAAAAAAAAAAAAAAAAAGlCOcU9VjJURVhUAAAAAP//
-				//8AAAkgAAAAAAAAAAAAAAAAAAAAA2xpYgAAEAAIAADD
-				UuBcAAAAEQAIAADFPaqSAAAAAQAUAGlCLQBpQH0AChQd
-				AAYqmgAAeYcAAgAyTGVvcGFyZDpVc2VyczpicmlhbjpE
-				ZXY6TXlDUEFOLUluZGV4ZXI6bGliOkRQQU4ucG0ADgAQ
-				AAcARABQAEEATgAuAHAAbQAPABAABwBMAGUAbwBwAGEA
-				cgBkABIAKlVzZXJzL2JyaWFuL0Rldi9NeUNQQU4tSW5k
-				ZXhlci9saWIvRFBBTi5wbQATAAEvAAAVAAIADP//AAA=
-				</data>
-				<key>FileURL</key>
-				<string>file://localhost/Users/brian/Dev/MyCPAN-Indexer/lib/DPAN.pm</string>
 				<key>TypeID</key>
 				<string>_CFileLocator</string>
 				<key>Version</key>
@@ -329,7 +396,7 @@
 		<key>WindowFrame:brian:displays()</key>
 		<string>rect(66,555,1178,1512)</string>
 		<key>WindowFrame:brian:displays([(0, 0), (1280, 854)])</key>
-		<string>rect(56,47,853,1007)</string>
+		<string>rect(266,26,1063,986)</string>
 		<key>WindowFrame:brian:displays([(0, 0), (1680, 1050)])</key>
 		<string>rect(44,181,1041,1040)</string>
 		<key>WindowFrame:brian:displays([(0, 0), (1920, 1200)]:[(-1680, 0), (1680, 1050)])</key>
