@@ -1,5 +1,8 @@
 # Changes for MyCPAN::Indexer
 
+1.17_08 - Tue Nov 11 20:53:03 2008
+	* Fixups to config processing and lots of refactoring. 
+
 1.17_04 - Fri Oct 31 07:49:42 2008
 	* Fixes to the chdir and tempdir mess, and many fixes for Windows
 
