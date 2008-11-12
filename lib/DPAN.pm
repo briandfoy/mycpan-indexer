@@ -212,7 +212,7 @@ sub final_words
 		# some files may be left over from earlier runs, even though the
 		# original distribution has disappeared. Only index distributions
 		# that are still there
-		my @backpan_dirs = @{ $Notes->{config}->backpan_dir };
+		#my @backpan_dirs = @{ $Notes->{config}->backpan_dir };
 		# check that dist file is in one of these directories
 		next unless -e $dist_file; # && $dist_file =~ m/^\Q$backpan_dir/;
 		

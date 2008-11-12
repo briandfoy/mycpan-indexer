@@ -71,6 +71,34 @@ sub get_config
 	}
 }
 
+sub adjust_config
+	{
+	my( $self, $Config, @argv ) = @_;
+	
+	# set the directories to index
+	unless( $Config->exists( 'backpan_dir') )
+		{
+		$Config->set( 'backpan_dir', [ @argv ? @argv : cwd() ] );
+		}
+	
+	unless( ref $Config->get( 'backpan_dir' ) eq ref [] )
+		{
+		$Config->set( 'backpan_dir', [ $Config->get( 'backpan_dir' ) ] );
+		}
+		
+	if( $Config->exists( 'report_dir' ) )
+		{
+		foreach my $subdir ( qw(success error) )
+			{
+			$Config->set(
+				"${subdir}_report_subdir",
+				catfile( $Config->get( 'report_dir' ), $subdir ),
+				);
+			}
+		}		
+			
+	}
+	
 sub run
 	{
 	my( $self, @argv ) = @_;
@@ -83,7 +111,7 @@ sub run
 	( my $script  = basename( $0 ) ) =~ s/\.\w+$//;
 
 	local @ARGV = @argv;
-	getopts('l:f:', \%Options);
+	getopts( 'cl:f:', \%Options );
 	@argv = @ARGV; # XXX: yuck
 
 	$Options{f} ||= catfile( $run_dir, "$script.conf" );
@@ -95,18 +123,18 @@ sub run
 	$self->setup_environment;
 	
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-	# The set up
-
-	
+	# Adjust config based on run parameters
 	my $Config = $self->get_config( $Options{f} );
 
-	# set the directories to index
-	unless( $Config->exists( 'backpan_dir') )
+	$self->adjust_config( $Config, @argv );
+	
+	if( $Options{c} )
 		{
-		$Config->set( 'backpan_dir', [ @argv ? @argv : cwd() ] );
+		use Data::Dumper;
+		print STDERR Dumper( $Config );
+		exit;
 		}
-
-
+	
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 	# Load classes and check that they do the right thing
 	my $Notes = {
@@ -211,7 +239,7 @@ sub setup_dirs # XXX big ugly mess to clean up
 
 	my $Config = $Notes->{config};
 	
-# Okay, I've goen back and forth on this a couple of times. There is 
+# Okay, I've gone back and forth on this a couple of times. There is 
 # no default for temp_dir. I create it here so it's only set when I
 # need it. It either comes from the user or on-demand creation. I then
 # set it's value in the configuration.
