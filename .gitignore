@@ -14,3 +14,4 @@ examples/backpan_indexer.config
 examples/*.config
 examples/test_use.db
 indexer_reports
+MyCPAN.bbproject
