@@ -226,7 +226,7 @@ sub final_words
 			my $version  = $module->{version};
 			$version = $version->numify if eval { $version->can('numify') };
 
-			foreach my $package ( @$packages )
+			PACKAGE: foreach my $package ( @$packages )
 				{
 				# broken crap that works on Unix and Windows to make cpanp
 				# happy.
@@ -234,6 +234,12 @@ sub final_words
 				
 				$path =~ s|\\+|/|g; # no windows paths.
 				
+				if( $class->skip_package( $package ) )
+					{
+					$reporter_logger->debug( "Skipping $package: excluded by config" );
+					next PACKAGE;
+					}
+					
 				$package_details->add_entry(
 					'package name' => $package,
 					version        => $version,
@@ -264,6 +270,21 @@ sub final_words
 	$class->create_checksums( [ keys %dirs_needing_checksums ] );
 
 	}
+
+=item skip_package
+
+=cut
+
+BEGIN {
+my %skips = map { $_, 1 } qw(main bytes MY MM);
+
+sub skip_package
+	{
+	my( $class, $package ) = @_;
+	
+	exists $skips{ $package };
+	}
+}
 
 =item create_package_details
 

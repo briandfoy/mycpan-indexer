@@ -408,7 +408,7 @@ sub unpack_dist
 	my $rc = $extractor->extract( to => $self->dist_info( 'unpack_dir' ) );
 	$logger->debug( "Archive::Extract returns [$rc] for $dist" );
 
-	unless( $rc )
+	unless( $rc and $^O !~ /Win32/ )
 		{
 		$logger->error( "Archive::Extract could not extract $dist: " . $extractor->error(0) );
 		$self->set_dist_info( 'extraction_error', $extractor->error(0) );
