@@ -15,7 +15,7 @@ use File::Temp qw(tempdir);
 use Getopt::Std;
 use Log::Log4perl;
 
-$VERSION = '1.17_08';
+$VERSION = '1.17_09';
 
 $|++;
 
