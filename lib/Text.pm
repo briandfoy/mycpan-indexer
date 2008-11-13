@@ -50,7 +50,7 @@ sub do_interface
 	my $count = 0;
 	while( 1 )
 		{
-		last if $Notes->{Left} <= 0;
+		last if $Notes->{Finished};
 
 		local $|;
 		$|++;

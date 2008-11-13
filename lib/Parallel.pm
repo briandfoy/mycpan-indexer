@@ -100,15 +100,20 @@ sub _make_interface_callback
 	$Notes->{Errors}       = 0;
 	$Notes->{Done}         = 0;
 	$Notes->{Started}      = scalar localtime;
+	$Notes->{Finished}     = 0;
 
 	$Notes->{queue_cursor} = 0;
 
 	$Notes->{interface_callback} = sub {
 		$class->_remove_old_processes( $Notes );
 
+		$logger->debug( "Start: Finished: $Notes->{Finished} Left: $Notes->{Left}" );
+		
 		unless( $Notes->{Left} )
 			{
+			$logger->debug( "Waiting on all children [" . time . "]" );
 			$Notes->{dispatcher}->wait_all_children;
+			$Notes->{Finished} = 1;
 			return;
 			};
 
@@ -127,7 +132,8 @@ sub _make_interface_callback
 
 			$Notes->{Done}++;
 			$Notes->{Left} = $Notes->{Total} - $Notes->{Done};
-
+			$logger->debug( "Total: $Notes->{Total} Done: $Notes->{Done} Left: $Notes->{Left} Finished: $Notes->{Finished}" );
+			
 			no warnings;
 			$Notes->{Rate} = sprintf "%.2f / sec ",
 				eval { $Notes->{Done} / $Notes->{_elapsed} };

@@ -77,7 +77,7 @@ sub do_interface
 
 		_update_screen( $Notes );
 
-		last if $Notes->{Left} <= 0;
+		last if $Notes->{Finished};
 		}
 
 	}
