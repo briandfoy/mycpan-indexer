@@ -8,7 +8,9 @@ examples/backpan_indexer.config.minicpan
 examples/backpan_indexer.config.test_census
 examples/backpan_indexer.pl
 examples/dpan
+examples/dpan.config
 examples/minicpan_inject.config
+examples/time_summary.pl
 lib/App/DPAN.pm
 lib/App/Indexer.pm
 lib/AsYAML.pm
@@ -29,6 +31,7 @@ Makefile.PL
 MANIFEST
 README
 t/app/backpan.t
+t/app/defaults.t
 t/app/dpan.t
 t/compile.t
 t/load.t

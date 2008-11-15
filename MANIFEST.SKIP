@@ -25,3 +25,5 @@ examples/backpan_indexer.log
 research
 .*\.log
 tmproj
+indexer_reports
+\.bbproj
