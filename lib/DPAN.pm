@@ -189,7 +189,6 @@ sub final_words
 	opendir my($dh), $report_dir or
 		$reporter_logger->fatal( "Could not open directory [$report_dir]: $!");
 
-
 	my %dirs_needing_checksums;
 
 	require CPAN::PackageDetails;
@@ -220,14 +219,40 @@ sub final_words
 		
 		$dirs_needing_checksums{ $dist_dir }++;
 
+=pod 
+
+This is the big problem. Since we didn't really parse the source code, we
+don't really know how to match up packages and VERSIONs. The best we can
+do right now is assume that a $VERSION we found goes with the packages 
+we found.
+
+Additionally, that package variable my have been in one package, but 
+been the version for another package. For example:
+
+	package DBI;
+	
+	$DBI::PurePerl::VERSION = 1.23;
+
+=cut
+
 		foreach my $module ( @{ $yaml->{dist_info}{module_info} }  )
 			{
 			my $packages = $module->{packages};
-			my $version  = $module->{version};
+			my $version  = $module->{version_info}{version};
 			$version = $version->numify if eval { $version->can('numify') };
 
+			( my $version_variable = $module->{version_info}{identifier} )
+				=~ s/(?:\:\:)?VERSION$//;
+			$reporter_logger->debug( "Package from version variable is $version_variable" );
+			
 			PACKAGE: foreach my $package ( @$packages )
 				{
+				if( $version_variable && $version_variable ne $package )
+					{
+					$reporter_logger->debug( "Skipping package [$package] since version variable [$version_variable] is in a different package" );
+					next;
+					}
+					
 				# broken crap that works on Unix and Windows to make cpanp
 				# happy.
 				( my $path = $dist_file ) =~ s/.*authors.id.//g;
@@ -271,6 +296,19 @@ sub final_words
 
 	}
 
+sub guess_package_name
+	{
+	my( $self, $module_info ) = @_;
+	
+	
+	}
+	
+sub get_package_version
+	{
+	
+	
+	}
+	
 =item skip_package
 
 =cut
