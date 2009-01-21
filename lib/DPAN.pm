@@ -28,13 +28,12 @@ MyCPAN::Indexer::DPAN - Create a D(ark)PAN out of the indexed distributions
 =head1 DESCRIPTION
 
 This module implements the indexer_class and reporter_class components
-to allow C<backpan_indexer.pl> to count the test modules used in the
-indexed distributions. This application of MyCPAN::Indexer is 
+to allow C<backpan_indexer.pl> to create a CPAN-like directory structure
+with its associated index files. This application of MyCPAN::Indexer is 
 specifically aimed at creating a 02packages.details file, so it 
 strives to collect a minimum of information.
 
 It runs through the indexing and prints a report at the end of the run.
-
 
 =cut
 
@@ -95,6 +94,9 @@ sub find_module_techniques
 
 =item get_module_info_tasks
 
+Returns the list of techniques that C<get_module_info> should use
+to extract data from Perl module files. See the documentation in
+C<MyCPAN::Indexer::get_module_info>.
 
 =cut
 
@@ -296,25 +298,52 @@ been the version for another package. For example:
 
 	}
 
+=item guess_package_name
+
+Given information about the module, make a guess about which package
+is the primary one. This is 
+
+=cut
+
 sub guess_package_name
 	{
 	my( $self, $module_info ) = @_;
 	
 	
 	}
-	
+
+=item get_package_version( MODULE_INFO, PACKAGE )
+
+Get the $VERSION associated with PACKAGE. You probably want to use 
+C<guess_package_name> first to figure out which package is the 
+primary one that you should index.
+
+=cut
+
 sub get_package_version
 	{
 	
 	
 	}
 	
-=item skip_package
+=item skip_package( PACKAGE )
+
+Returns true if the indexer should ignore PACKAGE.
+
+By default, this skips the Perl special packages:
+
+	main
+	MY
+	MM
+	DB
+	bytes
+	
+There isn't a way to configure additional packages yet.
 
 =cut
 
 BEGIN {
-my %skips = map { $_, 1 } qw(main bytes MY MM);
+my %skips = map { $_, 1 } qw(main bytes MY MM DB);
 
 sub skip_package
 	{
@@ -325,6 +354,9 @@ sub skip_package
 }
 
 =item create_package_details
+
+Not yet implemented. Otehr code needs to be refactored and show up
+here.
 
 =cut
 
@@ -337,6 +369,11 @@ sub create_package_details
 	}
 	
 =item create_modlist
+
+If a modules/03modlist.data.gz does not already exist, this creates a
+placeholder which defines the CPAN::Modulelist package and the method
+C<data> in that package. The C<data> method returns an empty hash
+reference.
 
 =cut
 
@@ -354,12 +391,28 @@ sub create_modlist
 		}
 		
 	my $fh = IO::Compress::Gzip->new( $module_list_file );
-	print $fh "This is just a placeholder so CPAN.pm is happy\n\t\t-- $0\n";
+	print $fh <<"HERE";
+File:        03modlist.data
+Description: This a placeholder for CPAN.pm
+Modcount:    0
+Written-By:  Id: $0
+Date:        @{ [ scalar localtime ] }
+
+package CPAN::Modulelist;
+
+sub data { {} }
+
+1;
+HERE
+
 	close $fh;
 	}
 	
 =item create_checksums
 
+Creates the CHECKSUMS file that goes in each author directory in CPAN.
+This is mostly a wrapper around CPAN::Checksums since that already handles
+updating an entire tree. We just do a little logging.
 
 =cut
 
@@ -405,7 +458,7 @@ brian d foy, C<< <bdfoy@cpan.org> >>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2008, brian d foy, All Rights Reserved.
+Copyright (c) 2008-2009, brian d foy, All Rights Reserved.
 
 You may redistribute this under the same terms as Perl itself.
 
