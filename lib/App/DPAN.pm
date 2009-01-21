@@ -9,7 +9,7 @@ use Cwd qw(cwd);
 use File::Temp qw(tempdir);
 use File::Spec::Functions qw(catfile);
 
-$VERSION = '1.17_09';
+$VERSION = '1.17_10';
 
 BEGIN {
 my $cwd = cwd();
