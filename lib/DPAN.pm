@@ -240,7 +240,7 @@ been the version for another package. For example:
 		foreach my $module ( @{ $yaml->{dist_info}{module_info} }  )
 			{
 			my $packages = $module->{packages};
-			my $version  = $module->{version_info}{version};
+			my $version  = $module->{version_info}{value};
 			$version = $version->numify if eval { $version->can('numify') };
 
 			( my $version_variable = $module->{version_info}{identifier} )
