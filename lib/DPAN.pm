@@ -343,7 +343,7 @@ There isn't a way to configure additional packages yet.
 =cut
 
 BEGIN {
-my %skips = map { $_, 1 } qw(main bytes MY MM DB);
+my %skips = map { $_, 1 } qw(main bytes MY MM DB DynaLoader);
 
 sub skip_package
 	{
