@@ -12,7 +12,7 @@ WriteMakefile(
 	'AUTHOR'       => 'brian d foy <bdfoy@cpan.org>',
 	
 	'PREREQ_PM'    => { 
-		'Archive::Extract'                 => '0',
+		'Archive::Extract'                 => '0', # 0.32 when it's available
 		'Archive::Tar'                     => '0',
 		'ConfigReader::Simple'             => '0',
 		'Data::UUID'                       => '0',
@@ -23,14 +23,14 @@ WriteMakefile(
 		'MD5'                              => '0',
 		'Module::Extract::Namespaces'      => '0.14',
 		'Module::Extract::Use'             => '0.13',
-		'Module::Extract::VERSION'         => '0',
+		'Module::Extract::VERSION'         => '0.13',
 		'Parallel::ForkManager'            => '0',
 		'Probe::Perl'                      => '0',
 		'Test::More'                       => '0',
-		'Test::Output'                     => '0',
+		'Test::Output'                     => '0.13',
 		'YAML::Syck'                       => '0',
 		'YAML'                             => '0',
-		'CPAN::PackageDetails'             => '0.16',
+		'CPAN::PackageDetails'             => '0.18',
 		'CPAN::Checksums'                  => '0',
 		},
 
