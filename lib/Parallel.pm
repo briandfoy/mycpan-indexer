@@ -3,7 +3,7 @@ use strict;
 use warnings;
 
 use vars qw($VERSION $logger);
-$VERSION = '1.17_11';
+$VERSION = '1.18';
 
 use Log::Log4perl;
 
@@ -12,9 +12,7 @@ BEGIN {
 	no warnings 'redefine';
 	use Parallel::ForkManager;
 
-	package Parallel::ForkManager;
-
-	sub finish { my ($s, $x)=@_;
+	sub Parallel::ForkManager::finish { my ($s, $x)=@_;
 	  if ( $s->{in_child} ) {
 		CORE::exit ($x || 0);
 	  }
