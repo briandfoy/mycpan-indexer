@@ -15,7 +15,7 @@ use File::Spec::Functions qw(catfile);
 use File::Path;
 use YAML;
 
-$VERSION = '1.17_10';
+$VERSION = '1.18';
 
 =head1 NAME
 
@@ -343,7 +343,7 @@ There isn't a way to configure additional packages yet.
 =cut
 
 BEGIN {
-my %skips = map { $_, 1 } qw(main bytes MY MM DB);
+my %skips = map { $_, 1 } qw(main bytes MY MM DB DynaLoader);
 
 sub skip_package
 	{
