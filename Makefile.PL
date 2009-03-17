@@ -43,11 +43,9 @@ WriteMakefile(
 		'lib/Parallel.pm'    => '$(INST_LIBDIR)/Indexer/Dispatch/Parallel.pm',
 		'lib/Queue.pm'       => '$(INST_LIBDIR)/Indexer/Queue.pm',
 		'lib/TestCensus.pm'  => '$(INST_LIBDIR)/Indexer/TestCensus.pm',
-		'lib/DPAN.pm'        => '$(INST_LIBDIR)/Indexer/DPAN.pm',
 		'lib/Tk.pm'          => '$(INST_LIBDIR)/Indexer/Interface/Tk.pm',
 		'lib/Tutorial.pm'    => '$(INST_LIBDIR)/Indexer/Tutorial.pm',
 		'lib/Worker.pm'      => '$(INST_LIBDIR)/Indexer/Worker.pm',
-		'lib/App/DPAN.pm'    => '$(INST_LIBDIR)/App/DPAN.pm',
 		'lib/App/Indexer.pm' => '$(INST_LIBDIR)/App/BackPAN/Indexer.pm',
 		},
 
