@@ -11,7 +11,7 @@ my $method  = 'default';
 my $setting = 'alarm';
 my $value   = 15;
 
-foreach my $class ( map { "MyCPAN::App::$_" } qw( BackPAN::Indexer DPAN ) )
+foreach my $class ( map { "MyCPAN::App::$_" } qw( BackPAN::Indexer ) )
 	{
 	use_ok( $class );
 	can_ok( $class, $method );
@@ -28,6 +28,4 @@ my $setting = 'indexer_class';
 is( MyCPAN::App::BackPAN::Indexer->$method( $setting ), 'MyCPAN::Indexer',
 	"$setting in MyCPAN::App::BackPAN::Indexer is right" );
 
-is( MyCPAN::App::DPAN->$method( $setting ), 'MyCPAN::Indexer::DPAN',
-	"$setting in MyCPAN::App::BackPAN::Indexer is right" );
 }
