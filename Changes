@@ -1,5 +1,8 @@
 # Changes for MyCPAN::Indexer
 
+1.18_03 - Fri May  8 15:50:34 2009
+	* Cleanup the MANIFEST for the files I removed
+
 1.18_01 - Fri May  8 15:43:42 2009
 	* Removed the vestiges of the DPAN stuff, which is now in
 	its own module, MyCPAN::Indexder::DPAN
