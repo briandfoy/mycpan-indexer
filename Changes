@@ -1,5 +1,11 @@
 # Changes for MyCPAN::Indexer
 
+1.18_01 - Fri May  8 15:43:42 2009
+	* Removed the vestiges of the DPAN stuff, which is now in
+	its own module, MyCPAN::Indexder::DPAN
+	* Separated the cleanup and exit steps in MyCPAN::App::Indexer.
+	The exit() shouldn't be called from an embedded use.
+
 1.17_09 - Thu Nov 13 06:29:41 2008
 	* Fixed a problem where the final processing in dpan started 
 	before the last child process was finished - this left a 
