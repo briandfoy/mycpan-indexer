@@ -168,7 +168,9 @@ sub run
 
 	}
 	
-	$self->cleanup_and_exit( $Notes );
+	$self->cleanup( $Notes );
+	
+	$self->_exit( $Notes );
 	}
 
 sub setup_environment
@@ -212,7 +214,7 @@ sub components
 	)
 	}
 
-sub cleanup_and_exit
+sub cleanup
 	{
 	my( $self, $Notes ) = @_;
 	
@@ -228,8 +230,14 @@ sub cleanup_and_exit
 	
 	print STDERR "$@\n" if $@;
 	
-	$logger->error( "Couldn't cleanup before exiting: $@" ) if $@;
-	
+	$logger->error( "Couldn't cleanup: $@" ) if $@;
+	}
+
+# I'm don't remember why I made an explicit exit. Was it to get
+# out of a Tk app or something?
+sub _exit
+	{
+	$logger->info( "Exiting" );
 	exit 0;
 	}
 	

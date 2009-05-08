@@ -3,5 +3,4 @@ compile.t
 pod.t
 pod_coverage.t
 app/backpan.t
-app/dpan.t
 app/defaults.t
