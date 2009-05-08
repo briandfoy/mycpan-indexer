@@ -7,13 +7,11 @@ examples/backpan_indexer.config.inject
 examples/backpan_indexer.config.minicpan
 examples/backpan_indexer.config.test_census
 examples/backpan_indexer.pl
-examples/minicpan_inject.config
 examples/time_summary.pl
 lib/App/Indexer.pm
 lib/AsYAML.pm
 lib/CPANMiniInject.pm
 lib/Curses.pm
-lib/DPAN.pm
 lib/Indexer.pm
 lib/NullTester.pm
 lib/Parallel.pm
