@@ -21,7 +21,7 @@ $|++;
 
 my $logger = Log::Log4perl->get_logger( 'backpan_indexer' );
 
-__PACKAGE__->run( @ARGV ) unless caller;
+__PACKAGE__->activate( @ARGV ) unless caller;
 
 #$SIG{__WARN__} = sub { Carp::cluck( @_ ) };
 
@@ -99,7 +99,7 @@ sub adjust_config
 			
 	}
 	
-sub run
+sub activate
 	{
 	my( $self, @argv ) = @_;
 	use vars qw( %Options );

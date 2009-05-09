@@ -39,8 +39,9 @@ __PACKAGE__->run( @ARGV ) unless caller;
 
 =over 4
 
-=item run
+=item run( DISTS )
 
+Takes a list of distributions and indexes them.
 
 =cut
 
