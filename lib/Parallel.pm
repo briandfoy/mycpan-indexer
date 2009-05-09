@@ -12,7 +12,7 @@ BEGIN {
 	no warnings 'redefine';
 	use Parallel::ForkManager;
 
-	sub Parallel::ForkManager::finish { my ($s, $x)=@_;
+	sub Parallel::ForkManager::finish { my ($s, $x) = @_;
 	  if ( $s->{in_child} ) {
 		CORE::exit ($x || 0);
 	  }
@@ -41,7 +41,7 @@ Use this in backpan_indexer.pl by specifying it as the queue class:
 
 =head1 DESCRIPTION
 
-This class takes the list of ditributions to process and passes them
+This class takes the list of distributions to process and passes them
 out to the code that will do the work.
 
 =head2 Methods

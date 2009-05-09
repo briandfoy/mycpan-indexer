@@ -42,7 +42,8 @@ sub do_interface
 	my( $class, $Notes ) = @_;
 	$logger->debug( "Calling do_interface" );
 
-	print "BackPAN Indexer 1.00\n";
+	print join( " ", $Notes->{config}->indexer_class, $Notes->{config}->indexer_class->VERSION ),
+		"\n";
 
 	print 'Processing ' . @{ $Notes->{queue} } . " distributions\n";
 	print "One * = 1 distribution\n";

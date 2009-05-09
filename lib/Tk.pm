@@ -61,7 +61,7 @@ sub do_interface
 	$mw->geometry('500x375');
 
 	$mw->resizable( 0, 0 );
-	$mw->title( 'BackPAN Indexer 1.00' );
+	$mw->title( join " ", $Notes->{config}->indexer_class, $Notes->{config}->indexer_class->VERSION );
 	my $menubar = _menubar( $mw );
 
 	my( $progress, $top, $middle, $bottom ) = map {

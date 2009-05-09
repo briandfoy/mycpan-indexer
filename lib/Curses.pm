@@ -55,7 +55,7 @@ sub do_interface
 	$Notes->{curses}{rows} = LINES();
 	$Notes->{curses}{cols} = COLS();
 
-	addstr( 0, 0, 'BackPAN Indexer 1.00' );
+	addstr( 0, 0, join " ", $Notes->{Config}{indexer_class}, $Notes->{Config}{indexer_class}->VERSION );
 	refresh();
 
 	$Notes->{curses}{windows}{progress}      = newwin( 3, COLS(),   1,  0 );
