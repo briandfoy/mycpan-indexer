@@ -761,8 +761,8 @@ sub parse_meta_files
 
 	if( -e 'META.yml'  )
 		{
-		require YAML::Syck;
-		my $yaml = YAML::Syck::LoadFile( 'META.yml' );
+		require YAML;
+		my $yaml = YAML::LoadFile( 'META.yml' );
 		$_[0]->set_dist_info( 'META.yml', $yaml );
 		return $yaml;
 		}
