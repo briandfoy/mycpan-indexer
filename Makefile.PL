@@ -40,6 +40,7 @@ WriteMakefile(
 		'lib/Indexer.pm'     => '$(INST_LIBDIR)/Indexer.pm',
 		'lib/NullTester.pm'  => '$(INST_LIBDIR)/Indexer/NullTester.pm',
 		'lib/Parallel.pm'    => '$(INST_LIBDIR)/Indexer/Dispatch/Parallel.pm',
+		'lib/Serial.pm'      => '$(INST_LIBDIR)/Indexer/Dispatch/Serial.pm',
 		'lib/Queue.pm'       => '$(INST_LIBDIR)/Indexer/Queue.pm',
 		'lib/TestCensus.pm'  => '$(INST_LIBDIR)/Indexer/TestCensus.pm',
 		'lib/Tk.pm'          => '$(INST_LIBDIR)/Indexer/Interface/Tk.pm',
