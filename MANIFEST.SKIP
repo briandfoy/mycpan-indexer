@@ -27,3 +27,7 @@ research
 tmproj
 indexer_reports
 \.bbproj
+CPAN
+dpan.config
+hook_test
+extract_test
