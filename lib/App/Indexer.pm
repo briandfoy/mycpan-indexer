@@ -103,7 +103,8 @@ sub activate
 	{
 	my( $self, @argv ) = @_;
 	use vars qw( %Options );
-
+	local %ENV = %ENV;
+	
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 	# Process the options
 	{
