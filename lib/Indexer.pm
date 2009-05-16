@@ -1186,6 +1186,44 @@ sub file_magic
 	$class->new->checktype_filename( $file );
 	}
 
+=item copy_dist_into_authors
+
+=cut
+
+sub copy_dist_into_authors
+	{
+	$logger->trace( sub { get_caller_info } );
+
+	my( $self, $file ) = @_;
+
+	my $path = catfile(
+		$backpan_dir,
+		author_path_parts( $author ),
+		basename( $file )
+		);
+		
+	#rename( $file, $path );
+	
+	$logger->info( "Would copy to $path" );
+	}
+
+sub author_path_parts
+	{
+	my( $self, $author ) = @_;
+	
+	(
+	qw(
+		authors
+		id
+		),
+		
+	substr( $author, 0, 1 ),
+	substr( $author, 0, 2 ),
+	$author
+	)
+	
+	}
+	
 =back
 
 =head2 Utility functions

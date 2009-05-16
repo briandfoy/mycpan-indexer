@@ -47,6 +47,8 @@ my %Defaults = (
 	worker_class          => 'MyCPAN::Indexer::Worker',
 	reporter_class        => 'MyCPAN::Indexer::Reporter::AsYAML',
 	parallel_jobs         => 1,
+	organize_dists        => 0,
+	pause_id              => 'MYCPAN',
 	);
 
 sub default { $Defaults{$_[1]} }
@@ -144,6 +146,8 @@ sub activate
 		tempdirs   => [],
 		log_file   => $Options{l},
 		};
+
+	$self->{Notes} = $Notes;
 
 	$self->setup_logging( $Notes );
 
