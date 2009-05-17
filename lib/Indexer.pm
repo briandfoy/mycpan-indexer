@@ -112,12 +112,14 @@ sub examine_dist_steps
 	{
 	my @methods = (
 		#    method                error message                  fatal
-		[ 'unpack_dist',        "Could not unpack distribtion!",     1 ],
+		[ 'unpack_dist',        "Could not unpack distribution!",    1 ],
 		[ 'find_dist_dir',      "Did not find distro directory!",    1 ],
 		[ 'get_file_list',      'Could not get file list',           1 ],
 		[ 'parse_meta_files',   "Could not parse META.yml!",         0 ],
 		[ 'find_modules',       "Could not find modules!",           1 ],
+		[ 'examine_modules',    "Could not process modules!",        0 ],
 		[ 'find_tests',         "Could not find tests!",             0 ],
+		[ 'examine_tests',      "Could not process tests!",          0 ],
 		);
 	}
 
@@ -131,7 +133,8 @@ sub examine_dist
 	foreach my $tuple ( $self->examine_dist_steps )
 		{
 		my( $method, $error_msg, $die_on_error ) = @$tuple;
-
+		$logger->debug( "Running examine_dist step [$method]" );
+		
 		unless( $self->$method() )
 			{
 			$logger->error( $error_msg );
@@ -145,36 +148,36 @@ sub examine_dist
 			}
 		}
 
-	{
-	my @file_info = ();
-	foreach my $file ( @{ $self->dist_info( 'modules' ) } )
-		{
-		$logger->debug( "Processing module $file" );
-		my $hash = $self->get_module_info( $file );
-		push @file_info, $hash;
-		}
-
-	$self->set_dist_info( 'module_info', [ @file_info ] );
-	}
-
-	{
-	my @file_info = ();
-	foreach my $file ( @{ $self->dist_info( 'tests' ) || [] } )
-		{
-		$logger->debug( "Processing test $file" );
-		my $hash = $self->get_test_info( $file );
-		push @file_info, $hash;
-		}
-
-	$self->set_dist_info( 'test_info', [ @file_info ] );
-	}
-
 	$self->set_run_info( 'examine_end_time', time );
 	$self->set_run_info( 'examine_time',
 		$self->run_info('examine_end_time') - $self->run_info('examine_start_time')
 		);
 
 	return 1;
+	}
+
+sub examine_modules
+	{
+	my( $self ) = @_;
+
+	my @file_info = map {
+		$logger->debug( "Processing module $_" );
+		$self->get_module_info( $_ );
+		} @{ $self->dist_info( 'modules' ) || [] };
+	
+	$self->set_dist_info( 'module_info', \@file_info );
+	}
+
+sub examine_tests
+	{
+	my( $self ) = @_;
+
+	my @file_info = map {
+		$logger->debug( "Processing test $_" );
+		$self->get_test_info( $_ );
+		} @{ $self->dist_info( 'tests' ) || [] };
+	
+	$self->set_dist_info( 'test_info', \@file_info );
 	}
 
 =item clear_run_info
