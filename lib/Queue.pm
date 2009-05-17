@@ -85,13 +85,11 @@ sub get_queue
 		foreach my $i ( 0 .. $#{ $Notes->{queue} } )
 			{
 			my $file = $Notes->{queue}[$i];
-			print "Processing $file\n";
+			$logger->debug( "Processing $file" );
 			next if $file =~ m|authors/id/./../.*?/|;
-			print "Copying $file\n";
+			$logger->debug( "Copying $file into PAUSE structure" );
 			
-			print "1. Notes value at $i is [$Notes->{queue}[$i]]\n";
 			$Notes->{queue}[$i] = _copy_file( $file, $Notes );
-			print "2. Notes value at $i is [$Notes->{queue}[$i]]\n";
 			}
 		}
 
