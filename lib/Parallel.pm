@@ -106,7 +106,7 @@ sub _make_interface_callback
 		$class->_remove_old_processes( $Notes );
 
 		$logger->debug( "Start: Finished: $Notes->{Finished} Left: $Notes->{Left}" );
-		
+
 		unless( $Notes->{Left} )
 			{
 			$logger->debug( "Waiting on all children [" . time . "]" );
@@ -131,7 +131,7 @@ sub _make_interface_callback
 			$Notes->{Done}++;
 			$Notes->{Left} = $Notes->{Total} - $Notes->{Done};
 			$logger->debug( "Total: $Notes->{Total} Done: $Notes->{Done} Left: $Notes->{Left} Finished: $Notes->{Finished}" );
-			
+
 			no warnings;
 			$Notes->{Rate} = sprintf "%.2f / sec ",
 				eval { $Notes->{Done} / $Notes->{_elapsed} };

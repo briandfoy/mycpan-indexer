@@ -68,12 +68,12 @@ sub get_reporter
 
 		my $out_dir_key  = $info->run_info( 'completed' ) ? 'success' : 'error';
 
-		$out_dir_key = 'error' if grep { $info->run_info($_) } 
+		$out_dir_key = 'error' if grep { $info->run_info($_) }
 			qw(error fatal_error);
-		
-		my $out_path = catfile( 
-			$Notes->{config}->get( "${out_dir_key}_report_subdir" ), 
-			"$basename.yml" 
+
+		my $out_path = catfile(
+			$Notes->{config}->get( "${out_dir_key}_report_subdir" ),
+			"$basename.yml"
 			);
 
 		open my($fh), ">", $out_path or $logger->fatal( "Could not open $out_path: $!" );
