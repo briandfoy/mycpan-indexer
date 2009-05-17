@@ -106,7 +106,7 @@ sub activate
 	my( $self, @argv ) = @_;
 	use vars qw( %Options );
 	local %ENV = %ENV;
-	
+		
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 	# Process the options
 	{
@@ -146,8 +146,6 @@ sub activate
 		tempdirs   => [],
 		log_file   => $Options{l},
 		};
-
-	$self->{Notes} = $Notes;
 
 	$self->setup_logging( $Notes );
 

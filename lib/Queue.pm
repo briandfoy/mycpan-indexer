@@ -131,16 +131,17 @@ sub _copy_file
 	my $pause_id = eval { $Notes->{config}->get( 'pause_id' ) } || 'MYCPAN';
 	
 	my $basename = basename( $file );
-	print "Need to copy file $basename into $pause_id\n";
+	$logger->debug( "Need to copy file $basename into $pause_id" );
 	
-	my $new_name = catfile( _path_parts( $pause_id ), $basename );
+	my $new_name = rel2abs(
+		catfile( _path_parts( $pause_id ), $basename )
+		);
 	
-	rename $file => $new_name;
-	my $error = $!; # XXXX
+	my $rc = rename $file => $new_name;
 	$logger->error( "Could not rename [$file] to [$new_name]: $!" )
-		if $error;
+		unless $rc;
 	
-	return $error ? $file : $new_name;
+	return $rc ? $new_name : $file;
 	}
 	
 1;
