@@ -23,8 +23,6 @@ my $logger = Log::Log4perl->get_logger( 'backpan_indexer' );
 
 __PACKAGE__->activate( @ARGV ) unless caller;
 
-#$SIG{__WARN__} = sub { Carp::cluck( @_ ) };
-
 BEGIN {
 my $cwd = cwd();
 
@@ -47,6 +45,8 @@ my %Defaults = (
 	worker_class          => 'MyCPAN::Indexer::Worker',
 	reporter_class        => 'MyCPAN::Indexer::Reporter::AsYAML',
 	parallel_jobs         => 1,
+	organize_dists        => 0,
+	pause_id              => 'MYCPAN',
 	);
 
 sub default { $Defaults{$_[1]} }
@@ -74,18 +74,18 @@ sub get_config
 sub adjust_config
 	{
 	my( $self, $Config, @argv ) = @_;
-	
+
 	# set the directories to index
 	unless( $Config->exists( 'backpan_dir') )
 		{
 		$Config->set( 'backpan_dir', [ @argv ? @argv : cwd() ] );
 		}
-	
+
 	unless( ref $Config->get( 'backpan_dir' ) eq ref [] )
 		{
 		$Config->set( 'backpan_dir', [ $Config->get( 'backpan_dir' ) ] );
 		}
-		
+
 	if( $Config->exists( 'report_dir' ) )
 		{
 		foreach my $subdir ( qw(success error) )
@@ -95,14 +95,15 @@ sub adjust_config
 				catfile( $Config->get( 'report_dir' ), $subdir ),
 				);
 			}
-		}		
-			
+		}
+
 	}
-	
+
 sub activate
 	{
 	my( $self, @argv ) = @_;
 	use vars qw( %Options );
+	local %ENV = %ENV;
 
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 	# Process the options
@@ -121,20 +122,20 @@ sub activate
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 	# Minutely control the environment
 	$self->setup_environment;
-	
+
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 	# Adjust config based on run parameters
 	my $Config = $self->get_config( $Options{f} );
 
 	$self->adjust_config( $Config, @argv );
-	
+
 	if( $Options{c} )
 		{
 		use Data::Dumper;
 		print STDERR Dumper( $Config );
 		exit;
 		}
-	
+
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 	# Load classes and check that they do the right thing
 	my $Notes = {
@@ -143,7 +144,7 @@ sub activate
 		tempdirs   => [],
 		log_file   => $Options{l},
 		};
-
+	
 	$self->setup_logging( $Notes );
 
 	$self->setup_dirs( $Notes );
@@ -167,9 +168,9 @@ sub activate
 		}
 
 	}
-	
+
 	$self->cleanup( $Notes );
-	
+
 	$self->_exit( $Notes );
 	}
 
@@ -184,15 +185,15 @@ sub setup_environment
 
 	$ENV{AUTOMATED_TESTING}++;
 	}
-	
+
 sub setup_logging
 	{
 	my( $self, $Notes ) = @_;
-	
+
 	if( -e $Notes->{log_file} )
 		{
-		Log::Log4perl->init_and_watch( 
-			$Notes->{log_file}, 
+		Log::Log4perl->init_and_watch(
+			$Notes->{log_file},
 			$Notes->{config}->get( 'log_file_watch_time' )
 			);
 		}
@@ -201,7 +202,7 @@ sub setup_logging
 		Log::Log4perl->easy_init( $Log::Log4perl::ERROR );
 		}
 	}
-	
+
 sub components
 	{
 	(
@@ -217,19 +218,19 @@ sub components
 sub cleanup
 	{
 	my( $self, $Notes ) = @_;
-	
+
 	require File::Path;
-	
+
 	my @dirs = @{ $Notes->{tempdirs} }, $Notes->{config}->get('temp_dir');
 	$logger->debug( "Dirs to remove are @dirs" );
-	
+
 	eval {
 		no warnings;
 		File::Path::rmtree [@dirs];
 		};
-	
+
 	print STDERR "$@\n" if $@;
-	
+
 	$logger->error( "Couldn't cleanup: $@" ) if $@;
 	}
 
@@ -237,17 +238,19 @@ sub cleanup
 # out of a Tk app or something?
 sub _exit
 	{
+	my( $self, $Notes ) = @_;
 	$logger->info( "Exiting" );
+		
 	exit 0;
 	}
-	
+
 sub setup_dirs # XXX big ugly mess to clean up
 	{
 	my( $self, $Notes ) = @_;
 
 	my $Config = $Notes->{config};
-	
-# Okay, I've gone back and forth on this a couple of times. There is 
+
+# Okay, I've gone back and forth on this a couple of times. There is
 # no default for temp_dir. I create it here so it's only set when I
 # need it. It either comes from the user or on-demand creation. I then
 # set it's value in the configuration.
@@ -263,7 +266,7 @@ sub setup_dirs # XXX big ugly mess to clean up
 	foreach my $key ( qw(report_dir success_report_subdir error_report_subdir) )
 		{
 		my $dir = $Config->get( $key );
-		
+
 		mkpath( $dir ) unless -d $dir;
 		$logger->logdie( "$key [$dir] does not exist!" ) unless -d $dir;
 		}

@@ -34,7 +34,7 @@ out to the code that will do the work.
 =item get_dispatcher( $Notes )
 
 Takes the $Notes hash and adds the C<dispatcher> key with a code
-reference. 
+reference.
 
 It adds to $Notes:
 
@@ -70,7 +70,7 @@ sub _make_interface_callback
 	$Notes->{interface_callback} = sub {
 
 		$logger->debug( "Start: Finished: $Notes->{Finished} Left: $Notes->{Left}" );
-		
+
 		unless( $Notes->{Left} )
 			{
 			$Notes->{Finished} = 1;
@@ -87,7 +87,7 @@ sub _make_interface_callback
 		$Notes->{Done}++;
 		$Notes->{Left} = $Notes->{Total} - $Notes->{Done};
 		$logger->debug( "Total: $Notes->{Total} Done: $Notes->{Done} Left: $Notes->{Left} Finished: $Notes->{Finished}" );
-		
+
 		no warnings;
 		$Notes->{Rate} = sprintf "%.2f / sec ",
 			eval { $Notes->{Done} / $Notes->{_elapsed} };

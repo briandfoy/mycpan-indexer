@@ -112,14 +112,14 @@ sub examine_dist_steps
 	{
 	my @methods = (
 		#    method                error message                  fatal
-		[ 'unpack_dist',        "Could not unpack distribtion!",     1 ],
+		[ 'unpack_dist',        "Could not unpack distribution!",    1 ],
 		[ 'find_dist_dir',      "Did not find distro directory!",    1 ],
 		[ 'get_file_list',      'Could not get file list',           1 ],
 		[ 'parse_meta_files',   "Could not parse META.yml!",         0 ],
 		[ 'find_modules',       "Could not find modules!",           1 ],
-		[ 'get_modules_info',   "Could not get info of some module(s)", 0 ],
+		[ 'examine_modules',    "Could not process modules!",        0 ],
 		[ 'find_tests',         "Could not find tests!",             0 ],
-		[ 'get_tests_info',     "Could not get info of some test(s)", 0 ],
+		[ 'examine_tests',      "Could not process tests!",          0 ],
 		);
 	}
 
@@ -129,11 +129,12 @@ sub examine_dist
 	my( $self ) = @_;
 
 	$self->set_run_info( 'examine_start_time', time );
-	
+
 	foreach my $tuple ( $self->examine_dist_steps )
 		{
 		my( $method, $error_msg, $die_on_error ) = @$tuple;
-
+		$logger->debug( "Running examine_dist step [$method]" );
+		
 		unless( $self->$method() )
 			{
 			$logger->error( $error_msg );
@@ -148,25 +149,35 @@ sub examine_dist
 		}
 
 	$self->set_run_info( 'examine_end_time', time );
-	$self->set_run_info( 'examine_time', 
+	$self->set_run_info( 'examine_time',
 		$self->run_info('examine_end_time') - $self->run_info('examine_start_time')
 		);
 
 	return 1;
 	}
 
-sub get_tests_info
+sub examine_modules
 	{
-        my $self = shift;
-	my @file_info = ();
-	foreach my $file ( @{ $self->dist_info( 'tests' ) || [] } )
-		{
-		$logger->debug( "Processing test $file" );
-		my $hash = $self->get_test_info( $file );
-		push @file_info, $hash;
-		}
+	my( $self ) = @_;
 
-	$self->set_dist_info( 'test_info', [ @file_info ] );
+	my @file_info = map {
+		$logger->debug( "Processing module $_" );
+		$self->get_module_info( $_ );
+		} @{ $self->dist_info( 'modules' ) || [] };
+	
+	$self->set_dist_info( 'module_info', \@file_info );
+	}
+
+sub examine_tests
+	{
+	my( $self ) = @_;
+
+	my @file_info = map {
+		$logger->debug( "Processing test $_" );
+		$self->get_test_info( $_ );
+		} @{ $self->dist_info( 'tests' ) || [] };
+	
+	$self->set_dist_info( 'test_info', \@file_info );
 	}
 
 =item clear_run_info
@@ -405,7 +416,7 @@ sub unpack_dist
 		{
 		$logger->error( "Archive::Extract could not extract $dist: " . $extractor->error(0) );
 		$self->set_dist_info( 'extraction_error', $extractor->error(0) );
-		# I should fail here, but Archive::Extract 0.26 on Windows fails 
+		# I should fail here, but Archive::Extract 0.26 on Windows fails
 		# even when it succeeds, so just log the error and keep going
 		# return;
 		}
@@ -985,7 +996,7 @@ to do. Each anonymous array holds:
 	0. method to call
 	1. description of technique
 
-The default list includes C<extract_module_namespaces>, C<exract_module_version>, 
+The default list includes C<extract_module_namespaces>, C<exract_module_version>,
 and C<extract_module_dependencies>. If you don't like that list, you can prune
 or expand it in a subclass.
 
@@ -996,10 +1007,10 @@ sub get_module_info_tasks
 	(
 	[ 'extract_module_namespaces',   'Extract the namespaces a file declares' ],
 	[ 'extract_module_version',      'Extract the version of the module'      ],
-	[ 'extract_module_dependencies', 'Extract module dependencies'            ],	
+	[ 'extract_module_dependencies', 'Extract module dependencies'            ],
 	)
 	}
-	
+
 =item get_module_info( FILE )
 
 Collect meta informantion and package information about a module
@@ -1034,14 +1045,14 @@ sub get_module_info
 	$logger->debug( "get_module_info called with [$file]\n" );
 
 	my @tasks = $self->get_module_info_tasks;
-	
+
 	foreach my $task ( @tasks )
 		{
 		my( $method, $description ) = @$task;
 		$logger->debug( "get_module_info calling [$method]\n" );
 
 		my $result = $self->$method( $file, $hash );
-		
+
 		unless( $result )
 			{
 			$self->set_run_info( 'error', "Problem with $method and $file" );
@@ -1050,23 +1061,23 @@ sub get_module_info
 
 	$hash;
 	}
-	
+
 sub extract_module_namespaces
 	{
 	my( $self, $file, $hash ) = @_;
-	
+
 	require Module::Extract::Namespaces;
-	
+
 	my @packages             = Module::Extract::Namespaces->from_file( $file );
 
 	$logger->warn( "Didn't find any packages in $file" ) unless @packages;
-	
+
 	$hash->{packages}        = [ @packages ];
 	$hash->{primary_package} = $packages[0];
-	
+
 	1;
 	}
-	
+
 sub extract_module_version
 	{
 	my( $self, $file, $hash ) = @_;
@@ -1074,25 +1085,25 @@ sub extract_module_version
 	require Module::Extract::VERSION;
 
 	my @keys = qw( sigil identifier value filename line_number );
-	
+
 	my @version_info = eval {
 		local $SIG{__WARN__} = sub { die @_ };
 		my @v = Module::Extract::VERSION->parse_version_safely( $file );
 		};
-	
+
 	# I don't have a better way to know if nothing was found. I need
 	# to fix that in Module::Extract::VERSION
 	my $defined_count = grep defined, @version_info;
-	
-	my %v = ! $defined_count ? () : 
+
+	my %v = ! $defined_count ? () :
 		map  { $keys[$_] => $version_info[$_] } 0 .. $#keys;
-	
+
 	$v{error} = $@ if $@;
-	
+
 	$hash->{version_info} = \%v;
-	
+
 	return 0 if $@;
-	
+
 	1;
 	}
 
@@ -1111,10 +1122,10 @@ sub extract_module_dependencies
 		}
 
 	$hash->{uses} = [ @uses ];
-	
-	1;	
+
+	1;
 	}
-	
+
 =item get_test_info( FILE )
 
 Collect meta informantion and package information about a test

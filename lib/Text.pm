@@ -31,8 +31,6 @@ This class presents the information as the indexer runs, using plain text.
 
 =cut
 
-BEGIN { $SIG{INT} = sub { exit } }
-
 BEGIN {
 	$logger = Log::Log4perl->get_logger( 'Interface' );
 	}

@@ -4,7 +4,7 @@ use Test::Output;
 use vars qw( @scripts );
 
 BEGIN {
-	open my($fh), "<", "MANIFEST";
+	open my($fh), "<", "MANIFEST" or die "Could not open MANIFEST! $!";
 	
 	@scripts = 
 		map  { catfile( split m|/| ) }
