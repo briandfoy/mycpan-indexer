@@ -117,7 +117,9 @@ sub examine_dist_steps
 		[ 'get_file_list',      'Could not get file list',           1 ],
 		[ 'parse_meta_files',   "Could not parse META.yml!",         0 ],
 		[ 'find_modules',       "Could not find modules!",           1 ],
+		[ 'get_modules_info',   "Could not get info of some module(s)", 0 ],
 		[ 'find_tests',         "Could not find tests!",             0 ],
+		[ 'get_tests_info',     "Could not get info of some test(s)", 0 ],
 		);
 	}
 
@@ -145,19 +147,17 @@ sub examine_dist
 			}
 		}
 
-	{
-	my @file_info = ();
-	foreach my $file ( @{ $self->dist_info( 'modules' ) } )
-		{
-		$logger->debug( "Processing module $file" );
-		my $hash = $self->get_module_info( $file );
-		push @file_info, $hash;
-		}
+	$self->set_run_info( 'examine_end_time', time );
+	$self->set_run_info( 'examine_time', 
+		$self->run_info('examine_end_time') - $self->run_info('examine_start_time')
+		);
 
-	$self->set_dist_info( 'module_info', [ @file_info ] );
+	return 1;
 	}
 
+sub get_tests_info
 	{
+        my $self = shift;
 	my @file_info = ();
 	foreach my $file ( @{ $self->dist_info( 'tests' ) || [] } )
 		{
@@ -167,14 +167,6 @@ sub examine_dist
 		}
 
 	$self->set_dist_info( 'test_info', [ @file_info ] );
-	}
-
-	$self->set_run_info( 'examine_end_time', time );
-	$self->set_run_info( 'examine_time', 
-		$self->run_info('examine_end_time') - $self->run_info('examine_start_time')
-		);
-
-	return 1;
 	}
 
 =item clear_run_info
@@ -1015,6 +1007,21 @@ file. It starts by calling C<get_file_info>, then adds more to
 the hash, including the version and package information.
 
 =cut
+
+sub get_modules_info
+	{
+        my $self = shift;
+	my @file_info = ();
+	foreach my $file ( @{ $self->dist_info( 'modules' ) } )
+		{
+		$logger->debug( "Processing module $file" );
+		my $hash = $self->get_module_info( $file );
+		push @file_info, $hash;
+		}
+
+	$self->set_dist_info( 'module_info', [ @file_info ] );
+	}
+
 
 sub get_module_info
 	{
