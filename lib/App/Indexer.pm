@@ -23,8 +23,6 @@ my $logger = Log::Log4perl->get_logger( 'backpan_indexer' );
 
 __PACKAGE__->activate( @ARGV ) unless caller;
 
-#$SIG{__WARN__} = sub { Carp::cluck( @_ ) };
-
 BEGIN {
 my $cwd = cwd();
 
@@ -146,7 +144,7 @@ sub activate
 		tempdirs   => [],
 		log_file   => $Options{l},
 		};
-
+	
 	$self->setup_logging( $Notes );
 
 	$self->setup_dirs( $Notes );
@@ -240,7 +238,9 @@ sub cleanup
 # out of a Tk app or something?
 sub _exit
 	{
+	my( $self, $Notes ) = @_;
 	$logger->info( "Exiting" );
+		
 	exit 0;
 	}
 
