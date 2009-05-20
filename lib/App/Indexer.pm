@@ -239,7 +239,8 @@ sub cleanup
 sub _exit
 	{
 	my( $self, $Notes ) = @_;
-	$logger->info( "Exiting" );
+	
+	$logger->info( "Exiting from ", __PACKAGE__ );
 		
 	exit 0;
 	}
