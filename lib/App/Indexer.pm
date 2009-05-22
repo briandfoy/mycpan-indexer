@@ -15,7 +15,7 @@ use File::Temp qw(tempdir);
 use Getopt::Std;
 use Log::Log4perl;
 
-$VERSION = '1.20';
+$VERSION = '1.21';
 
 $|++;
 
@@ -239,7 +239,8 @@ sub cleanup
 sub _exit
 	{
 	my( $self, $Notes ) = @_;
-	$logger->info( "Exiting" );
+	
+	$logger->info( "Exiting from ", __PACKAGE__ );
 		
 	exit 0;
 	}
