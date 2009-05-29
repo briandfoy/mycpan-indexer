@@ -49,6 +49,8 @@ my %Defaults = (
 	pause_id              => 'MYCPAN',
 	);
 
+sub default_keys { keys %Defaults }
+
 sub default { $Defaults{$_[1]} }
 
 sub config_class { 'ConfigReader::Simple' }
@@ -61,7 +63,7 @@ sub get_config
 
 	my $Config = $self->config_class->new( defined $file ? $file : () );
 
-	foreach my $key ( keys %Defaults )
+	foreach my $key ( $self->default_keys )
 		{
 		next if $Config->exists( $key );
 		$Config->set( $key, $self->default( $key ) );

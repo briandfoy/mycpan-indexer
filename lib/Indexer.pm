@@ -797,7 +797,7 @@ sub find_module_techniques
 
 =item find_modules
 
-Find the module files. First, look in C<blib/>. IF there are no files in
+Find the module files. First, look in C<blib/>. If there are no files in
 C<blib/>, look in C<lib/>. IF there are still none, look in the current
 working directory.
 
