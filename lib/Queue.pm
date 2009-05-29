@@ -3,7 +3,7 @@ use strict;
 use warnings;
 
 use vars qw($VERSION $logger);
-$VERSION = '1.21';
+$VERSION = '1.23';
 
 use File::Basename;
 use File::Find;
@@ -86,7 +86,7 @@ sub get_queue
 			{
 			my $file = $Notes->{queue}[$i];
 			$logger->debug( "Processing $file" );
-			next if $file =~ m|authors/id/./../.*?/|;
+			next if $file =~ m|authors/id/./../.+?/|;
 			$logger->debug( "Copying $file into PAUSE structure" );
 
 			$Notes->{queue}[$i] = _copy_file( $file, $Notes );
