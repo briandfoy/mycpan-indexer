@@ -13,7 +13,7 @@ MyCPAN::Indexer::Tutorial - How the backpan_indexer.pl pieces fit together
 
 The MyCPAN::Indexer system lets you plug in different engines to
 control major portions of the process. It's up to each class to
-obey the interface and do that parts the other portions it expects
+obey the interface and do that parts the other portions expects
 it to do. The idea is to decouple some of these bits as much as
 possible.
 

@@ -21,7 +21,7 @@ MyCPAN::Indexer::Storage::AsYAML - Save the result as a YAML file
 
 =head1 SYNOPSIS
 
-Use this in backpan_indexer.pl by specifying it as the queue class:
+Use this in backpan_indexer.pl by specifying it as the reporter class:
 
 	# in backpan_indexer.config
 	reporter_class  MyCPAN::Indexer::Reporter::AsYAML
