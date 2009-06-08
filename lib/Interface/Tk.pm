@@ -15,13 +15,12 @@ BEGIN {
 		" to use MyCPAN::Indexer::Interface::Tk" if $@;
 }
 
+use base qw(MyCPAN::Indexer::Component);
 use vars qw($VERSION $logger);
-$VERSION = '1.23';
+$VERSION = '1.23_01';
 
 use Log::Log4perl;
 use Tk;
-'Tk'                               => '0',
-'Tk::ProgressBar'                  => '0',
 
 =head1 NAME
 
@@ -51,17 +50,20 @@ BEGIN {
 	$logger = Log::Log4perl->get_logger( 'Interface' );
 	}
 
+sub component_type { $_[0]->interface_type }
+
 sub do_interface
 	{
-	my( $class, $Notes ) = @_;
+	my( $self ) = @_;
 
+	my $config = $self->get_config;
 	use Tk;
 
 	my $mw = MainWindow->new;
 	$mw->geometry('500x375');
 
 	$mw->resizable( 0, 0 );
-	$mw->title( join " ", $Notes->{config}->indexer_class, $Notes->{config}->indexer_class->VERSION );
+	$mw->title( join " ", $config->indexer_class, $config->indexer_class->VERSION );
 	my $menubar = _menubar( $mw );
 
 	my( $progress, $top, $middle, $bottom ) = map {
@@ -206,7 +208,7 @@ sub do_interface
 
 
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-	$mw->repeat( 500, $Notes->{interface_callback} );
+	$mw->repeat( 500, $self->get_note( 'interface_callback' ) );
 
 	MainLoop;
 	}

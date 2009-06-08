@@ -34,19 +34,27 @@ WriteMakefile(
 		},
 
 	'PM'           => {
-		'lib/AsYAML.pm'      => '$(INST_LIBDIR)/Indexer/Reporter/AsYAML.pm',
-		'lib/Text.pm'        => '$(INST_LIBDIR)/Indexer/Interface/Text.pm',
-		'lib/Curses.pm'      => '$(INST_LIBDIR)/Indexer/Interface/Curses.pm',
-		'lib/Indexer.pm'     => '$(INST_LIBDIR)/Indexer.pm',
-		'lib/NullTester.pm'  => '$(INST_LIBDIR)/Indexer/NullTester.pm',
-		'lib/Parallel.pm'    => '$(INST_LIBDIR)/Indexer/Dispatch/Parallel.pm',
-		'lib/Serial.pm'      => '$(INST_LIBDIR)/Indexer/Dispatch/Serial.pm',
-		'lib/Queue.pm'       => '$(INST_LIBDIR)/Indexer/Queue.pm',
-		'lib/TestCensus.pm'  => '$(INST_LIBDIR)/Indexer/TestCensus.pm',
-		'lib/Tk.pm'          => '$(INST_LIBDIR)/Indexer/Interface/Tk.pm',
-		'lib/Tutorial.pm'    => '$(INST_LIBDIR)/Indexer/Tutorial.pm',
-		'lib/Worker.pm'      => '$(INST_LIBDIR)/Indexer/Worker.pm',
-		'lib/App/Indexer.pm' => '$(INST_LIBDIR)/App/BackPAN/Indexer.pm',
+		'lib/Reporter/Base.pm'       => '$(INST_LIBDIR)/Indexer/Reporter/Base.pm',
+		'lib/Reporter/AsYAML.pm'     => '$(INST_LIBDIR)/Indexer/Reporter/AsYAML.pm',
+
+		'lib/Interface/Text.pm'      => '$(INST_LIBDIR)/Indexer/Interface/Text.pm',
+		'lib/Interface/Curses.pm'    => '$(INST_LIBDIR)/Indexer/Interface/Curses.pm',
+		'lib/Interface/Tk.pm'        => '$(INST_LIBDIR)/Indexer/Interface/Tk.pm',
+
+		'lib/Dispatcher/Parallel.pm' => '$(INST_LIBDIR)/Indexer/Dispatcher/Parallel.pm',
+		'lib/Dispatcher/Serial.pm'   => '$(INST_LIBDIR)/Indexer/Dispatcher/Serial.pm',
+
+		'lib/Indexer.pm'             => '$(INST_LIBDIR)/Indexer.pm',
+		'lib/NullTester.pm'          => '$(INST_LIBDIR)/Indexer/NullTester.pm',
+		'lib/Queue.pm'               => '$(INST_LIBDIR)/Indexer/Queue.pm',
+		'lib/TestCensus.pm'          => '$(INST_LIBDIR)/Indexer/TestCensus.pm',
+		'lib/Tutorial.pm'            => '$(INST_LIBDIR)/Indexer/Tutorial.pm',
+		'lib/Worker.pm'              => '$(INST_LIBDIR)/Indexer/Worker.pm',
+		'lib/Coordinator.pm'         => '$(INST_LIBDIR)/Indexer/Coordinator.pm',
+		'lib/Component.pm'           => '$(INST_LIBDIR)/Indexer/Component.pm',
+		'lib/Notes.pm'               => '$(INST_LIBDIR)/Indexer/Notes.pm',
+		
+		'lib/App/Indexer.pm'         => '$(INST_LIBDIR)/App/BackPAN/Indexer.pm',
 		},
 
 	'MAN3PODS'     => {},

@@ -9,7 +9,7 @@ no warnings;
 use subs qw(get_caller_info);
 use vars qw($VERSION $logger);
 
-$VERSION = '1.23';
+$VERSION = '1.23_01';
 
 =head1 NAME
 
@@ -102,7 +102,7 @@ Most of this needs to move out of run and into this method.
 Return a list of 3-element anonymous arrays that tell C<examine_dists>
 what to do. The elements of each anonymous array are:
 
-	1) the method to call (must be in indexing class or its parents)
+	1) the method to call (must be in indexing class or its parent classes)
 	2) a text description of the method
 	3) if a failure in that step should stop the exam: true or false
 

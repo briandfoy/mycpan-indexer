@@ -2,5 +2,6 @@ load.t
 compile.t
 pod.t
 pod_coverage.t
+reporter/base.t
 app/backpan.t
 app/defaults.t

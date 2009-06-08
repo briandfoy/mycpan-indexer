@@ -10,7 +10,7 @@ use subs qw(get_caller_info);
 use vars qw($VERSION $logger);
 use base qw(MyCPAN::Indexer);
 
-$VERSION = '1.23';
+$VERSION = '1.23_01';
 
 =head1 NAME
 
@@ -143,7 +143,7 @@ sub setup_dist_info
 	my( $self, $dist ) = @_;
 
 	$logger->debug( "Setting dist [$dist]\n" );
-	$self->set_dist_info( 'dist_file',     $dist                   );
+	$self->set_dist_info( 'dist_file', $dist );
 
 	return 1;
 	}
@@ -171,13 +171,13 @@ sub get_reporter
 	{
 	#TRACE( sub { get_caller_info } );
 
-	my( $class, $Notes ) = @_;
+	my( $self ) = @_;
 
 	unlink "/Users/brian/Desktop/test_use";
 
-	$Notes->{reporter} = sub {
+	my $reporter = sub {
 
-		my( $Notes, $info ) = @_;
+		my( $info ) = @_;
 
 		my $test_files = $info->{dist_info}{test_info};
 
@@ -198,6 +198,8 @@ sub get_reporter
 
 		};
 
+	$self->set_note( 'reporter', $reporter );
+	
 	1;
 	}
 
@@ -205,7 +207,6 @@ sub get_reporter
 
 sub final_words
 	{
-	my( $class );
 	$logger->debug( "Final words from the Reporter" );
 
 	our %DBM;

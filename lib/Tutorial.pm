@@ -3,7 +3,7 @@ use strict;
 use warnings;
 
 use vars qw($VERSION);
-$VERSION = '1.23';
+$VERSION = '1.23_01';
 
 =head1 NAME
 
@@ -18,7 +18,7 @@ it to do. The idea is to decouple some of these bits as much as
 possible.
 
 As C<backpan_indexer.pl> does its work, it stores information about
-its components in an anonymous hash called C<$Notes>. The different
+its components in an anonymous hash called C<notes>. The different
 components have access to this hash. (To Do: this is some pretty bad
 design smell, but that's how it is right now).
 
@@ -37,16 +37,16 @@ Perl distribution.
 
 Implements:
 
-	get_queue( $Notes )
+	get_queue()
 
-Creates in C<$Notes>:
+Creates in C<notes>:
 
 	queue - a reference to the array reference returned by get_queue.
 
-Expects in C<$Notes>:
+Expects in C<notes>:
 
-	config - the configuration object
-
+	nothing
+	
 To Do: The Queue class should really be an iterator of some sort. Instead
 of returning an array (which it can't change), return an iterator.
 
@@ -56,44 +56,45 @@ The Worker class returns the anonymous subroutine that the interface
 class calls for each of its cycles. Inside that code reference, do the
 actual indexing work, including saving the results.
 C<backpan_indexer.pl> calls C<get_task> with a reference to its
-C<$Notes> hash.
+C<notes> hash.
 
 Implements:
 
-	get_task( $Notes )
+	get_task()
 
-Creates in C<$Notes>
+Creates in C<notes>
 
 	child_task - a reference to the code reference returned by get_task.
 
-Expects in C<$Notes>
+Expects in C<notes>
 
-	config - the configuration object
-
+	nothing
+	
 To Do: There should be a storage class which the worker class hands
 the results to.
 
 =head1 The Reporter class
 
 The Reporter class implements the bits to store the result of the
-Worker class. C<backpan_indexer.pl> calls C<get_storer> with a reference to its
-C<$Notes> hash.
+Worker class. C<backpan_indexer.pl> calls C<get_reporter> with a
+reference to its C<notes> hash.
 
 Implements:
 
-	get_reporter( $Notes, $info )
+	get_reporter( $info )
 
-Creates in C<$Notes>:
+Creates in C<notes>:
 
 	reporter - the code ref to handle storing the information
 
-Expects in C<$Notes>:
+Expects in C<notes>:
 
-	config
+	nothing
 
 Expects in config:
 
-
+	nothing
+	
 =head1 The Dispatcher class
 
 The Dispatcher class implements the bits to hand out work to the
@@ -102,16 +103,15 @@ the interface_callback code ref the Dispatcher class provides.
 
 Implements:
 
-	get_dispatcher( $Notes )
+	get_dispatcher()
 
-Creates in C<$Notes>
+Creates in C<notes>
 
 	dispatcher - the dispatcher object, with start and finish methods
 	interface_callback - a code ref to call repeatedly in the Interface class
 
-Expects in C<$Notes>
+Expects in C<notes>
 
-	config     - the configuration object
 	child_task - the code ref that handles indexing a single dist
 	queue      - the array ref of dist paths
 
@@ -123,13 +123,14 @@ the dispatcher to start new work.
 
 Implements:
 
-	do_interface( $Notes )
+	do_interface()
 
-Creates in C<$Notes>
+Creates in C<notes>:
 
-Expects in C<$Notes>
+	nothing
 
-	config             - the configuration object
+Expects in C<notes>
+
 	interface_callback - a code ref to call repeatedly in the Interface class
 
 =head1 SEE ALSO

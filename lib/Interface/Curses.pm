@@ -10,7 +10,7 @@ BEGIN {
 }
 
 use vars qw($VERSION $logger);
-$VERSION = '1.23';
+$VERSION = '1.23_01';
 
 =head1 NAME
 
@@ -43,28 +43,33 @@ BEGIN {
 	$logger = Log::Log4perl->get_logger( 'Interface' );
 	}
 
+sub component_type { $_[0]->interface_type }
+
 sub do_interface
 	{
-	my( $class, $Notes ) = @_;
+	my( $self ) = @_;
 	$logger->debug( "Calling do_interface" );
 
 	initscr();
 	noecho();
 	raw();
 
-	$Notes->{curses}{rows} = LINES();
-	$Notes->{curses}{cols} = COLS();
+	$self->set_note( 'curses', {} );
+	my $curses = $self->get_note( 'curses' );
+	
+	$curses->{rows} = LINES();
+	$curses->{cols} = COLS();
 
 	addstr( 0, 0, join " ", $Notes->{Config}{indexer_class}, $Notes->{Config}{indexer_class}->VERSION );
 	refresh();
 
-	$Notes->{curses}{windows}{progress}      = newwin( 3, COLS(),   1,  0 );
-	$Notes->{curses}{windows}{left_tracker}  = newwin( 6, 20,   4,  0 );
-	$Notes->{curses}{windows}{right_tracker} = newwin( 6, COLS() - 21,   4, 21 );
-	$Notes->{curses}{windows}{PID}           = newwin( 7, COLS(),  10,  0 );
-	$Notes->{curses}{windows}{Errors}        = newwin( 7, COLS(), 17,  0 );
+	$curses->{windows}{progress}      = newwin( 3, COLS(),   1,  0 );
+	$curses->{windows}{left_tracker}  = newwin( 6, 20,   4,  0 );
+	$curses->{windows}{right_tracker} = newwin( 6, COLS() - 21,   4, 21 );
+	$curses->{windows}{PID}           = newwin( 7, COLS(),  10,  0 );
+	$curses->{windows}{Errors}        = newwin( 7, COLS(), 17,  0 );
 
-	foreach my $value ( values %{ $Notes->{curses}{windows} } )
+	foreach my $value ( values %{ $curses->{windows} } )
 		{
 		box( $value, 0, 0 );
 		refresh( $value );
@@ -73,11 +78,11 @@ sub do_interface
 	my $count = 0;
 	while( 1 )
 		{
-		$Notes->{interface_callback}->();
+		$self->get_note( 'interface_callback' )->();
 
-		_update_screen( $Notes );
+		$self->_update_screen( $Notes );
 
-		last if $Notes->{Finished};
+		last if $self->get_note( 'Finished' );
 		}
 
 	}
@@ -109,26 +114,28 @@ my $values = {};
 
 sub _update_screen
 	{
-	&_update_labels;
-	&_update_progress;
-	&_update_values;
+	$_[0]->_update_labels;
+	$_[0]->_update_progress;
+	$_[0]->_update_values;
 	}
 
 sub _update_labels
 	{
-	my( $Notes ) = @_;
+	my( $self ) = @_;
 
 	#print "Calling _update_screen\n";
 
+	my $curses = $self->get_note( 'curses' );
+	
 	foreach my $key ( keys %$labels )
 		{
 		my $tuple = $labels->{$key};
 
 		eval { addstr(
-			$Notes->{curses}{windows}{ $tuple->[0] },
+			$curses->{windows}{ $tuple->[0] },
 			@$tuple[1,2,3]
 			);
-		refresh( $Notes->{curses}{windows}{ $tuple->[0] } );
+		refresh( $curses->{windows}{ $tuple->[0] } );
 		};
 		}
 
@@ -140,11 +147,11 @@ sub _update_labels
 
 		my $width = $tuple->[4];
 		addstr(
-			$Notes->{curses}{windows}{ $tuple->[0] },
+			$curses->{windows}{ $tuple->[0] },
 			@$tuple[1,2],
 			sprintf "%${width}s", $tuple->[3]
 			);
-		refresh( $Notes->{curses}{windows}{ $tuple->[0] } );
+		refresh( $curses->{windows}{ $tuple->[0] } );
 		};
 		}
 
@@ -154,33 +161,37 @@ sub _update_labels
 		no warnings;
 		my $width = $headers->{'##'}[4];
 		addstr(
-			$Notes->{curses}{windows}{PID},
+			$curses->{windows}{PID},
 			$i + 1,
 			$headers->{'##'}[2] + 1,
 			sprintf "%${width}s", $i );
-		refresh( $Notes->{curses}{windows}{PID} );
+		refresh( $curses->{windows}{PID} );
 		}
 
-	refresh( $Notes->{curses}{windows}{PID} );
+	refresh( $curses->{windows}{PID} );
 	}
 
 sub _update_progress
 	{
-	my( $Notes ) = @_;
+	my( $self ) = @_;
+
+	my $curses = $self->get_note( 'curses' );
 
 	my $progress = eval { ( COLS() - 2 ) / $Notes->{Total} * $Notes->{Done} } || 0;
 
 	addstr(
-		$Notes->{curses}{windows}{progress},
+		$curses->{windows}{progress},
 		1, 1,
 		'*' x $progress
 		);
-	refresh( $Notes->{curses}{windows}{progress} );
+	refresh( $curses->{windows}{progress} );
 	}
 
 sub _update_values
 	{
-	my( $Notes ) = @_;
+	my( $self ) = @_;
+
+	my $curses = $self->get_note( 'curses' );
 
 	no warnings;
 	foreach my $key ( qw(Total Done Left Errors UUID Started Elapsed Rate) )
@@ -188,39 +199,42 @@ sub _update_values
 		my $tuple = $labels->{$key};
 
 		addstr(
-			$Notes->{curses}{windows}{ $tuple->[0] },
+			$curses->{windows}{ $tuple->[0] },
 			$tuple->[1],
 			$tuple->[2] + $tuple->[4] + 2,
-			sprintf "%" . $tuple->[5] . "s", $Notes->{$tuple->[3]}
+			sprintf "%" . $tuple->[5] . "s", $self->get_notes( $tuple->[3] );
 			);
-		refresh( $Notes->{curses}{windows}{ $tuple->[0] } );
+		refresh( $curses->{windows}{ $tuple->[0] } );
 		}
 
-	foreach my $i ( 1 .. $Notes->{Threads} )
+	foreach my $i ( 1 .. $self->get_note( 'Threads' ) )
 		{
 		my $width = $headers->{PID}[4];
 		addstr(
-			$Notes->{curses}{windows}{PID},
+			$curses->{windows}{PID},
 			$i + 1, $headers->{PID}[2],
-			sprintf "%${width}s", $Notes->{PID}[$i-1]
+			sprintf "%${width}s", $self->get_note('PID')->[$i-1]
 			);
 
 		$width = COLS() - $headers->{Processing}[2] - 1;
 		addstr(
-			$Notes->{curses}{windows}{PID},
+			$curses->{windows}{PID},
 			$i + 1,
 			$headers->{Processing}[2],
 			' ' x ( COLS() - $headers->{Processing}[2] - 1 )
 			);
+			
+		my $recent = $self->get_note( 'recent' );
+		
 		addstr(
-			$Notes->{curses}{windows}{PID},
+			$curses->{windows}{PID},
 			$i + 1,
 			$headers->{Processing}[2],
 			sprintf "%-${width}s", substr(
-				(defined $Notes->{recent}[$i-1] ? $Notes->{recent}[$i-1] : ''), 0, $width )
+				(defined $recent->[$i-1] ? $recent->[$i-1] : ''), 0, $width )
 			);
 
-		refresh( $Notes->{curses}{windows}{PID} );
+		refresh( $curses->{windows}{PID} );
 		}
 
 	}

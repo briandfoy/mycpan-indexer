@@ -2,8 +2,9 @@ package MyCPAN::Indexer::Queue;
 use strict;
 use warnings;
 
+use base qw(MyCPAN::Indexer::Component);
 use vars qw($VERSION $logger);
-$VERSION = '1.23';
+$VERSION = '1.23_01';
 
 use File::Basename;
 use File::Find;
@@ -52,12 +53,14 @@ value of the C<pause_id> configuration to create the path.
 
 =cut
 
+sub component_type { $_[0]->queue_type }
+
 sub get_queue
 	{
-	my( $class, $Notes ) = @_;
-
+	my( $self ) = @_;
+	
 	my @dirs = do {
-		my $item = $Notes->{config}->backpan_dir;
+		my $item = $self->get_config->backpan_dir;
 		ref $item ? @$item : $item;
 		};
 
@@ -66,47 +69,55 @@ sub get_queue
 		$logger->error( "backpan_dir directory does not exist: [$dir]" )
 			unless -e $dir;
 		}
-
-	$logger->debug( "Taking dists from [@dirs]" );
-	my( $wanted, $reporter ) = File::Find::Closures::find_by_regex( qr/\.(t?gz|zip)$/ );
-
-	find( $wanted, @dirs );
-
-	$Notes->{queue} = [
-		map  { rel2abs($_) }
-		grep { ! /.(data|txt).gz$/ }
-		$reporter->()
-		];
-
-	if( $Notes->{config}->get( 'organize_dists' ) )
+	
+	my $queue = $self->_get_file_list( @dirs );
+	
+	if( $self->get_config->organize_dists )
 		{
-		_setup_organize_dists( $Notes );
+		$self->_setup_organize_dists;
 
-		foreach my $i ( 0 .. $#{ $Notes->{queue} } )
+		foreach my $i ( 0 .. $#$queue )
 			{
-			my $file = $Notes->{queue}[$i];
+			my $file = $queue->[$i];
 			$logger->debug( "Processing $file" );
 			next if $file =~ m|authors/id/./../.+?/|;
 			$logger->debug( "Copying $file into PAUSE structure" );
 
-			$Notes->{queue}[$i] = _copy_file( $file, $Notes );
+			$queue->[$i] = $self->_copy_file( $file );
 			}
 		}
 
+	$self->set_note( 'queue', $queue );
+	
 	1;
 	}
 
+sub _get_file_list
+	{
+	my( $self, @dirs ) = @_;
+	
+	$logger->debug( "Taking dists from [@dirs]" );
+	my( $wanted, $reporter ) = File::Find::Closures::find_by_regex( qr/\.(t?gz|zip)$/ );
+
+	find( $wanted, @dirs );
+	
+	return [
+		map  { rel2abs($_) }
+		grep { ! /.(data|txt).gz$/ }
+		$reporter->()
+		];
+	
+	}
+	
 sub _setup_organize_dists
 	{
-	my( $Notes ) = @_;
+	my( $self ) = @_;
 
-	my $pause_id = eval { $Notes->{config}->get( 'pause_id' ) } || 'MYCPAN';
+	my $pause_id = eval { $self->get_config->pause_id } || 'MYCPAN';
 
-	my @parts = _path_parts( $pause_id );
-
-	mkpath _path_parts( $pause_id ), { mode => 0775 };
-	$logger->error( "Could not create PAUSE author path for [$pause_id]: $!" )
-		if $!;
+	eval { mkpath $self->_path_parts( $pause_id ), { mode => 0775 } };
+	$logger->error( "Could not create PAUSE author path for [$pause_id]: $@" )
+		if $@;
 
 	1;
 	}
@@ -115,8 +126,8 @@ sub _path_parts
 	{
 	catfile (
 		qw(authors id),
-		substr( $_[0], 0, 1 ),
-		substr( $_[0], 0, 2 ),
+		substr( $_[1], 0, 1 ),
+		substr( $_[1], 0, 2 ),
 		$_[0]
 		);
 	}
@@ -124,15 +135,15 @@ sub _path_parts
 # if there is an error with the rename, return the original file name
 sub _copy_file
 	{
-	my( $file, $Notes ) = @_;
-
-	my $pause_id = eval { $Notes->{config}->get( 'pause_id' ) } || 'MYCPAN';
+	my( $self, $file ) = @_;
+	
+	my $pause_id = eval { $self->get_config->pause_id } || 'MYCPAN';
 
 	my $basename = basename( $file );
 	$logger->debug( "Need to copy file $basename into $pause_id" );
 
 	my $new_name = rel2abs(
-		catfile( _path_parts( $pause_id ), $basename )
+		catfile( $self->_path_parts( $pause_id ), $basename )
 		);
 
 	my $rc = rename $file => $new_name;

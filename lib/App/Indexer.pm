@@ -15,11 +15,13 @@ use File::Temp qw(tempdir);
 use Getopt::Std;
 use Log::Log4perl;
 
-$VERSION = '1.23';
+$VERSION = '1.23_01';
 
 $|++;
 
 my $logger = Log::Log4perl->get_logger( 'backpan_indexer' );
+
+#$SIG{__DIE__} = \&Carp::confess;
 
 __PACKAGE__->activate( @ARGV ) unless caller;
 
@@ -29,24 +31,24 @@ my $cwd = cwd();
 my $report_dir = catfile( $cwd, 'indexer_reports' );
 
 my %Defaults = (
-	report_dir            => $report_dir,
-	success_report_subdir => catfile( $report_dir, 'success' ),
-	error_report_subdir   => catfile( $report_dir, 'errors'  ),
 	alarm                 => 15,
-	log_file_watch_time   => 30,
 	copy_bad_dists        => 0,
-	retry_errors          => 1,
-	indexer_id            => 'Joe Example <joe@example.com>',
-	system_id             => 'an unnamed system',
+	dispatcher_class      => 'MyCPAN::Indexer::Dispatcher::Parallel',
+	error_report_subdir   => catfile( $report_dir, 'errors'  ),
 	indexer_class         => 'MyCPAN::Indexer',
-	queue_class           => 'MyCPAN::Indexer::Queue',
-	dispatcher_class      => 'MyCPAN::Indexer::Dispatch::Parallel',
+	indexer_id            => 'Joe Example <joe@example.com>',
 	interface_class       => 'MyCPAN::Indexer::Interface::Text',
-	worker_class          => 'MyCPAN::Indexer::Worker',
-	reporter_class        => 'MyCPAN::Indexer::Reporter::AsYAML',
-	parallel_jobs         => 1,
+	log_file_watch_time   => 30,
 	organize_dists        => 0,
+	parallel_jobs         => 1,
 	pause_id              => 'MYCPAN',
+	queue_class           => 'MyCPAN::Indexer::Queue',
+	report_dir            => $report_dir,
+	reporter_class        => 'MyCPAN::Indexer::Reporter::AsYAML',
+	retry_errors          => 1,
+	success_report_subdir => catfile( $report_dir, 'success' ),
+	system_id             => 'an unnamed system',
+	worker_class          => 'MyCPAN::Indexer::Worker',
 	);
 
 sub default_keys { keys %Defaults }
@@ -57,56 +59,72 @@ sub config_class { 'ConfigReader::Simple' }
 
 sub get_config
 	{
-	my( $self, $file ) = @_;
+	my( $class, $file ) = @_;
 
-	eval "require " . $self->config_class . "; 1";
+	eval "require " . $class->config_class . "; 1";
 
-	my $Config = $self->config_class->new( defined $file ? $file : () );
+	my $config = $class->config_class->new( defined $file ? $file : () );
 
-	foreach my $key ( $self->default_keys )
+	
+	foreach my $key ( $class->default_keys )
 		{
-		next if $Config->exists( $key );
-		$Config->set( $key, $self->default( $key ) );
+		next if $config->exists( $key );
+		$config->set( $key, $class->default( $key ) );
 		}
 
-	$Config;
+	$config;
 	}
 }
 
 sub adjust_config
 	{
-	my( $self, $Config, @argv ) = @_;
+	my( $self, @argv ) = @_;
 
+	my $config = $self->get_config;
+	
 	# set the directories to index
-	unless( $Config->exists( 'backpan_dir') )
+	unless( $config->exists( 'backpan_dir') )
 		{
-		$Config->set( 'backpan_dir', [ @argv ? @argv : cwd() ] );
+		$config->set( 'backpan_dir', [ @argv ? @argv : cwd() ] );
 		}
 
-	unless( ref $Config->get( 'backpan_dir' ) eq ref [] )
+	unless( ref $config->get( 'backpan_dir' ) eq ref [] )
 		{
-		$Config->set( 'backpan_dir', [ $Config->get( 'backpan_dir' ) ] );
+		$config->set( 'backpan_dir', [ $config->get( 'backpan_dir' ) ] );
 		}
 
-	if( $Config->exists( 'report_dir' ) )
+	if( $config->exists( 'report_dir' ) )
 		{
 		foreach my $subdir ( qw(success error) )
 			{
-			$Config->set(
+			$config->set(
 				"${subdir}_report_subdir",
-				catfile( $Config->get( 'report_dir' ), $subdir ),
+				catfile( $config->get( 'report_dir' ), $subdir ),
 				);
 			}
 		}
 
 	}
 
+sub new { bless {}, $_[0] }
+
+sub get_coordinator { $_[0]->{coordinator}         }
+sub set_coordinator { $_[0]->{coordinator} = $_[1] }
+
 sub activate
 	{
-	my( $self, @argv ) = @_;
+	my( $class, @argv ) = @_;
 	use vars qw( %Options );
 	local %ENV = %ENV;
 
+	my $application = $class->new();
+	require MyCPAN::Indexer::Coordinator;
+	
+	my $coordinator = MyCPAN::Indexer::Coordinator->new;
+	
+	$coordinator->set_application( $application );
+	$application->set_coordinator( $coordinator );
+	
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 	# Process the options
 	{
@@ -123,57 +141,60 @@ sub activate
 
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 	# Minutely control the environment
-	$self->setup_environment;
-
+	$application->setup_environment;
+	
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 	# Adjust config based on run parameters
-	my $Config = $self->get_config( $Options{f} );
-
-	$self->adjust_config( $Config, @argv );
+	my $config = $application->get_config( $Options{f} );
+	$coordinator->set_config( $config );
+	
+	$application->adjust_config( @argv );
 
 	if( $Options{c} )
 		{
 		use Data::Dumper;
-		print STDERR Dumper( $Config );
+		print STDERR Dumper( $config );
 		exit;
 		}
 
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 	# Load classes and check that they do the right thing
-	my $Notes = {
-		config     => $Config,
-		UUID       => $self->get_uuid(),
-		tempdirs   => [],
-		log_file   => $Options{l},
-		};
+	$coordinator->set_note( 'UUID',     $application->get_uuid() );
+	$coordinator->set_note( 'tempdirs', [] );
+	$coordinator->set_note( 'log_file', $Options{l} );
 	
-	$self->setup_logging( $Notes );
+	$application->setup_logging;
 
-	$self->setup_dirs( $Notes );
+	$application->setup_dirs;
 
 
 	{
-	my @components = $self->components;
+	my @components = $application->components;
 
 	foreach my $tuple ( @components )
 		{
 		my( $directive, $default_class, $method ) = @$tuple;
 
-		my $class = $Config->get( $directive ) || $default_class;
+		my $class = $config->get( "${directive}_class" ) || $default_class;
 
-		eval "require $class" or die "$@\n";
+		eval "require $class; 1" or die "$@\n";
 		die "$directive [$class] does not implement $method()"
 			unless $class->can( $method );
 
 		$logger->debug( "Calling $class->$method()" );
-		$class->$method( $Notes );
+		
+		my $component = $class->new;
+		$component->set_coordinator( $coordinator );
+		$component->$method();
+		
+		my $set_method = "set_$directive";
+		$coordinator->$set_method( $component );
 		}
-
 	}
 
-	$self->cleanup( $Notes );
+	$application->cleanup;
 
-	$self->_exit( $Notes );
+	$application->_exit;
 	}
 
 sub setup_environment
@@ -190,13 +211,15 @@ sub setup_environment
 
 sub setup_logging
 	{
-	my( $self, $Notes ) = @_;
+	my( $self ) = @_;
 
-	if( -e $Notes->{log_file} )
+	my $log_file = $self->get_coordinator->get_note( 'log_file' );
+	
+	if( -e $log_file )
 		{
 		Log::Log4perl->init_and_watch(
-			$Notes->{log_file},
-			$Notes->{config}->get( 'log_file_watch_time' )
+			$log_file,
+			$self->get_config->get( 'log_file_watch_time' )
 			);
 		}
 	else
@@ -208,29 +231,30 @@ sub setup_logging
 sub components
 	{
 	(
-	[ qw( queue_class      MyCPAN::Indexer::Queue             get_queue      ) ],
-	[ qw( dispatcher_class MyCPAN::Indexer::Parallel          get_dispatcher ) ],
-	[ qw( reporter_class   MyCPAN::Indexer::Reporter::AsYAML  get_reporter   ) ],
-	[ qw( worker_class     MyCPAN::Indexer::Worker            get_task       ) ],
-	[ qw( interface_class  MyCPAN::Indexer::Interface::Curses do_interface   ) ],
-	[ qw( reporter_class   MyCPAN::Indexer::Interface::Curses final_words    ) ],
+	[ qw( queue      MyCPAN::Indexer::Queue                get_queue      ) ],
+	[ qw( dispatcher MyCPAN::Indexer::Dispatcher::Parallel get_dispatcher ) ],
+	[ qw( reporter   MyCPAN::Indexer::Reporter::AsYAML     get_reporter   ) ],
+	[ qw( worker     MyCPAN::Indexer::Worker               get_task       ) ],
+	[ qw( interface  MyCPAN::Indexer::Interface::Curses    do_interface   ) ],
+	[ qw( reporter   MyCPAN::Indexer::Interface::Curses    final_words    ) ],
 	)
 	}
 
 sub cleanup
 	{
-	my( $self, $Notes ) = @_;
+	my( $self ) = @_;
 
 	require File::Path;
 
-	my @dirs = @{ $Notes->{tempdirs} }, $Notes->{config}->get('temp_dir');
+	my @dirs = 
+		@{ $self->get_coordinator->get_note('tempdirs') }, 
+		$self->get_coordinator->get_config->temp_dir;
 	$logger->debug( "Dirs to remove are @dirs" );
 
 	eval {
 		no warnings;
 		File::Path::rmtree [@dirs];
 		};
-
 	print STDERR "$@\n" if $@;
 
 	$logger->error( "Couldn't cleanup: $@" ) if $@;
@@ -240,7 +264,7 @@ sub cleanup
 # out of a Tk app or something?
 sub _exit
 	{
-	my( $self, $Notes ) = @_;
+	my( $self ) = @_;
 	
 	$logger->info( "Exiting from ", __PACKAGE__ );
 		
@@ -249,34 +273,38 @@ sub _exit
 
 sub setup_dirs # XXX big ugly mess to clean up
 	{
-	my( $self, $Notes ) = @_;
+	my( $self ) = @_;
 
-	my $Config = $Notes->{config};
+	my $config = $self->get_coordinator->get_config;
 
 # Okay, I've gone back and forth on this a couple of times. There is
 # no default for temp_dir. I create it here so it's only set when I
 # need it. It either comes from the user or on-demand creation. I then
 # set it's value in the configuration.
 
-	my $temp_dir = $Config->temp_dir || tempdir( DIR => cwd(), CLEANUP => 0 );
-	$logger->debug( "temp_dir is [$temp_dir] [" . $Config->temp_dir . "]" );
-	$Config->set( 'temp_dir', $temp_dir );
-	push @{ $Notes->{tempdirs} }, $temp_dir;
+	my $temp_dir = $config->temp_dir || tempdir( DIR => cwd(), CLEANUP => 0 );
+	$logger->debug( "temp_dir is [$temp_dir] [" . $config->temp_dir . "]" );
+	$config->set( 'temp_dir', $temp_dir );
+	
+	
+	my $tempdirs = $self->get_coordinator->get_note( 'tempdirs' );
+	push @$tempdirs, $temp_dir;
+	$self->get_coordinator->set_note( 'tempdirs', $tempdirs );
 
 	mkpath( $temp_dir ) unless -d $temp_dir;
 	$logger->logdie( "temp_dir [$temp_dir] does not exist!" ) unless -d $temp_dir;
 
 	foreach my $key ( qw(report_dir success_report_subdir error_report_subdir) )
 		{
-		my $dir = $Config->get( $key );
+		my $dir = $config->get( $key );
 
 		mkpath( $dir ) unless -d $dir;
 		$logger->logdie( "$key [$dir] does not exist!" ) unless -d $dir;
 		}
 
-	if( $Config->retry_errors )
+	if( $config->retry_errors )
 		{
-		my $glob = catfile( $Config->get( 'error_report_subdir' ), "*.yml" );
+		my $glob = catfile( $config->get( 'error_report_subdir' ), "*.yml" );
 		$glob =~ s/( +)/(\\$1)/g;
 
 		unlink glob( $glob );
@@ -285,12 +313,10 @@ sub setup_dirs # XXX big ugly mess to clean up
 
 sub get_uuid
 	{
-	my $UUID = do {
-		require Data::UUID;
-		my $ug = Data::UUID->new;
-		my $uuid = $ug->create;
-		$ug->to_string( $uuid );
-		};
+	require Data::UUID;
+	my $ug = Data::UUID->new;
+	my $uuid = $ug->create;
+	$ug->to_string( $uuid );
 	}
 
 1;

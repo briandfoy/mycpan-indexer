@@ -2,8 +2,9 @@ package MyCPAN::Indexer::NullTester;
 use strict;
 use warnings;
 
+use base qw(MyCPAN::Indexer::Component);
 use vars qw($VERSION $logger);
-$VERSION = '1.23';
+$VERSION = '1.23_01';
 
 use Log::Log4perl;
 
@@ -26,7 +27,11 @@ want to do nothing:
 =head1 DESCRIPTION
 
 This class implements all of the methods needed by all of the
-component classes. The
+component classes. Thes methods don't do anything, so they can
+be useful to ignore parts of the system while you focus on
+developing another. For instance, you might use this module
+as the reporter_class, since it does nothing, which you work
+on the dispatcher_class.
 
 =head2 Methods
 
@@ -39,7 +44,7 @@ C<queue> is an empty
 
 =cut
 
-sub get_queue { $_[1]->{queue} = [] }
+sub get_queue { $_[0]->set_note( 'queue', [] ) }
 
 =item Worker class: get_task( HASH_REF )
 
@@ -48,7 +53,7 @@ C<child_task> is a code reference that returns 1 and does nothing else.
 
 =cut
 
-sub get_task { $_[1]->{child_task} = sub { 1 } }
+sub get_task { $_[0]->set_note( 'child_task', sub { 1 } ) }
 
 =item Storage class: get_storer( HASH_REF )
 
@@ -57,7 +62,7 @@ C<reporter> is a code reference that returns 1 and does nothing else.
 
 =cut
 
-sub get_storer { $_[1]->{reporter} = sub { 1 } }
+sub get_storer { $_[0]->set_note( 'reporter', sub { 1 } ) }
 
 =item Dispatcher class: get_dispatcher()
 
@@ -77,8 +82,8 @@ BEGIN {
 
 sub get_dispatcher
 	{
-	$_[1]->{child_task} = MyCPAN::Indexer::NullTester::Dispatcher->new;
-	$_[1]->{interface_callback} = sub { 1 }
+	$_[0]->set_note('child_task', MyCPAN::Indexer::NullTester::Dispatcher->new );
+	$_[0]->set_note('interface_callback', sub { 1 } );
 	}
 
 =item Interface class: do_interface( HASH_REF )
