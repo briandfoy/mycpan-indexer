@@ -20,7 +20,7 @@ WriteMakefile(
 		'File::Find'                       => '0',
 		'File::Find::Closures'             => '0',
 		'Log::Log4perl'                    => '0',
-		'MD5'                              => '0',
+		'Digest::MD5'                      => '0',
 		'Module::Extract::Namespaces'      => '0.14',
 		'Module::Extract::Use'             => '0.13',
 		'Module::Extract::VERSION'         => '0.13',

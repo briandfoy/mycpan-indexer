@@ -1272,9 +1272,9 @@ sub get_caller_info
 
 sub get_md5
 	{
-	require MD5;
+	require Digest::MD5;
 
-	my $context = MD5->new;
+	my $context = Digest::MD5->new;
 	$context->add( $_[1] );
 	$context->hexdigest;
 	}
