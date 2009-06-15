@@ -67,25 +67,29 @@ sub _make_interface_callback
 
 	$Notes->{queue_cursor} = 0;
 
-	$Notes->{interface_callback} = sub {
+	foreach my $key ( keys %$Notes )
+		{
+		$self->set_note( $key, $Notes->{$key} );
+		}
 
+	$Notes->{interface_callback} = sub {
 		$logger->debug( "Start: Finished: $Notes->{Finished} Left: $Notes->{Left}" );
 
 		unless( $self->get_note('Left') )
 			{
-			$self->set_note('Finished', 1 );
+			$self->set_note('Finished', 'true' );
 			return;
 			};
 
-		$self->set_note('_started') ||= time;
+		$self->set_note_unless_defined('_started', time);
 
 		$self->set_note('_elapsed', time - $self->get_note('_started') );
-		$self->set_note('Elapsed', _elapsed( $self->get_note('_elapsed') );
+		$self->set_note('Elapsed', _elapsed( $self->get_note('_elapsed') ) );
 
 		my $item = ${ $self->get_note('queue') }[ $self->get_note('queue_cursor') ];
-		$self->set_note( 'queue_cursor', $self->get_note('queue_cursor') + 1 );
+		$self->increment_note( 'queue_cursor' );
 
-		$self->set_note( 'Done', $self->get_note('Done') + 1 );
+		$self->increment_note( 'Done' );
 		$self->set_note('Left', $self->get_note('Total') - $self->get_note('Done') );
 		$logger->debug( 
 			sprintf "Total: %s Done: %s Left: %s Finished: %s",
@@ -94,17 +98,14 @@ sub _make_interface_callback
 
 		no warnings;
 		$self->set_note('Rate', sprintf "%.2f / sec ",
-			eval { $self->get_note('Done') / $self->get_note('_elapsed') };
+			eval { $self->get_note('Done') / $self->get_note('_elapsed') }
+			);
 
 		my $info = $self->get_note('child_task')->( $item );
 
 		$info;
 		};
 		
-	foreach my $key ( keys %$Notes )
-		{
-		$self->set_note( $key, $Notes->{$key} );
-		}
 	}
 
 BEGIN {

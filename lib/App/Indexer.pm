@@ -234,7 +234,7 @@ sub components
 	[ qw( reporter   MyCPAN::Indexer::Reporter::AsYAML     get_reporter   ) ],
 	[ qw( worker     MyCPAN::Indexer::Worker               get_task       ) ],
 	[ qw( interface  MyCPAN::Indexer::Interface::Curses    do_interface   ) ],
-	[ qw( reporter   MyCPAN::Indexer::Interface::Curses    final_words    ) ],
+	[ qw( reporter   MyCPAN::Indexer::Reporter::AsYAML     final_words    ) ],
 	)
 	}
 

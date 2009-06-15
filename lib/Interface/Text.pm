@@ -65,7 +65,7 @@ sub do_interface
 		local $| = 1;
 
 		my $info = $self->get_note('interface_callback')->();
-        
+
 		my $method = do {
 			if( not defined $info or ref $info ne ref {} ) { 'error_tick' }
 			elsif( $info->{'completed'} ) { 'success_tick' }
@@ -73,10 +73,10 @@ sub do_interface
 			elsif( grep { exists $info->{$_} } qw( error fatal_error ) ) { 'error_tick' }
 			else { 'error_tick' }
 			};
-			
+
 		# if we fork, how does the interface class know what happened?
 		$method = 'success_tick';
-		
+
 		print $self->$method();
 		print "\n" unless ++$count % 70;
 
