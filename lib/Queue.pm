@@ -60,8 +60,8 @@ sub get_queue
 	my( $self ) = @_;
 	
 	my @dirs = do {
-		my $item = $self->get_config->backpan_dir;
-		ref $item ? @$item : $item;
+		my $item = $self->get_config->backpan_dir || '';
+		split /\s+/, $item;
 		};
 
 	foreach my $dir ( @dirs )
@@ -69,6 +69,9 @@ sub get_queue
 		$logger->error( "backpan_dir directory does not exist: [$dir]" )
 			unless -e $dir;
 		}
+	
+	@dirs = grep { -d $_ } @dirs;
+	$logger->logdie( "No directories to index!" ) unless @dirs;
 	
 	my $queue = $self->_get_file_list( @dirs );
 	

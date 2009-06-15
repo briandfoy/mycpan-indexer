@@ -57,19 +57,19 @@ sub default { $Defaults{$_[1]} }
 
 sub config_class { 'ConfigReader::Simple' }
 
-sub get_config
+sub init_config
 	{
-	my( $class, $file ) = @_;
+	my( $self, $file ) = @_;
 
-	eval "require " . $class->config_class . "; 1";
+	eval "require " . $self->config_class . "; 1";
 
-	my $config = $class->config_class->new( defined $file ? $file : () );
+	my $config = $self->config_class->new( defined $file ? $file : () );
 
 	
-	foreach my $key ( $class->default_keys )
+	foreach my $key ( $self->default_keys )
 		{
 		next if $config->exists( $key );
-		$config->set( $key, $class->default( $key ) );
+		$config->set( $key, $self->default( $key ) );
 		}
 
 	$config;
@@ -80,17 +80,15 @@ sub adjust_config
 	{
 	my( $self, @argv ) = @_;
 
-	my $config = $self->get_config;
+	my $config = $self->get_coordinator->get_config;
 	
 	# set the directories to index
 	unless( $config->exists( 'backpan_dir') )
 		{
-		$config->set( 'backpan_dir', [ @argv ? @argv : cwd() ] );
-		}
-
-	unless( ref $config->get( 'backpan_dir' ) eq ref [] )
-		{
-		$config->set( 'backpan_dir', [ $config->get( 'backpan_dir' ) ] );
+		# At the moment, you can only set string values, so we have to
+		# cheat a bit. This should really come in as a ConfigReader
+		# subclass
+		$config->set( 'backpan_dir', @argv ? join( ' ', @argv ) : cwd() );
 		}
 
 	if( $config->exists( 'report_dir' ) )
@@ -145,7 +143,7 @@ sub activate
 	
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 	# Adjust config based on run parameters
-	my $config = $application->get_config( $Options{f} );
+	my $config = $application->init_config( $Options{f} );
 	$coordinator->set_config( $config );
 	
 	$application->adjust_config( @argv );
