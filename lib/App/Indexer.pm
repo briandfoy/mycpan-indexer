@@ -23,6 +23,8 @@ my $logger = Log::Log4perl->get_logger( 'backpan_indexer' );
 
 #$SIG{__DIE__} = \&Carp::confess;
 
+$SIG{INT} = sub { exit() };
+
 __PACKAGE__->activate( @ARGV ) unless caller;
 
 BEGIN {
@@ -78,9 +80,11 @@ sub init_config
 
 sub adjust_config
 	{
-	my( $self, @argv ) = @_;
+	my( $application ) = @_;
 
-	my $config = $self->get_coordinator->get_config;
+	my $config = $application->get_coordinator->get_config;
+	
+	my @argv = $application->{args};
 	
 	# set the directories to index
 	unless( $config->exists( 'backpan_dir') )
@@ -104,71 +108,110 @@ sub adjust_config
 
 	}
 
-sub new { bless {}, $_[0] }
+sub new 
+	{ 
+	my( $class, @args ) = @_;
+	
+	bless { args => [ @args ] }, $class;
+	}
 
 sub get_coordinator { $_[0]->{coordinator}         }
 sub set_coordinator { $_[0]->{coordinator} = $_[1] }
 
+sub process_options
+	{
+	my( $application ) = @_;
+		
+	my $run_dir = dirname( $0 );
+	( my $script  = basename( $0 ) ) =~ s/\.\w+$//;
+
+	local @ARGV = @{ $application->{args} };
+	getopts( 'cl:f:', \ my %Options );
+	
+	# other things might want to use things from @ARGV, and
+	# we just removed the bits that we wanted.
+	$application->{args} = [ @ARGV ]; # XXX: yuck
+
+	$Options{f} ||= catfile( $run_dir, "$script.conf" );
+	$Options{l} ||= catfile( $run_dir, "$script.log4perl" );
+	
+	$application->{options} = \%Options;
+	}
+	
+sub get_option { $_[0]->{options}{$_[1]} }
+
+sub setup_coordinator
+	{
+	my( $application ) = @_;
+	
+	require MyCPAN::Indexer::Coordinator;
+	my $coordinator = MyCPAN::Indexer::Coordinator->new;
+	
+	$coordinator->set_application( $application );
+	$application->set_coordinator( $coordinator );
+	
+	$coordinator->set_note( 'UUID',     $application->get_uuid() );
+	$coordinator->set_note( 'tempdirs', [] );
+	$coordinator->set_note( 'log_file', $application->get_option( 'l' ) );
+	
+	$coordinator;
+	}
+	
+sub handle_config
+	{
+	my( $application ) = @_;
+
+	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+	# Adjust config based on run parameters
+	my $config = $application->init_config( $application->get_option('f') );
+	$application->get_coordinator->set_config( $config );
+	
+	$application->adjust_config;
+
+	if( $application->get_option('c') )
+		{
+		use Data::Dumper;
+		print STDERR Dumper( $config );
+		exit;
+		}
+	}
+
+sub activate_steps
+	{
+	qw(
+	process_options setup_coordinator setup_environment handle_config
+	setup_logging setup_dirs run_components activate_end
+	);
+	}
+	
 sub activate
 	{
 	my( $class, @argv ) = @_;
 	use vars qw( %Options );
 	local %ENV = %ENV;
 
-	my $application = $class->new();
-	require MyCPAN::Indexer::Coordinator;
+	my $application = $class->new( @argv );
 	
-	my $coordinator = MyCPAN::Indexer::Coordinator->new;
-	
-	$coordinator->set_application( $application );
-	$application->set_coordinator( $coordinator );
-	
-	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-	# Process the options
-	{
-	my $run_dir = dirname( $0 );
-	( my $script  = basename( $0 ) ) =~ s/\.\w+$//;
-
-	local @ARGV = @argv;
-	getopts( 'cl:f:', \%Options );
-	@argv = @ARGV; # XXX: yuck
-
-	$Options{f} ||= catfile( $run_dir, "$script.conf" );
-	$Options{l} ||= catfile( $run_dir, "$script.log4perl" );
+	foreach my $step ( $application->activate_steps )
+		{
+		$application->$step();
+		}
+		
+	$application;
 	}
 
-	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-	# Minutely control the environment
-	$application->setup_environment;
+sub run_components
+	{
+	my( $application ) = @_;
 	
-	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-	# Adjust config based on run parameters
-	my $config = $application->init_config( $Options{f} );
-	$coordinator->set_config( $config );
-	
-	$application->adjust_config( @argv );
-
-	if( $Options{c} )
-		{
-		use Data::Dumper;
-		print STDERR Dumper( $config );
-		exit;
-		}
-
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 	# Load classes and check that they do the right thing
-	$coordinator->set_note( 'UUID',     $application->get_uuid() );
-	$coordinator->set_note( 'tempdirs', [] );
-	$coordinator->set_note( 'log_file', $Options{l} );
-	
-	$application->setup_logging;
-
-	$application->setup_dirs;
-
-
-	{
 	my @components = $application->components;
 
+	my $coordinator = $application->get_coordinator;
+
+	my $config     = $coordinator->get_config;
+		
 	foreach my $tuple ( @components )
 		{
 		my( $directive, $default_class, $method ) = @$tuple;
@@ -190,11 +233,15 @@ sub activate
 		}
 	}
 
+sub activate_end
+	{
+	my( $application ) = @_;
+	
 	$application->cleanup;
 
 	$application->_exit;
 	}
-
+	
 sub setup_environment
 	{
 	my %pass_through = map { $_, 1 } qw( DISPLAY USER HOME PWD TERM );
@@ -280,7 +327,7 @@ sub setup_dirs # XXX big ugly mess to clean up
 # need it. It either comes from the user or on-demand creation. I then
 # set it's value in the configuration.
 
-	my $temp_dir = $config->temp_dir || tempdir( DIR => cwd(), CLEANUP => 0 );
+	my $temp_dir = $config->temp_dir || tempdir( DIR => cwd(), CLEANUP => 1 );
 	$logger->debug( "temp_dir is [$temp_dir] [" . $config->temp_dir . "]" );
 	$config->set( 'temp_dir', $temp_dir );
 	
