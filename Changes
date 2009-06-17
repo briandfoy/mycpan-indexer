@@ -1,5 +1,12 @@
 # Changes for MyCPAN::Indexer
 
+1.24 - Wed Jun 17 13:33:47 2009
+	* I made lots of changes to the internals to make it
+	much easier for the components talk to each other.
+	There isn't any improvement in the actual indexing,
+	but it's easier to write application and specialized
+	components now.
+
 1.21 - Wed May 20 14:24:05 2009
 	* Refactored a bit of the examine_dist stuff to move the
 	actual indexing steps into examine_dist_steps
