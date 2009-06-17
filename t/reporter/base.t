@@ -30,7 +30,10 @@ is( $reporter->get_error_report_subdir,   'error' );
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 {
-my $info  = bless { completed => 1,  dist_file => 'Foo-Bar-0.01.tgz' }, 'Mock::run_info';
+my $info  = bless { 
+	completed => 1,  
+	dist_info => { dist_file => 'Foo-Bar-0.01.tgz' }, 
+	}, 'Mock::run_info';
 my $Notes = { Finished => 1, config => bless {}, 'Mock::config' };
 my $config = bless( {
 		success_report_dir => 'success',

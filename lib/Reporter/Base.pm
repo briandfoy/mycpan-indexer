@@ -102,7 +102,7 @@ sub get_report_filename
 		if( ref $arg ) { $arg->{dist_info}{dist_file} }
 		elsif( defined $arg ) { $arg }
 		};
-	croak( "Did not get a distribution name!" ) unless $dist_file;
+	croak( "Did not get a distribution file name!" ) unless $dist_file;
 		
 	no warnings 'uninitialized';
 	( my $basename = basename( $dist_file ) ) =~ s/\.(tgz|tar\.gz|zip)$//;
