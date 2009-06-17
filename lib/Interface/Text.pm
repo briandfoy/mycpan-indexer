@@ -6,7 +6,7 @@ use Log::Log4perl;
 
 use base qw(MyCPAN::Indexer::Component);
 use vars qw($VERSION $logger);
-$VERSION = '1.23_01';
+$VERSION = '1.23_02';
 
 =head1 NAME
 
