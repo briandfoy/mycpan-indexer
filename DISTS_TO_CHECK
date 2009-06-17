@@ -1,0 +1,3 @@
+JSON (what's up with lib/JSON/PPBoolean.pm)
+DateTime::Locale::LocaleCatalog
+Compress::Zlib shows up in IO::Compress and Compress::Zlib
