@@ -1,3 +1,18 @@
 JSON (what's up with lib/JSON/PPBoolean.pm)
 DateTime::Locale::LocaleCatalog
 Compress::Zlib shows up in IO::Compress and Compress::Zlib
+Log::Log4perl::FAQ doesn't declare a package
+
+Could not add  undef from T/TH/THIRDPARTY/Log-Log4perl-1.21.tar.gz!  was already
+ added to CPAN::PackageDetails! at c:/lib/perl5/CPAN/PackageDetails.pm line 252
+
+Could not add  undef from T/TH/THIRDPARTY/JSON-2.14.tar.gz!  was already added t
+o CPAN::PackageDetails! at c:/lib/perl5/CPAN/PackageDetails.pm line 252
+
+Could not add  undef from T/TH/THIRDPARTY/DateTime-TimeZone-0.90-DRW.tar.gz!  wa
+s already added to CPAN::PackageDetails! at c:/lib/perl5/CPAN/PackageDetails.pm
+line 252
+
+Could not add  undef from T/TH/THIRDPARTY/DateTime-Locale-0.42.tar.gz!  was alre
+ady added to CPAN::PackageDetails! at c:/lib/perl5/CPAN/PackageDetails.pm line 2
+52
