@@ -18,7 +18,7 @@ BEGIN {
 
 =head1 NAME
 
-MyCPAN::Indexer::Storage::AsYAML - Save the result as a YAML file
+MyCPAN::Indexer::Reporter::AsYAML - Save the result as a YAML file
 
 =head1 SYNOPSIS
 
