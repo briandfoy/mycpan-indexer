@@ -4,7 +4,7 @@ use warnings;
 
 use base qw(MyCPAN::Indexer::Component);
 use vars qw($VERSION);
-$VERSION = '1.23_01';
+$VERSION = '1.24';
 
 use Carp qw(croak confess);
 use File::Basename qw(basename);
@@ -102,7 +102,7 @@ sub get_report_filename
 		if( ref $arg ) { $arg->{dist_info}{dist_file} }
 		elsif( defined $arg ) { $arg }
 		};
-	croak( "Did not get a distribution name!" ) unless $dist_file;
+	croak( "Did not get a distribution file name!" ) unless $dist_file;
 		
 	no warnings 'uninitialized';
 	( my $basename = basename( $dist_file ) ) =~ s/\.(tgz|tar\.gz|zip)$//;

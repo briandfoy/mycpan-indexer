@@ -9,7 +9,7 @@ no warnings;
 use subs qw(get_caller_info);
 use vars qw($VERSION $logger);
 
-$VERSION = '1.23_01';
+$VERSION = '1.24';
 
 =head1 NAME
 
@@ -1053,12 +1053,27 @@ sub extract_module_namespaces
 
 	require Module::Extract::Namespaces;
 
-	my @packages             = Module::Extract::Namespaces->from_file( $file );
+	my @packages      = Module::Extract::Namespaces->from_file( $file );
 
 	$logger->warn( "Didn't find any packages in $file" ) unless @packages;
 
-	$hash->{packages}        = [ @packages ];
-	$hash->{primary_package} = $packages[0];
+	$hash->{packages} = [ @packages ];
+	
+	# some people do odd things in their distributions, like fork
+	# modules. I'll try to guess the primary package by seeing if
+	# there is a package that matches the file name.
+	#
+	# See, for instance, Module::Info and it's B::BUtil fork.
+	( my $module = $file ) =~ s|.*(?:blib\b.)?lib\b.||g;
+	$module =~ s/\.pm\z//;
+	$module =~ s|[\\/]|::|g;
+	
+	$hash->{module_name_from_file_guess} = $module;
+	my @matches = grep { $_ eq $module } @packages;
+
+	my $primary_package = $matches[0] || $packages[0];
+	
+	$hash->{primary_package} = $primary_package;
 
 	1;
 	}

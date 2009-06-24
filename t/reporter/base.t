@@ -4,6 +4,8 @@ use warnings;
 
 use Test::More 'no_plan';
 
+use File::Spec::Functions;
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 my $class = 'MyCPAN::Indexer::Reporter::Base';
 use_ok( $class );
@@ -30,7 +32,10 @@ is( $reporter->get_error_report_subdir,   'error' );
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 {
-my $info  = bless { completed => 1,  dist_file => 'Foo-Bar-0.01.tgz' }, 'Mock::run_info';
+my $info  = bless { 
+	completed => 1,  
+	dist_info => { dist_file => 'Foo-Bar-0.01.tgz' }, 
+	}, 'Mock::run_info';
 my $Notes = { Finished => 1, config => bless {}, 'Mock::config' };
 my $config = bless( {
 		success_report_dir => 'success',
@@ -51,12 +56,12 @@ $reporter->set_coordinator( $coordinator );
 bless $reporter, 'Mock::derived';
 
 is( $reporter->get_report_subdir( $info ), 'success' );
-is( $reporter->get_report_path( $info ), 'success/Foo-Bar-0.01.test' );
+is( $reporter->get_report_path( $info ), catfile( qw(success Foo-Bar-0.01.test) ) );
 
 $info->{error} = 1;
 
 is( $reporter->get_report_subdir( $info ), 'error' );
-is( $reporter->get_report_path( $info ), 'error/Foo-Bar-0.01.test' );
+is( $reporter->get_report_path( $info ), catfile( qw(error Foo-Bar-0.01.test  ) ) );
 }
 
 

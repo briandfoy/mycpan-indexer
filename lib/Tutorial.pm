@@ -3,7 +3,7 @@ use strict;
 use warnings;
 
 use vars qw($VERSION);
-$VERSION = '1.23_01';
+$VERSION = '1.24';
 
 =head1 NAME
 
@@ -11,11 +11,11 @@ MyCPAN::Indexer::Tutorial - How the backpan_indexer.pl pieces fit together
 
 =head1 DESCRIPTION
 
-The MyCPAN::Indexer system lets you plug in different engines to
-control major portions of the process. It's up to each class to
-obey the interface and do that parts the other portions expects
-it to do. The idea is to decouple some of these bits as much as
-possible.
+The C<MyCPAN::Indexer> system lets you plug in different components to
+control major portions of the process of examining Perl distributions
+and collating the results. It's up to each component to obey its
+interface and do that parts the other components expect it to do. The
+idea is to decouple some of these bits as much as possible.
 
 As C<backpan_indexer.pl> does its work, it stores information about
 its components in an anonymous hash called C<notes>. The different
@@ -25,7 +25,49 @@ design smell, but that's how it is right now).
 Specific implementations will impose other requirements not listed
 in this tutorial.
 
-=head1 The Queue class
+=head1 The Application
+
+The application is the bit that you write when you want to do
+something very specialized with a different process. The application
+object controls the big picture.
+
+See C<MyCPAN::Indexer::App::BackPAN>, the module version, and
+C<backpan_indexer.pl>, the script version.
+
+=head1 The Coordinator
+
+The coordinator is just a way for the components to talk to each other.
+The application starts up, creates a coordinator object, and stores it. The
+application gives a reference to the coordinator to every component.
+
+When the application creates components, it tells each of about the coordinator.
+Each component can talk to the coordinator to get to parts of the application
+it doesn't directly know about. Each component tells the coordinator about
+itself so the coordinator can talk to any component.
+
+The coordinator maintains the "notes", which are arbitrary bits of information
+that components use to pass information around.
+
+See C<MyCPAN::Indexer::Coordinator>.
+
+=head1 The Indexer
+
+Most of the work to examine a Perl distribution is in C<MyCPAN::Indexer>. When
+it gets down to it, everything C<MyCPAN> knows about Perl distributions is in
+there. It has a C<run()> method which handles the examination. It kicks off
+C<examine>, which figures out what to do by getting a list of steps from
+C<examine_dist_steps>.
+
+This technique is common throughout C<MyCPAN::Indexer>. One method returns a 
+list of methods to run. This way, a subclass can control the process by overriding
+the method that returns the steps.
+
+The basic class is C<MyCPAN::Indexer>, but C<MyCPAN::Indexer::TestCensus> is
+an example of another indexing class.
+
+=head1 Components
+
+=head2 The Queue class
 
 The Queue class is responsible for getting the list of distributions to
 process.
@@ -50,7 +92,7 @@ Expects in C<notes>:
 To Do: The Queue class should really be an iterator of some sort. Instead
 of returning an array (which it can't change), return an iterator.
 
-=head1 The Worker class
+=head2 The Worker class
 
 The Worker class returns the anonymous subroutine that the interface
 class calls for each of its cycles. Inside that code reference, do the
@@ -73,7 +115,7 @@ Expects in C<notes>
 To Do: There should be a storage class which the worker class hands
 the results to.
 
-=head1 The Reporter class
+=head2 The Reporter class
 
 The Reporter class implements the bits to store the result of the
 Worker class. C<backpan_indexer.pl> calls C<get_reporter> with a
@@ -95,7 +137,7 @@ Expects in config:
 
 	nothing
 	
-=head1 The Dispatcher class
+=head2 The Dispatcher class
 
 The Dispatcher class implements the bits to hand out work to the
 worker class. The Interface class, discussed next, repeatedly calls

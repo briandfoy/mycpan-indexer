@@ -10,6 +10,8 @@ examples/backpan_indexer.pl
 examples/dpan
 examples/time_summary.pl
 lib/App/Indexer.pm
+lib/Component.pm
+lib/Coordinator.pm
 lib/Dispatcher/Parallel.pm
 lib/Dispatcher/Serial.pm
 lib/Indexer.pm
@@ -17,6 +19,7 @@ lib/Interface/ANSIText.pm
 lib/Interface/Curses.pm
 lib/Interface/Text.pm
 lib/Interface/Tk.pm
+lib/Notes.pm
 lib/NullTester.pm
 lib/Queue.pm
 lib/Reporter/AsYAML.pm
