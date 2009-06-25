@@ -264,7 +264,7 @@ sub setup_logging
 		{
 		Log::Log4perl->init_and_watch(
 			$log_file,
-			$self->get_config->get( 'log_file_watch_time' )
+			$self->get_coordinator->get_config->get( 'log_file_watch_time' )
 			);
 		}
 	else
