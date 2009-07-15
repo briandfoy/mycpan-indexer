@@ -31,7 +31,7 @@ indexer_class MyCPAN::Indexer
 queue_class MyCPAN::Indexer::Queue
 
 # the Perl class to use to hand out indexing jobs.
-dispatcher_class MyCPAN::Indexer::Dispatch::Parallel
+dispatcher_class MyCPAN::Indexer::Dispatcher::Parallel
 
 interface_class MyCPAN::Indexer::Interface::Text
 
