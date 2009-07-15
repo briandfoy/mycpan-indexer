@@ -4,7 +4,7 @@ use warnings;
 
 use base qw(MyCPAN::Indexer::Interface::Text)
 use vars qw($VERSION $logger);
-$VERSION = '1.24';
+$VERSION = '1.25';
 
 use Log::Log4perl;
 use Term::ANSIColor qw(colored);

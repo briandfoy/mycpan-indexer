@@ -10,7 +10,7 @@ BEGIN {
 }
 
 use vars qw($VERSION $logger);
-$VERSION = '1.24';
+$VERSION = '1.25';
 
 =head1 NAME
 
