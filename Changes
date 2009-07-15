@@ -1,5 +1,9 @@
 # Changes for MyCPAN::Indexer
 
+1.25 - Wed Jul 15 02:27:11 2009
+	* Minor updates to docs, fixes to method names, etc.
+	* Sync to changes with MyCPAN::App::DPAN
+
 1.24 - Wed Jun 17 13:33:47 2009
 	* I made lots of changes to the internals to make it
 	much easier for the components talk to each other.
