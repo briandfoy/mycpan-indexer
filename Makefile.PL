@@ -60,5 +60,14 @@ WriteMakefile(
 	'MAN3PODS'     => {},
 
 	clean  => { FILES    => q|MyCPAN-Indexer-*| },
-
+    (
+    ( $ExtUtils::MakeMaker::VERSION ge '6.46' )
+        ? (META_MERGE => {
+            resources => {
+                homepage    => 'http://github.com/briandfoy/mycpan-indexer/tree/master',
+                repository  => 'git://github.com/briandfoy/mycpan-indexer.git',
+            }
+        })
+        : ()
+    )
 	);
