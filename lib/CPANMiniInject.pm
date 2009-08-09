@@ -39,6 +39,8 @@ have finished.
 
 The location of the configuration file for CPAN::Mini::Config
 
+=back
+
 =cut
 
 =head2 Methods

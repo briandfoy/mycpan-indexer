@@ -305,7 +305,7 @@ sub cleanup
 	$logger->error( "Couldn't cleanup: $@" ) if $@;
 	}
 
-# I'm don't remember why I made an explicit exit. Was it to get
+# I don't remember why I made an explicit exit. Was it to get
 # out of a Tk app or something?
 sub _exit
 	{

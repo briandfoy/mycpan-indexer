@@ -25,9 +25,6 @@ Use this in C<backpan_indexer.pl> by specifying it as the interface class:
 This class presents the information as the indexer runs, using plain text.
 Successful reports are green and failed reports are red.
 
-
-=back
-
 =cut
 
 sub skip_tick    { BLUE,  $_[0]->SUPER::skip_tick,    RESET }
