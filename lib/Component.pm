@@ -122,7 +122,7 @@ sub set_coordinator
 	croak "Coordinator object is missing these methods: @missing"
 		if @missing;
 		
-	$_[0]->{_coordinator} = $_[1] 
+	$self->{_coordinator} = $coordinator
 	}
 	
 }

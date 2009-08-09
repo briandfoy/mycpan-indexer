@@ -21,8 +21,34 @@ MyCPAN::Indexer::Coordinator - Provide a way for the various components to commu
 
 =head1 SYNOPSIS
 
+	my $componentA   = MyCPAN::Indexer::ComponentA->new;
+	my $componentB   = MyCPAN::Indexer::ComponentB->new;
+	
+	my $coordinator = MyCPAN::Indexer::Coordinator->new;
+	
+	# each component gets a reference
+	$componentA->set_coordinator( $coordinator );
+	$componentB->set_coordinator( $coordinator );
+	
+	# the coordinator knows about all of the components
+	$coordinator->set_component( 'A', $componentA );
+	$coordinator->set_component( 'B', $componentB );
+	
+	$componentA->set_note( 'cat', 'Buster' );
+	
+	my $cat = $componentB->get_note( 'cat' );
+	
+	# Any component can find any other component
+	$componentB->get_coordinator->get_component( 'A' )->method_in_A;
 
 =head1 DESCRIPTION
+
+The coordinator keeps track of the components in C<MyCPAN::Indexer>. It acts
+as a central point where all comunication can flow so everything can talk to
+everything with only 2N connections.
+
+It automatically sets up a notes object to act as a scratchpad. Every component
+can read from and write to the notes object.
 
 =cut
 
@@ -39,6 +65,25 @@ sub new
 		}, $class;
 	
 	}
+
+=item get_component( NAME )
+
+Retrieve the component named NAME.
+
+=cut
+
+sub get_component { $_[0]->{components}{$_[1]}         }
+
+=item set_component( NAME, REFERENCE )
+
+Set the component with name NAME to REFERENCE. So far there are no restrictions
+on reference, but it should be a subclass of C<MyCPAN::Indexer::Component> or at
+least something that acts like that class.
+
+=cut
+
+sub set_component { $_[0]->{components}{$_[1]} = $_[2] }
+
 
 =head2 Dispatch to notes
 
@@ -113,9 +158,6 @@ BEGIN {
 			};
 		}
 	}
-
-sub get_component { $_[0]->{components}{$_[1]}         }
-sub set_component { $_[0]->{components}{$_[1]} = $_[2] }
 
 =head1 TO DO
 

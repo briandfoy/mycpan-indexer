@@ -37,7 +37,7 @@ indexer to process.
 
 =over 4
 
-=item get_queue( $Notes )
+=item get_queue
 
 C<get_queue> sets the key C<queue> in C<$Notes> hash reference. It
 finds all of the tarballs or zip archives in under the directories
@@ -131,7 +131,7 @@ sub _path_parts
 		qw(authors id),
 		substr( $_[1], 0, 1 ),
 		substr( $_[1], 0, 2 ),
-		$_[0]
+		$_[1]
 		);
 	}
 
