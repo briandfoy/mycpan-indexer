@@ -1,5 +1,11 @@
 package MyCPAN::Indexer::Notes;
 
+use strict;
+use warnings;
+
+use vars qw($VERSION);
+$VERSION = '1.26';
+
 =head1 NAME
 
 MyCPAN::Indexer::Notes - Tiny class for MyCPAN component note passing
