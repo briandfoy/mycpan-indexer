@@ -1053,12 +1053,23 @@ sub extract_module_namespaces
 
 	require Module::Extract::Namespaces;
 
-	my @packages      = Module::Extract::Namespaces->from_file( $file );
+	my @packages = Module::Extract::Namespaces->from_file( $file );
 
 	$logger->warn( "Didn't find any packages in $file" ) unless @packages;
 
 	$hash->{packages} = [ @packages ];
-	
+
+	$hash->{module_name_from_file_guess} = $self->get_package_name_from_filename( $file );
+
+	$hash->{primary_package} = $self->guess_primary_package;
+
+	1;
+	}
+
+sub get_package_name_from_filename
+	{
+	my( $self, $file ) = @_;
+
 	# some people do odd things in their distributions, like fork
 	# modules. I'll try to guess the primary package by seeing if
 	# there is a package that matches the file name.
@@ -1068,16 +1079,25 @@ sub extract_module_namespaces
 	$module =~ s/\.pm\z//;
 	$module =~ s|[\\/]|::|g;
 	
-	$hash->{module_name_from_file_guess} = $module;
-	my @matches = grep { $_ eq $module } @packages;
-
-	my $primary_package = $matches[0] || $packages[0];
-	
-	$hash->{primary_package} = $primary_package;
-
-	1;
+	$module;
 	}
+	
+sub guess_primary_package
+	{
+	my( $self, $packages, $file ) = @_;
 
+	my $module = $self->get_package_name_from_filename( $file );
+	
+	my @matches = grep { $_ eq $module } @$packages;
+
+	# ignore packages that start with an underscore
+	@$packages = grep { ! /^_/ } @$packages;
+	
+	my $primary_package = $matches[0] || $packages->[0];
+
+	return $primary_package;	
+	}
+	
 sub extract_module_version
 	{
 	my( $self, $file, $hash ) = @_;

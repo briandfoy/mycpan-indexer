@@ -2,6 +2,7 @@ load.t
 compile.t
 pod.t
 pod_coverage.t
+guess_package_names.t
 reporter/base.t
 app/backpan.t
 app/defaults.t
