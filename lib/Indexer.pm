@@ -1061,7 +1061,7 @@ sub extract_module_namespaces
 
 	$hash->{module_name_from_file_guess} = $self->get_package_name_from_filename( $file );
 
-	$hash->{primary_package} = $self->guess_primary_package;
+	$hash->{primary_package} = $self->guess_primary_package( $hash->{packages}, $file );
 
 	1;
 	}
@@ -1086,13 +1086,13 @@ sub guess_primary_package
 	{
 	my( $self, $packages, $file ) = @_;
 
+	# ignore packages that start with an underscore
+	@$packages = grep { ! /\b_/ } @$packages;
+	
 	my $module = $self->get_package_name_from_filename( $file );
 	
 	my @matches = grep { $_ eq $module } @$packages;
 
-	# ignore packages that start with an underscore
-	@$packages = grep { ! /^_/ } @$packages;
-	
 	my $primary_package = $matches[0] || $packages->[0];
 
 	return $primary_package;	

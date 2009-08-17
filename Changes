@@ -1,5 +1,11 @@
 # Changes for MyCPAN::Indexer
 
+1.26 - Mon Aug 17 02:28:10 CDT 2009
+	* More heuristics to guess the primary package in a distro
+	* Some files have private packages that start with _, so those should
+	stay hidden
+	* Refactored the bits to guess the primary package
+
 1.25 - Wed Jul 15 02:27:11 2009
 	* Minor updates to docs, fixes to method names, etc.
 	* Sync to changes with MyCPAN::App::DPAN

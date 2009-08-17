@@ -16,7 +16,7 @@ isa_ok( $indexer, $class );
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Test the case where there is a private package (starts with _)
 {
-my $file     = 'blib/lib/Test/Pod.pm'; 
+my $file     = 'blib/lib/Pod.pm'; 
 my @packages = qw(Test::Pod::_parser Test::Pod);
 my $primary_package = $class->$method( \@packages, $file );
 is( $primary_package, 'Test::Pod', 'Gets right package for Test::Pod' );
