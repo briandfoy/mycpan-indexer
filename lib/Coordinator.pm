@@ -52,6 +52,16 @@ can read from and write to the notes object.
 
 =cut
 
+=head2 Methods
+
+=over 4
+
+=item new
+
+Create a new Coordinator object.
+
+=cut
+
 sub new
 	{
 	my( $class ) = @_;
@@ -84,6 +94,7 @@ least something that acts like that class.
 
 sub set_component { $_[0]->{components}{$_[1]} = $_[2] }
 
+=back
 
 =head2 Dispatch to notes
 
