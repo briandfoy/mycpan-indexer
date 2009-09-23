@@ -377,32 +377,40 @@ sub unpack_dist
 
 	require Archive::Tar;
 	require Archive::Extract;
-	local $Archive::Extract::WARN = 0;
-	local $Archive::Tar::WARN = $Archive::Extract::WARN; # sent in patch for this rt.cpan.org #40472
 
+	local $Archive::Extract::DEBUG = $logger->is_debug;
+	local $Archive::Extract::WARN  = $logger->is_warn;
+	local $Archive::Tar::WARN      = $Archive::Extract::WARN; # sent in patch for this rt.cpan.org #40472
+	local $Archive::Extract::PREFER_BIN = defined $ENV{PREFER_BIN} ? $ENV{PREFER_BIN} : 0;
+	
+	foreach my $var ( qw( DEBUG WARN PREFER_BIN ) )
+		{
+		no strict 'refs';
+		
+		$logger->debug( qq|\$Archive::Extract::$var is |, ${"Archive::Extract::$var"} );	
+		}
+		
 	my $self = shift;
 	my $dist = $self->dist_info( 'dist_file' );
 	$logger->debug( "Unpacking dist $dist" );
 
 	return unless $self->get_unpack_dir;
 
-	my $extractor = eval {
-		Archive::Extract->new( archive => $dist );
-		};
-	local $Archive::Tar::WARN = 0;
-
+	my $extractor = eval { Archive::Extract->new( archive => $dist ) };
+	my $error = $@;
+	
 	if( $extractor->type eq 'gz' )
 		{
 		$logger->error( "Dist $dist claims to be a gz, so try .tgz instead" );
 
-		$extractor = eval {
-			Archive::Extract->new( archive => $dist, type => 'tgz' )
-			};
+		eval {
+			$extractor = Archive::Extract->new( archive => $dist, type => 'tgz' );
+			} || ($error = $@);
 		}
 
-	unless( $extractor )
+	unless( ref $extractor )
 		{
-		$logger->error( "Could create Archive::Extract object for $dist [$@]" );
+		$logger->error( "Could create Archive::Extract object for $dist [$error]" );
 		$self->set_dist_info( 'dist_archive_type', 'unknown' );
 		return;
 		}
