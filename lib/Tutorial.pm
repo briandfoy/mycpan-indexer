@@ -3,7 +3,7 @@ use strict;
 use warnings;
 
 use vars qw($VERSION);
-$VERSION = '1.26_01';
+$VERSION = '1.26_02';
 
 =head1 NAME
 
