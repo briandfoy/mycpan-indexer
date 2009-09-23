@@ -79,7 +79,7 @@ sub get_task
 			}
 
 		local $SIG{ALRM} = sub { die "alarm rang for $basename!\n" };
-		alarm( $config->alarm || 15 );
+		alarm( $config->alarm || 150 );
 		my $info = eval { $Indexer->run( $dist ) };
 		alarm 0;
 
