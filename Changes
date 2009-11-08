@@ -1,5 +1,9 @@
 # Changes for MyCPAN::Indexer
 
+1.27 - Sun Nov  8 02:23:12 2009
+	* Set the Log4perl config file with the MYCPAN_LOG4PERL_FILE
+	environment variable
+
 1.26 - Mon Aug 17 02:28:10 CDT 2009
 	* More heuristics to guess the primary package in a distro
 	* Some files have private packages that start with _, so those should
