@@ -10,7 +10,7 @@ use subs qw(get_caller_info);
 use vars qw($VERSION $logger);
 use base qw(MyCPAN::Indexer);
 
-$VERSION = '1.26_02';
+$VERSION = '1.27';
 
 =head1 NAME
 
