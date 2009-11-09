@@ -260,8 +260,7 @@ sub setup_environment
 	{
 	my %pass_through = map { $_, 1 } qw( 
 		DISPLAY USER HOME PWD TERM 
-		DPAN_LOG4PERL_FILE MYCPAN_LOG4PERL_FILE
-		);
+		), grep { /^(?:D|MY)CPAN_/ } keys %ENV;
 
 	foreach my $key ( keys %ENV )
 		{
