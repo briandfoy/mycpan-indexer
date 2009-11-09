@@ -2,7 +2,11 @@ package MyCPAN::Indexer::Component;
 use strict;
 use warnings;
 
+use vars qw($VERSION);
+
 use Carp qw(croak);
+
+$VERSION = '1.27';
 
 =head1 NAME
 

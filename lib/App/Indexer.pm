@@ -15,7 +15,7 @@ use File::Temp qw(tempdir);
 use Getopt::Std;
 use Log::Log4perl;
 
-$VERSION = '1.26_02';
+$VERSION = '1.27';
 
 $|++;
 
@@ -67,7 +67,6 @@ sub init_config
 
 	my $config = $self->config_class->new( defined $file ? $file : () );
 
-	
 	foreach my $key ( $self->default_keys )
 		{
 		next if $config->exists( $key );
@@ -82,7 +81,8 @@ sub adjust_config
 	{
 	my( $application ) = @_;
 
-	my $config = $application->get_coordinator->get_config;
+	my $coordinator = $application->get_coordinator;
+	my $config      = $coordinator->get_config;
 	
 	my @argv = $application->{args};
 	
@@ -105,7 +105,15 @@ sub adjust_config
 				);
 			}
 		}
-
+	
+	# Adjust for some environment variables
+	my $log4perl_file = 
+		$ENV{'MYCPAN_LOG4PERL_FILE'} 
+			|| 
+		$coordinator->get_note( 'log4perl_file' )
+			;
+	
+	$config->set( 'log4perl_file', $log4perl_file ) if $log4perl_file;
 	}
 
 sub new 
@@ -152,7 +160,7 @@ sub setup_coordinator
 	
 	$coordinator->set_note( 'UUID',     $application->get_uuid() );
 	$coordinator->set_note( 'tempdirs', [] );
-	$coordinator->set_note( 'log_file', $application->get_option( 'l' ) );
+	$coordinator->set_note( 'log4perl_file', $application->get_option( 'l' ) );
 	
 	$coordinator;
 	}
@@ -179,8 +187,14 @@ sub handle_config
 sub activate_steps
 	{
 	qw(
-	process_options setup_coordinator setup_environment handle_config
-	setup_logging setup_dirs run_components activate_end
+	process_options 
+	setup_coordinator 
+	setup_environment 
+	handle_config
+	setup_logging 
+	setup_dirs 
+	run_components 
+	activate_end
 	);
 	}
 	
@@ -244,7 +258,10 @@ sub activate_end
 	
 sub setup_environment
 	{
-	my %pass_through = map { $_, 1 } qw( DISPLAY USER HOME PWD TERM );
+	my %pass_through = map { $_, 1 } qw( 
+		DISPLAY USER HOME PWD TERM 
+		DPAN_LOG4PERL_FILE MYCPAN_LOG4PERL_FILE
+		);
 
 	foreach my $key ( keys %ENV )
 		{
@@ -258,9 +275,10 @@ sub setup_logging
 	{
 	my( $self ) = @_;
 
-	my $log_file = $self->get_coordinator->get_note( 'log_file' );
+	my $config   = $self->get_coordinator->get_config;
+	my $log_file = $config->get( 'log4perl_file' );
 	
-	if( -e $log_file )
+	if( defined $log_file and -e $log_file )
 		{
 		Log::Log4perl->init_and_watch(
 			$log_file,
