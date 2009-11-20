@@ -1,5 +1,10 @@
 # Changes for MyCPAN::Indexer
 
+1.28 - Fri Nov 20 05:38:26 2009
+	* With organize_dists, reorganize in backpan_dir instead of the
+	current working directory. The index files show up in there,
+	so the dists need to be there too.
+
 1.27 - Sun Nov  8 02:23:12 2009
 	* Set the Log4perl config file with the MYCPAN_LOG4PERL_FILE
 	environment variable
