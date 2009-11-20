@@ -4,7 +4,7 @@ use warnings;
 
 use base qw(MyCPAN::Indexer::Component);
 use vars qw($VERSION $logger);
-$VERSION = '1.27';
+$VERSION = '1.28';
 
 use File::Basename;
 use File::Find;
@@ -77,7 +77,7 @@ sub get_queue
 	
 	if( $self->get_config->organize_dists )
 		{
-		$self->_setup_organize_dists;
+		$self->_setup_organize_dists( $dirs[0] );
 
 		foreach my $i ( 0 .. $#$queue )
 			{
@@ -86,7 +86,7 @@ sub get_queue
 			next if $file =~ m|authors/id/./../.+?/|;
 			$logger->debug( "Copying $file into PAUSE structure" );
 
-			$queue->[$i] = $self->_copy_file( $file );
+			$queue->[$i] = $self->_copy_file( $file, $dirs[0] );
 			}
 		}
 
@@ -106,7 +106,7 @@ sub _get_file_list
 	
 	return [
 		map  { rel2abs($_) }
-		grep { ! /.(data|txt).gz$/ }
+		grep { ! /.(data|txt).gz$/ and ! /02packages/ }
 		$reporter->()
 		];
 	
@@ -114,11 +114,14 @@ sub _get_file_list
 	
 sub _setup_organize_dists
 	{
-	my( $self ) = @_;
+	my( $self, $base_dir ) = @_;
 
 	my $pause_id = eval { $self->get_config->pause_id } || 'MYCPAN';
 
-	eval { mkpath $self->_path_parts( $pause_id ), { mode => 0775 } };
+	eval { mkpath 
+		catfile( $base_dir, $self->_path_parts( $pause_id ) ), 
+		{ mode => 0775 } 
+		};
 	$logger->error( "Could not create PAUSE author path for [$pause_id]: $@" )
 		if $@;
 
@@ -138,7 +141,7 @@ sub _path_parts
 # if there is an error with the rename, return the original file name
 sub _copy_file
 	{
-	my( $self, $file ) = @_;
+	my( $self, $file, $base_dir ) = @_;
 	
 	my $pause_id = eval { $self->get_config->pause_id } || 'MYCPAN';
 
@@ -146,7 +149,7 @@ sub _copy_file
 	$logger->debug( "Need to copy file $basename into $pause_id" );
 
 	my $new_name = rel2abs(
-		catfile( $self->_path_parts( $pause_id ), $basename )
+		catfile( $base_dir, $self->_path_parts( $pause_id ), $basename )
 		);
 
 	my $rc = rename $file => $new_name;

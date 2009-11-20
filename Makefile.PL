@@ -29,7 +29,7 @@ WriteMakefile(
 		'Test::More'                       => '0',
 		'Test::Output'                     => '0.13',
 		'YAML'                             => '0',
-		'CPAN::PackageDetails'             => '0.18',
+		'CPAN::PackageDetails'             => '0.21',
 		'CPAN::Checksums'                  => '0',
 		},
 
