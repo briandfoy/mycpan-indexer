@@ -640,15 +640,20 @@ Look in the lib/ directory for .pm files.
 
 =cut
 
-sub look_in_lib
+sub look_in_lib  { $_[0]->_look_in_dirs( 'lib' );  }
+sub look_in_blib { $_[0]->_look_in_dirs( 'blib' ); }
+				 
+sub _look_in_dirs
 	{
+	my( $self, @directories ) = @_;
+		
 	$logger->trace( sub { get_caller_info } );
 
 	require File::Find::Closures;
 	require File::Find;
 
 	my( $wanted, $reporter ) = File::Find::Closures::find_by_regex( qr/\.pm\z/ );
-	File::Find::find( $wanted, 'lib' );
+	File::Find::find( $wanted, @directories );
 
 	my @modules = $reporter->();
 	unless( @modules )
@@ -796,6 +801,7 @@ sub find_module_techniques
 	{
 	my @methods = (
 		[ 'run_build_file', "Got from running build file"  ],
+		[ 'look_in_blib',   "Guessed from looking in blib/"  ],
 		[ 'look_in_lib',    "Guessed from looking in lib/" ],
 		[ 'look_in_cwd',    "Guessed from looking in cwd"  ],
 		[ 'look_in_meta_yml_provides',    "Guessed from looking in META.yml"  ],
