@@ -1,5 +1,9 @@
 # Changes for MyCPAN::Indexer
 
+1.28_01 - Sun Nov 29 14:13:37 2009
+	* Fix the path inspection in Queue.pm. In a fit of 
+	laziness I didn't use portable paths.
+
 1.28 - Fri Nov 20 05:38:26 2009
 	* With organize_dists, reorganize in backpan_dir instead of the
 	current working directory. The index files show up in there,
