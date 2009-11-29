@@ -78,15 +78,15 @@ sub get_queue
 	if( $self->get_config->organize_dists )
 		{
 		$self->_setup_organize_dists( $dirs[0] );
-
+		
+		# I really hate this following line. It's sure to
+		# break on something
+		my $regex = catfile( qw( authors id (.) .. .+? ), '' );
+		
 		foreach my $i ( 0 .. $#$queue )
 			{
 			my $file = $queue->[$i];
 			$logger->debug( "Processing $file" );
-			
-			# XXX: This doesn't really work for everyone because I'm
-			# creating a relative path 
-			my $regex = catfile( qw( authors id . .. .+? ), '' );
 			
 			next if $file =~ m|$regex|;
 			$logger->debug( "Copying $file into PAUSE structure" );

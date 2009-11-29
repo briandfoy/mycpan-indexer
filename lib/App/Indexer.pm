@@ -317,7 +317,6 @@ sub cleanup
 		no warnings;
 		File::Path::rmtree [@dirs];
 		};
-	print STDERR "$@\n" if $@;
 
 	$logger->error( "Couldn't cleanup: $@" ) if $@;
 	}
