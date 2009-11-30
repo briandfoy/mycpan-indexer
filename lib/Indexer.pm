@@ -658,7 +658,7 @@ sub _look_in_dirs
 	my @modules = $reporter->();
 	unless( @modules )
 		{
-		$logger->debug( "Did not find any modules in lib" );
+		$logger->debug( "Did not find any modules in @directories" );
 		return;
 		}
 
@@ -691,6 +691,41 @@ sub look_in_cwd
 	return 1;
 	}
 
+=item look_in_cwd_and_lib
+
+This is instantly deprecated. It's glue until I can figure out a
+better solution. 
+
+=cut
+
+sub look_in_cwd_and_lib
+	{
+	$logger->trace( sub { get_caller_info } );
+
+	$_[0]->_look_in_dirs( 'lib' );
+	
+	my $lib_modules = $_[0]->dist_info( 'modules' ) || [];
+
+	my @modules = glob( "*.pm" );
+
+	unless( @modules )
+		{
+		$logger->debug( "Did not find any modules in cwd" );
+		}
+
+	push @modules, @$lib_modules;
+	unless( @modules )
+		{
+		$logger->debug( "Did not find any modules in cwd and lib" );
+		return;
+		}
+	
+	$_[0]->set_dist_info( 'modules', [ @modules ] );
+
+	return 1;
+	}
+
+	
 =item look_in_meta_yml_provides
 
 As an almost-last-ditch effort, decide to beleive META.yml if it
@@ -733,6 +768,7 @@ sub look_in_meta_yml_provides
 
 	return 1;
 	}
+
 =item look_for_pm
 
 This is a last ditch effort to find modules by looking everywhere, starting
@@ -812,7 +848,7 @@ sub find_module_techniques
 =item find_modules
 
 Find the module files. First, look in C<blib/>. If there are no files in
-C<blib/>, look in C<lib/>. IF there are still none, look in the current
+C<blib/>, look in C<lib/>. If there are still none, look in the current
 working directory.
 
 =cut
