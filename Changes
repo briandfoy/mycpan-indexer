@@ -1,5 +1,11 @@
 # Changes for MyCPAN::Indexer
 
+1.28_02 - Mon Nov 30 17:43:05 2009
+	* Added a temporary module finding technique - look_in_cwd_and_lib
+	to handle things like DBI and HTML::Parser that have XS and Pure
+	Perl bits. This is just a stopgap until I come up with something
+	better.
+
 1.28_01 - Sun Nov 29 14:13:37 2009
 	* Fix the path inspection in Queue.pm. In a fit of 
 	laziness I didn't use portable paths.
