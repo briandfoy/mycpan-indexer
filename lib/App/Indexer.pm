@@ -84,7 +84,7 @@ sub adjust_config
 	my $coordinator = $application->get_coordinator;
 	my $config      = $coordinator->get_config;
 	
-	my @argv = $application->{args};
+	my @argv = @{ $application->{args} };
 	
 	# set the directories to index
 	unless( $config->exists( 'backpan_dir') )
