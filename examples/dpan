@@ -111,7 +111,7 @@ The Perl class to use as the dispatching class. It has to at least
 provide a run method. See MyCPAN::Indexer::Tutorial for details
 on dispatching classes.
 
-Default: MyCPAN::Indexer::Dispatch::Parallel
+Default: MyCPAN::Indexer::Dispatcher::Parallel
 
 =item interface_class 
 

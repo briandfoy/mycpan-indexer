@@ -2,13 +2,14 @@ package MyCPAN::Indexer::Queue;
 use strict;
 use warnings;
 
+use base qw(MyCPAN::Indexer::Component);
 use vars qw($VERSION $logger);
-$VERSION = '1.21';
+$VERSION = '1.28_02';
 
 use File::Basename;
 use File::Find;
-use File::Find::Closures qw( find_by_regex );
-use File::Path qw(mkpath);
+use File::Find::Closures  qw( find_by_regex );
+use File::Path            qw(mkpath);
 use File::Spec::Functions qw( catfile rel2abs );
 use Log::Log4perl;
 
@@ -36,7 +37,7 @@ indexer to process.
 
 =over 4
 
-=item get_queue( $Notes )
+=item get_queue
 
 C<get_queue> sets the key C<queue> in C<$Notes> hash reference. It
 finds all of the tarballs or zip archives in under the directories
@@ -52,13 +53,15 @@ value of the C<pause_id> configuration to create the path.
 
 =cut
 
+sub component_type { $_[0]->queue_type }
+
 sub get_queue
 	{
-	my( $class, $Notes ) = @_;
-
+	my( $self ) = @_;
+	
 	my @dirs = do {
-		my $item = $Notes->{config}->backpan_dir;
-		ref $item ? @$item : $item;
+		my $item = $self->get_config->backpan_dir || '';
+		split /\s+/, $item;
 		};
 
 	foreach my $dir ( @dirs )
@@ -66,47 +69,67 @@ sub get_queue
 		$logger->error( "backpan_dir directory does not exist: [$dir]" )
 			unless -e $dir;
 		}
-
-	$logger->debug( "Taking dists from [@dirs]" );
-	my( $wanted, $reporter ) = File::Find::Closures::find_by_regex( qr/\.(t?gz|zip)$/ );
-
-	find( $wanted, @dirs );
-
-	$Notes->{queue} = [
-		map  { rel2abs($_) }
-		grep { ! /.(data|txt).gz$/ }
-		$reporter->()
-		];
-
-	if( $Notes->{config}->get( 'organize_dists' ) )
+	
+	@dirs = grep { -d $_ } @dirs;
+	$logger->logdie( "No directories to index!" ) unless @dirs;
+	
+	my $queue = $self->_get_file_list( @dirs );
+	
+	if( $self->get_config->organize_dists )
 		{
-		_setup_organize_dists( $Notes );
-
-		foreach my $i ( 0 .. $#{ $Notes->{queue} } )
+		$self->_setup_organize_dists( $dirs[0] );
+		
+		# I really hate this following line. It's sure to
+		# break on something
+		my $regex = catfile( qw( authors id (.) .. .+? ), '' );
+		
+		foreach my $i ( 0 .. $#$queue )
 			{
-			my $file = $Notes->{queue}[$i];
+			my $file = $queue->[$i];
 			$logger->debug( "Processing $file" );
-			next if $file =~ m|authors/id/./../.*?/|;
+			
+			next if $file =~ m|$regex|;
 			$logger->debug( "Copying $file into PAUSE structure" );
 
-			$Notes->{queue}[$i] = _copy_file( $file, $Notes );
+			$queue->[$i] = $self->_copy_file( $file, $dirs[0] );
 			}
 		}
 
+	$self->set_note( 'queue', $queue );
+	
 	1;
 	}
 
+sub _get_file_list
+	{
+	my( $self, @dirs ) = @_;
+	
+	$logger->debug( "Taking dists from [@dirs]" );
+	my( $wanted, $reporter ) = 
+		File::Find::Closures::find_by_regex( qr/\.(t?gz|zip)$/ );
+
+	find( $wanted, @dirs );
+	
+	return [
+		map  { rel2abs($_) }
+		grep { ! /.(data|txt).gz$/ and ! /02packages/ }
+		$reporter->()
+		];
+	
+	}
+	
 sub _setup_organize_dists
 	{
-	my( $Notes ) = @_;
+	my( $self, $base_dir ) = @_;
 
-	my $pause_id = eval { $Notes->{config}->get( 'pause_id' ) } || 'MYCPAN';
+	my $pause_id = eval { $self->get_config->pause_id } || 'MYCPAN';
 
-	my @parts = _path_parts( $pause_id );
-
-	mkpath _path_parts( $pause_id ), { mode => 0775 };
-	$logger->error( "Could not create PAUSE author path for [$pause_id]: $!" )
-		if $!;
+	eval { mkpath 
+		catfile( $base_dir, $self->_path_parts( $pause_id ) ), 
+		{ mode => 0775 } 
+		};
+	$logger->error( "Could not create PAUSE author path for [$pause_id]: $@" )
+		if $@;
 
 	1;
 	}
@@ -115,24 +138,24 @@ sub _path_parts
 	{
 	catfile (
 		qw(authors id),
-		substr( $_[0], 0, 1 ),
-		substr( $_[0], 0, 2 ),
-		$_[0]
+		substr( $_[1], 0, 1 ),
+		substr( $_[1], 0, 2 ),
+		$_[1]
 		);
 	}
 
 # if there is an error with the rename, return the original file name
 sub _copy_file
 	{
-	my( $file, $Notes ) = @_;
-
-	my $pause_id = eval { $Notes->{config}->get( 'pause_id' ) } || 'MYCPAN';
+	my( $self, $file, $base_dir ) = @_;
+	
+	my $pause_id = eval { $self->get_config->pause_id } || 'MYCPAN';
 
 	my $basename = basename( $file );
 	$logger->debug( "Need to copy file $basename into $pause_id" );
 
 	my $new_name = rel2abs(
-		catfile( _path_parts( $pause_id ), $basename )
+		catfile( $base_dir, $self->_path_parts( $pause_id ), $basename )
 		);
 
 	my $rc = rename $file => $new_name;

@@ -31,3 +31,5 @@ CPAN
 dpan.config
 hook_test
 extract_test
+~$
+DISTS_TO_CHECK

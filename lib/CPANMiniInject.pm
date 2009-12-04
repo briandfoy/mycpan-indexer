@@ -1,9 +1,10 @@
-package MyCPAN::Indexer::Worker;
+package MyCPAN::Indexer::CPANMiniInject;
 use strict;
 use warnings;
 
+use base qw(MyCPAN::Indexer::Component);
 use vars qw($VERSION $logger);
-$VERSION = '1.21';
+$VERSION = '1.28_02';
 
 use File::Basename;
 use File::Spec::Functions qw(catfile);
@@ -38,6 +39,8 @@ have finished.
 
 The location of the configuration file for CPAN::Mini::Config
 
+=back
+
 =cut
 
 =head2 Methods
@@ -61,15 +64,15 @@ BEGIN {
 
 sub get_task
 	{
-	my( $class, $Notes ) = @_;
+	my( $self ) = @_;
 
-	$Notes->{child_task} = sub {
+	my $child_task = sub {
 		my $dist = shift;
 
-		my $basename = $class->_check_for_previous_result( $dist, $Notes );
+		my $basename = $self->_check_for_previous_result( $dist );
 		return unless $basename;
 
-		my $Config = $Notes->{config};
+		my $Config = $self->get_config;
 
 		$logger->info( "Child [$$] processing $dist\n" );
 
@@ -95,27 +98,30 @@ sub get_task
 		elsif( ! eval { $info->run_info( 'completed' ) } )
 			{
 			$logger->error( "$basename did not complete\n" );
-			$class->_copy_bad_dist( $Notes, $info ) if $Config->copy_bad_dists;
+			$self->_copy_bad_dist( $info ) if $Config->copy_bad_dists;
 			}
 
 		alarm 0;
 
-		$class->_add_run_info( $info, $Notes );
+		$self->_add_run_info( $info );
 
-		$Notes->{reporter}->( $Notes, $info );
+		$self->get_note( 'reporter' )->( $info );
 
 		$logger->debug( "Child [$$] process done" );
 
 		1;
 		};
-
+		
+	$self->set_note( 'child_task', $child_task );
 	}
 
 sub _copy_bad_dist
 	{
-	my( $class, $Notes, $info ) = @_;
+	my( $self, $info ) = @_;
 
-	if( my $bad_dist_dir = $Notes->{config}->copy_bad_dists )
+	my $config = $self->get_config;
+	
+	if( my $bad_dist_dir = $config->copy_bad_dists )
 		{
 		my $dist_file = $info->dist_info( 'dist_file' );
 		my $basename  = $info->dist_info( 'dist_basename' );
@@ -148,9 +154,9 @@ sub _copy_bad_dist
 
 sub _check_for_previous_result
 	{
-	my( $class, $dist, $Notes ) = @_;
+	my( $self ) = @_;
 
-	my $Config = $Notes->{config};
+	my $Config = $self->get_config;
 
 	( my $basename = basename( $dist ) ) =~ s/\.(tgz|tar\.gz|zip)$//;
 
@@ -171,9 +177,9 @@ sub _check_for_previous_result
 
 sub _add_run_info
 	{
-	my( $class, $info, $Notes ) = @_;
+	my( $self, $info ) = @_;
 
-	my $Config = $Notes->{config};
+	my $Config = $self->get_config;
 
 	return unless eval { $info->can( 'set_run_info' ) };
 
@@ -209,7 +215,7 @@ brian d foy, C<< <bdfoy@cpan.org> >>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2008, brian d foy, All Rights Reserved.
+Copyright (c) 2008-2009, brian d foy, All Rights Reserved.
 
 You may redistribute this under the same terms as Perl itself.
 

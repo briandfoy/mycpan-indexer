@@ -2,8 +2,9 @@ package MyCPAN::Indexer::Reporter::AsYAML;
 use strict;
 use warnings;
 
+use base qw(MyCPAN::Indexer::Reporter::Base);
 use vars qw($VERSION $logger);
-$VERSION = '1.21';
+$VERSION = '1.28_02';
 
 use Carp;
 use File::Basename;
@@ -17,11 +18,11 @@ BEGIN {
 
 =head1 NAME
 
-MyCPAN::Indexer::Storage::AsYAML - Save the result as a YAML file
+MyCPAN::Indexer::Reporter::AsYAML - Save the result as a YAML file
 
 =head1 SYNOPSIS
 
-Use this in backpan_indexer.pl by specifying it as the queue class:
+Use this in backpan_indexer.pl by specifying it as the reporter class:
 
 	# in backpan_indexer.config
 	reporter_class  MyCPAN::Indexer::Reporter::AsYAML
@@ -45,14 +46,16 @@ and should do.
 
 =cut
 
+sub component_type { $_[0]->reporter_type }
+
 sub get_reporter
 	{
 	#TRACE( sub { get_caller_info } );
 
-	my( $class, $Notes ) = @_;
+	my( $self ) = @_;
 
-	$Notes->{reporter} = sub {
-		my( $Notes, $info ) = @_;
+	my $reporter = sub {
+		my( $info ) = @_;
 
 		unless( defined $info )
 			{
@@ -60,32 +63,28 @@ sub get_reporter
 			return;
 			}
 
-		my $dist = $info->dist_info( 'dist_file' );
-		$logger->error( "Info doesn't have dist_name! WTF?" ) unless $dist;
-
-		no warnings 'uninitialized';
-		( my $basename = basename( $dist ) ) =~ s/\.(tgz|tar\.gz|zip)$//;
-
-		my $out_dir_key  = $info->run_info( 'completed' ) ? 'success' : 'error';
-
-		$out_dir_key = 'error' if grep { $info->run_info($_) }
-			qw(error fatal_error);
-
-		my $out_path = catfile(
-			$Notes->{config}->get( "${out_dir_key}_report_subdir" ),
-			"$basename.yml"
-			);
+		my $out_path = $self->get_report_path( $info );
 
 		open my($fh), ">", $out_path or $logger->fatal( "Could not open $out_path: $!" );
 		print $fh Dump( $info );
 
-		$logger->error( "$basename.yml is missing!" ) unless -e $out_path;
+		$logger->error( "$out_path is missing!" ) unless -e $out_path;
 
 		1;
 		};
 
+	$self->set_note( 'reporter', $reporter );
 	1;
 	}
+
+=item get_report_file_extension
+
+Returns the extension for reports from this reporter. Since we're making
+YAML files, that's C<yml>.
+
+=cut
+
+sub get_report_file_extension { 'yml' }
 
 =item final_words( $Notes )
 

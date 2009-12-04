@@ -1,5 +1,41 @@
 # Changes for MyCPAN::Indexer
 
+1.28_02 - Mon Nov 30 17:43:05 2009
+	* Added a temporary module finding technique - look_in_cwd_and_lib
+	to handle things like DBI and HTML::Parser that have XS and Pure
+	Perl bits. This is just a stopgap until I come up with something
+	better.
+
+1.28_01 - Sun Nov 29 14:13:37 2009
+	* Fix the path inspection in Queue.pm. In a fit of 
+	laziness I didn't use portable paths.
+
+1.28 - Fri Nov 20 05:38:26 2009
+	* With organize_dists, reorganize in backpan_dir instead of the
+	current working directory. The index files show up in there,
+	so the dists need to be there too.
+
+1.27 - Sun Nov  8 02:23:12 2009
+	* Set the Log4perl config file with the MYCPAN_LOG4PERL_FILE
+	environment variable
+
+1.26 - Mon Aug 17 02:28:10 CDT 2009
+	* More heuristics to guess the primary package in a distro
+	* Some files have private packages that start with _, so those should
+	stay hidden
+	* Refactored the bits to guess the primary package
+
+1.25 - Wed Jul 15 02:27:11 2009
+	* Minor updates to docs, fixes to method names, etc.
+	* Sync to changes with MyCPAN::App::DPAN
+
+1.24 - Wed Jun 17 13:33:47 2009
+	* I made lots of changes to the internals to make it
+	much easier for the components talk to each other.
+	There isn't any improvement in the actual indexing,
+	but it's easier to write application and specialized
+	components now.
+
 1.21 - Wed May 20 14:24:05 2009
 	* Refactored a bit of the examine_dist stuff to move the
 	actual indexing steps into examine_dist_steps

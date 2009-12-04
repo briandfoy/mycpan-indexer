@@ -4,12 +4,13 @@ use warnings;
 
 use Log::Log4perl;
 
+use base qw(MyCPAN::Indexer::Component);
 use vars qw($VERSION $logger);
-$VERSION = '1.21';
+$VERSION = '1.28_02';
 
 =head1 NAME
 
-MyCPAN::Indexer::Interface::Text - Present the run info as a text
+MyCPAN::Indexer::Interface::Text - Present the run info as plain text
 
 =head1 SYNOPSIS
 
@@ -35,33 +36,60 @@ BEGIN {
 	$logger = Log::Log4perl->get_logger( 'Interface' );
 	}
 
+sub component_type { $_[0]->interface_type }
+
 sub do_interface
 	{
-	my( $class, $Notes ) = @_;
+	my( $self ) = @_;
 	$logger->debug( "Calling do_interface" );
 
-	print join( " ", $Notes->{config}->indexer_class, $Notes->{config}->indexer_class->VERSION ),
+	my $config = $self->get_config;
+	
+	my $i = $config->indexer_class;
+	eval "require $i; 1";
+	
+	print join( " ", 
+		$config->indexer_class, 
+		$config->indexer_class->VERSION 
+		),
 		"\n";
 
-	print 'Processing ' . @{ $Notes->{queue} } . " distributions\n";
+	print 'Processing ' . @{ $self->get_note('queue') } . " distributions\n";
 	print "One * = 1 distribution\n";
 
 	my $count = 0;
 	while( 1 )
 		{
-		last if $Notes->{Finished};
+		last if $self->get_note('Finished');
 
-		local $|;
-		$|++;
+		local $| = 1;
 
-		print "*";
+		my $info = $self->get_note('interface_callback')->();
+
+		my $method = do {
+			if( not defined $info or ref $info ne ref {} ) { 'error_tick' }
+			elsif( $info->{'completed'} ) { 'success_tick' }
+			elsif( $info->{'skipped'} )   { 'skip_tick' }
+			elsif( grep { exists $info->{$_} } qw( error fatal_error ) ) { 'error_tick' }
+			else { 'error_tick' }
+			};
+
+		# if we fork, how does the interface class know what happened?
+		$method = 'success_tick';
+
+		print $self->$method();
 		print "\n" unless ++$count % 70;
 
-		$Notes->{interface_callback}->();
 		}
 
 	print "\n";
 	}
+
+sub skip_tick    { '.' }
+
+sub success_tick { '+' }
+
+sub error_tick   { '!' }
 
 
 =back

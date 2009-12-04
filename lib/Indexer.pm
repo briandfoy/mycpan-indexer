@@ -9,7 +9,7 @@ no warnings;
 use subs qw(get_caller_info);
 use vars qw($VERSION $logger);
 
-$VERSION = '1.21';
+$VERSION = '1.28_02';
 
 =head1 NAME
 
@@ -102,7 +102,7 @@ Most of this needs to move out of run and into this method.
 Return a list of 3-element anonymous arrays that tell C<examine_dists>
 what to do. The elements of each anonymous array are:
 
-	1) the method to call (must be in indexing class or its parents)
+	1) the method to call (must be in indexing class or its parent classes)
 	2) a text description of the method
 	3) if a failure in that step should stop the exam: true or false
 
@@ -377,32 +377,40 @@ sub unpack_dist
 
 	require Archive::Tar;
 	require Archive::Extract;
-	local $Archive::Extract::WARN = 0;
-	local $Archive::Tar::WARN = $Archive::Extract::WARN; # sent in patch for this rt.cpan.org #40472
 
+	local $Archive::Extract::DEBUG = $logger->is_debug;
+	local $Archive::Extract::WARN  = $logger->is_warn;
+	local $Archive::Tar::WARN      = $Archive::Extract::WARN; # sent in patch for this rt.cpan.org #40472
+	local $Archive::Extract::PREFER_BIN = defined $ENV{PREFER_BIN} ? $ENV{PREFER_BIN} : 0;
+	
+	foreach my $var ( qw( DEBUG WARN PREFER_BIN ) )
+		{
+		no strict 'refs';
+		
+		$logger->debug( qq|\$Archive::Extract::$var is |, ${"Archive::Extract::$var"} );	
+		}
+		
 	my $self = shift;
 	my $dist = $self->dist_info( 'dist_file' );
 	$logger->debug( "Unpacking dist $dist" );
 
 	return unless $self->get_unpack_dir;
 
-	my $extractor = eval {
-		Archive::Extract->new( archive => $dist );
-		};
-	local $Archive::Tar::WARN = 0;
-
+	my $extractor = eval { Archive::Extract->new( archive => $dist ) };
+	my $error = $@;
+	
 	if( $extractor->type eq 'gz' )
 		{
 		$logger->error( "Dist $dist claims to be a gz, so try .tgz instead" );
 
-		$extractor = eval {
-			Archive::Extract->new( archive => $dist, type => 'tgz' )
-			};
+		eval {
+			$extractor = Archive::Extract->new( archive => $dist, type => 'tgz' );
+			} || ($error = $@);
 		}
 
-	unless( $extractor )
+	unless( ref $extractor )
 		{
-		$logger->error( "Could create Archive::Extract object for $dist [$@]" );
+		$logger->error( "Could create Archive::Extract object for $dist [$error]" );
 		$self->set_dist_info( 'dist_archive_type', 'unknown' );
 		return;
 		}
@@ -632,20 +640,25 @@ Look in the lib/ directory for .pm files.
 
 =cut
 
-sub look_in_lib
+sub look_in_lib  { $_[0]->_look_in_dirs( 'lib' );  }
+sub look_in_blib { $_[0]->_look_in_dirs( 'blib' ); }
+				 
+sub _look_in_dirs
 	{
+	my( $self, @directories ) = @_;
+		
 	$logger->trace( sub { get_caller_info } );
 
 	require File::Find::Closures;
 	require File::Find;
 
 	my( $wanted, $reporter ) = File::Find::Closures::find_by_regex( qr/\.pm\z/ );
-	File::Find::find( $wanted, 'lib' );
+	File::Find::find( $wanted, @directories );
 
 	my @modules = $reporter->();
 	unless( @modules )
 		{
-		$logger->debug( "Did not find any modules in lib" );
+		$logger->debug( "Did not find any modules in @directories" );
 		return;
 		}
 
@@ -678,6 +691,41 @@ sub look_in_cwd
 	return 1;
 	}
 
+=item look_in_cwd_and_lib
+
+This is instantly deprecated. It's glue until I can figure out a
+better solution. 
+
+=cut
+
+sub look_in_cwd_and_lib
+	{
+	$logger->trace( sub { get_caller_info } );
+
+	$_[0]->_look_in_dirs( 'lib' );
+	
+	my $lib_modules = $_[0]->dist_info( 'modules' ) || [];
+
+	my @modules = glob( "*.pm" );
+
+	unless( @modules )
+		{
+		$logger->debug( "Did not find any modules in cwd" );
+		}
+
+	push @modules, @$lib_modules;
+	unless( @modules )
+		{
+		$logger->debug( "Did not find any modules in cwd and lib" );
+		return;
+		}
+	
+	$_[0]->set_dist_info( 'modules', [ @modules ] );
+
+	return 1;
+	}
+
+	
 =item look_in_meta_yml_provides
 
 As an almost-last-ditch effort, decide to beleive META.yml if it
@@ -720,6 +768,7 @@ sub look_in_meta_yml_provides
 
 	return 1;
 	}
+
 =item look_for_pm
 
 This is a last ditch effort to find modules by looking everywhere, starting
@@ -788,6 +837,7 @@ sub find_module_techniques
 	{
 	my @methods = (
 		[ 'run_build_file', "Got from running build file"  ],
+		[ 'look_in_blib',   "Guessed from looking in blib/"  ],
 		[ 'look_in_lib',    "Guessed from looking in lib/" ],
 		[ 'look_in_cwd',    "Guessed from looking in cwd"  ],
 		[ 'look_in_meta_yml_provides',    "Guessed from looking in META.yml"  ],
@@ -797,8 +847,8 @@ sub find_module_techniques
 
 =item find_modules
 
-Find the module files. First, look in C<blib/>. IF there are no files in
-C<blib/>, look in C<lib/>. IF there are still none, look in the current
+Find the module files. First, look in C<blib/>. If there are no files in
+C<blib/>, look in C<lib/>. If there are still none, look in the current
 working directory.
 
 =cut
@@ -1068,16 +1118,51 @@ sub extract_module_namespaces
 
 	require Module::Extract::Namespaces;
 
-	my @packages             = Module::Extract::Namespaces->from_file( $file );
+	my @packages = Module::Extract::Namespaces->from_file( $file );
 
 	$logger->warn( "Didn't find any packages in $file" ) unless @packages;
 
-	$hash->{packages}        = [ @packages ];
-	$hash->{primary_package} = $packages[0];
+	$hash->{packages} = [ @packages ];
+
+	$hash->{module_name_from_file_guess} = $self->get_package_name_from_filename( $file );
+
+	$hash->{primary_package} = $self->guess_primary_package( $hash->{packages}, $file );
 
 	1;
 	}
 
+sub get_package_name_from_filename
+	{
+	my( $self, $file ) = @_;
+
+	# some people do odd things in their distributions, like fork
+	# modules. I'll try to guess the primary package by seeing if
+	# there is a package that matches the file name.
+	#
+	# See, for instance, Module::Info and it's B::BUtil fork.
+	( my $module = $file ) =~ s|.*(?:blib\b.)?lib\b.||g;
+	$module =~ s/\.pm\z//;
+	$module =~ s|[\\/]|::|g;
+	
+	$module;
+	}
+	
+sub guess_primary_package
+	{
+	my( $self, $packages, $file ) = @_;
+
+	# ignore packages that start with an underscore
+	@$packages = grep { ! /\b_/ } @$packages;
+	
+	my $module = $self->get_package_name_from_filename( $file );
+	
+	my @matches = grep { $_ eq $module } @$packages;
+
+	my $primary_package = $matches[0] || $packages->[0];
+
+	return $primary_package;	
+	}
+	
 sub extract_module_version
 	{
 	my( $self, $file, $hash ) = @_;
@@ -1287,9 +1372,9 @@ sub get_caller_info
 
 sub get_md5
 	{
-	require MD5;
+	require Digest::MD5;
 
-	my $context = MD5->new;
+	my $context = Digest::MD5->new;
 	$context->add( $_[1] );
 	$context->hexdigest;
 	}

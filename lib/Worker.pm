@@ -2,8 +2,9 @@ package MyCPAN::Indexer::Worker;
 use strict;
 use warnings;
 
+use base qw(MyCPAN::Indexer::Component);
 use vars qw($VERSION $logger);
-$VERSION = '1.21';
+$VERSION = '1.28_02';
 
 use Cwd;
 use File::Basename;
@@ -32,9 +33,9 @@ hands a disribution to for the actual indexing.
 
 =over 4
 
-=item get_task( $Notes )
+=item get_task
 
-C<get_task> sets the C<child_task> key in the C<$Notes> hash reference. The
+C<get_task> sets the C<child_task> key in the notes. The
 value is a code reference that takes a distribution path as its only
 argument and indexes that distribution.
 
@@ -47,34 +48,38 @@ BEGIN {
 	$logger = Log::Log4perl->get_logger( 'Worker' );
 	}
 
+sub component_type { $_[0]->worker_type }
+
 sub get_task
 	{
-	my( $class, $Notes ) = @_;
+	my( $self ) = @_;
 
-	$Notes->{child_task} = sub {
+	my $config  = $self->get_config;
+
+	my $coordinator = $self->get_coordinator;
+	
+	my $child_task = sub {
 		my $dist = shift;
 
-		my $basename = $class->_check_for_previous_result( $dist, $Notes );
-		return unless $basename;
-
-		my $Config = $Notes->{config};
+		my $basename = $coordinator->get_reporter->check_for_previous_successful_result( $dist );
+		return { skipped => 1 } unless $basename;
 
 		$logger->info( "Child process for $basename starting\n" );
 
-		my $Indexer = $Config->indexer_class || 'MyCPAN::Indexer';
+		my $Indexer = $config->indexer_class || 'MyCPAN::Indexer';
 
 		eval "require $Indexer" or die;
 
 		my $starting_dir = cwd();
 
-		unless( chdir $Config->temp_dir )
+		unless( chdir $config->temp_dir )
 			{
-			$logger->error( "Could not change to " . $Config->temp_dir . " : $!\n" );
+			$logger->error( "Could not change to " . $config->temp_dir . " : $!\n" );
 			exit 255;
 			}
 
 		local $SIG{ALRM} = sub { die "alarm rang for $basename!\n" };
-		alarm( $Config->alarm || 15 );
+		alarm( $config->alarm || 15 );
 		my $info = eval { $Indexer->run( $dist ) };
 		alarm 0;
 
@@ -92,25 +97,30 @@ sub get_task
 		elsif( ! eval { $info->run_info( 'completed' ) } )
 			{
 			$logger->error( "$basename did not complete\n" );
-			$class->_copy_bad_dist( $Notes, $info ) if $Config->copy_bad_dists;
+			$self->_copy_bad_dist( $info ) if $config->copy_bad_dists;
 			}
 
-		$class->_add_run_info( $info, $Notes );
-
-		$Notes->{reporter}->( $Notes, $info );
+		$self->_add_run_info( $info );
+		
+		$coordinator->get_note('reporter')->( $info );
 
 		$logger->debug( "Child process for $basename done" );
 
-		1;
+		$info;
 		};
 
+	$coordinator->set_note( 'child_task', $child_task );
+	
+	1;
 	}
 
 sub _copy_bad_dist
 	{
-	my( $class, $Notes, $info ) = @_;
+	my( $self, $info ) = @_;
 
-	if( my $bad_dist_dir = $Notes->{config}->copy_bad_dists )
+	my $config  = $self->get_config;
+	
+	if( my $bad_dist_dir = $config->copy_bad_dists )
 		{
 		my $dist_file = $info->dist_info( 'dist_file' );
 		my $basename  = $info->dist_info( 'dist_basename' );
@@ -141,42 +151,21 @@ sub _copy_bad_dist
 		}
 	}
 
-sub _check_for_previous_result
-	{
-	my( $class, $dist, $Notes ) = @_;
-
-	( my $basename = basename( $dist ) ) =~ s/\.(tgz|tar\.gz|zip)$//;
-
-	foreach my $key ( qw(success_report_subdir error_report_subdir) )
-		{
-		my $dir  = $Notes->{config}->$key();
-		my $file = catfile( $dir , "$basename.yml" );
-
-		if( -e $file )
-			{
-			$logger->debug( "Found run output for $basename in $dir. Skipping...\n" );
-			return;
-			}
-		}
-
-	return $basename;
-	}
-
 sub _add_run_info
 	{
-	my( $class, $info, $Notes ) = @_;
+	my( $self, $info ) = @_;
 
-	my $Config = $Notes->{config};
+	my $config = $self->get_config;
 
 	return unless eval { $info->can( 'set_run_info' ) };
 
-	$info->set_run_info( $_, $Config->get( $_ ) )
-		foreach ( $Config->directives );
+	$info->set_run_info( $_, $config->get( $_ ) )
+		foreach ( $config->directives );
 
-	$info->set_run_info( 'uuid', $Notes->{UUID} );
+	$info->set_run_info( 'uuid', $self->get_note( 'UUID' ) );
 
 	$info->set_run_info( 'child_pid',  $$ );
-	$info->set_run_info( 'parent_pid', eval { $Config->indexer_class->getppid } );
+	$info->set_run_info( 'parent_pid', eval { $config->indexer_class->getppid } );
 
 	$info->set_run_info( 'ENV', \%ENV );
 

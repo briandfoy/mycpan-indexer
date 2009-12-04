@@ -67,7 +67,7 @@ storage_class MyCPAN::Indexer::Storage::AsYAML
 
 # The Perl class to use to hand out indexing jobs
 # See MyCPAN::Indexer::Tutorial for more details
-dispatcher_class MyCPAN::Indexer::Dispatch::Parallel
+dispatcher_class MyCPAN::Indexer::Dispatcher::Parallel
 
 # The Perl class to use to create the live interface
 # See MyCPAN::Indexer::Tutorial for more details
