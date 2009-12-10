@@ -141,7 +141,7 @@ sub process_options
 	$application->{args} = [ @ARGV ]; # XXX: yuck
 
 	$Options{f} ||= catfile( $run_dir, "$script.conf" );
-	$Options{l} ||= catfile( $run_dir, "$script.log4perl" );
+	#$Options{l} ||= catfile( $run_dir, "$script.log4perl" );
 	
 	$application->{options} = \%Options;
 	}
@@ -282,13 +282,13 @@ sub setup_logging
 
 	my $log_config = do {
 		no warnings 'uninitialized';
-		if( -e $config->get( 'log4perl_file' ) ) 
-			{
-			$config->get( 'log4perl_file' );
-			}
-		elsif( -e $ENV{MYCPAN_LOG4PERL_FILE} )
+		if( -e $ENV{MYCPAN_LOG4PERL_FILE} )
 			{
 			$ENV{MYCPAN_LOG4PERL_FILE};
+			}
+		elsif( -e $config->get( 'log4perl_file' ) ) 
+			{
+			$config->get( 'log4perl_file' );
 			}
 		};
 
