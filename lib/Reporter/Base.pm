@@ -4,7 +4,7 @@ use warnings;
 
 use base qw(MyCPAN::Indexer::Component);
 use vars qw($VERSION);
-$VERSION = '1.28_02';
+$VERSION = '1.28_03';
 
 use Carp qw(croak confess);
 use File::Basename qw(basename);

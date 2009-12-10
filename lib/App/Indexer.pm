@@ -15,7 +15,7 @@ use File::Temp qw(tempdir);
 use Getopt::Std;
 use Log::Log4perl;
 
-$VERSION = '1.28_02';
+$VERSION = '1.28_03';
 
 $|++;
 
@@ -276,9 +276,27 @@ sub setup_logging
 
 	my $config   = $self->get_coordinator->get_config;
 	my $log_file = $config->get( 'log4perl_file' );
+	print STDERR "Log4perl file is [$log_file]\n";
+	print STDERR "cwd is [", cwd(), "]\n";
+
+
+	my $log_config = do {
+		no warnings 'uninitialized';
+		if( -e $config->get( 'log4perl_file' ) ) 
+			{
+			$config->get( 'log4perl_file' );
+			}
+		elsif( -e $ENV{MYCPAN_LOG4PERL_FILE} )
+			{
+			$ENV{MYCPAN_LOG4PERL_FILE};
+			}
+		};
+
+	print STDERR "Log4perl configuration should come from [$log_config]";
 	
-	if( defined $log_file and -e $log_file )
+	if( defined $log_config )
 		{
+		print STDERR "Trying to load [$log_config]\n";
 		Log::Log4perl->init_and_watch(
 			$log_file,
 			$self->get_coordinator->get_config->get( 'log_file_watch_time' )
@@ -286,7 +304,19 @@ sub setup_logging
 		}
 	else
 		{
-		Log::Log4perl->easy_init( $Log::Log4perl::ERROR );
+		print STDERR "Couldn't load [$log_file]\n";
+		
+		my %hash = (
+			DEBUG => $Log::Log4perl::DEBUG,
+			ERROR => $Log::Log4perl::ERROR,
+			WARN  => $Log::Log4perl::WARN,
+			FATAL => $Log::Log4perl::FATAL,
+			);
+			
+		my $level = defined $ENV{MYCPAN_LOGLEVEL} ? 
+			$ENV{MYCPAN_LOGLEVEL} : 'ERROR';
+		
+		Log::Log4perl->easy_init( $hash{$level} );
 		}
 	}
 
