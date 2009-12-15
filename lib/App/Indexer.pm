@@ -290,16 +290,13 @@ sub setup_logging
 	
 	if( defined $log_config )
 		{
-		print STDERR "Trying to load [$log_config]\n";
 		Log::Log4perl->init_and_watch(
 			$log_config,
 			$self->get_coordinator->get_config->get( 'log_file_watch_time' )
 			);
 		}
 	else
-		{
-		print STDERR "Couldn't load [$log_config]\n";
-		
+		{		
 		my %hash = (
 			DEBUG => $Log::Log4perl::DEBUG,
 			ERROR => $Log::Log4perl::ERROR,
