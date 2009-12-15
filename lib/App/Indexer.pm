@@ -275,8 +275,6 @@ sub setup_logging
 	my( $self ) = @_;
 
 	my $config   = $self->get_coordinator->get_config;
-	my $log_file = $config->get( 'log4perl_file' );
-	print STDERR "Log4perl file is [$log_file]\n";
 	print STDERR "cwd is [", cwd(), "]\n";
 
 
@@ -291,20 +289,21 @@ sub setup_logging
 			$config->get( 'log4perl_file' );
 			}
 		};
+	print STDERR "Log4perl file is [$log_config]\n";
 
-	print STDERR "Log4perl configuration should come from [$log_config]";
+	print STDERR "Log4perl configuration should come from [$log_config]\n";
 	
 	if( defined $log_config )
 		{
 		print STDERR "Trying to load [$log_config]\n";
 		Log::Log4perl->init_and_watch(
-			$log_file,
+			$log_config,
 			$self->get_coordinator->get_config->get( 'log_file_watch_time' )
 			);
 		}
 	else
 		{
-		print STDERR "Couldn't load [$log_file]\n";
+		print STDERR "Couldn't load [$log_config]\n";
 		
 		my %hash = (
 			DEBUG => $Log::Log4perl::DEBUG,
