@@ -275,8 +275,6 @@ sub setup_logging
 	my( $self ) = @_;
 
 	my $config   = $self->get_coordinator->get_config;
-	print STDERR "cwd is [", cwd(), "]\n";
-
 
 	my $log_config = do {
 		no warnings 'uninitialized';
@@ -289,9 +287,6 @@ sub setup_logging
 			$config->get( 'log4perl_file' );
 			}
 		};
-	print STDERR "Log4perl file is [$log_config]\n";
-
-	print STDERR "Log4perl configuration should come from [$log_config]\n";
 	
 	if( defined $log_config )
 		{
