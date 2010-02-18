@@ -61,10 +61,12 @@ sub get_task
 	my $child_task = sub {
 		my $dist = shift;
 
+		my $dist_basename = basename( $dist );
+		
 		my $basename = $coordinator->get_reporter->check_for_previous_successful_result( $dist );
 		return { skipped => 1 } unless $basename;
 
-		$logger->info( "Child process for $basename starting\n" );
+		$logger->info( "Starting Worker for $dist_basename\n" );
 
 		my $Indexer = $config->indexer_class || 'MyCPAN::Indexer';
 
@@ -78,16 +80,17 @@ sub get_task
 			exit 255;
 			}
 
-		local $SIG{ALRM} = sub { die "alarm rang for $basename!\n" };
+		local $SIG{ALRM} = sub { die "Alarm rang for $dist_basename!\n" };
 		alarm( $config->alarm || 15 );
 		my $info = eval { $Indexer->run( $dist ) };
+		my $at = $@; chomp $at;
 		alarm 0;
 
 		chdir $starting_dir;
 
 		unless( defined $info )
 			{
-			$logger->error( "run failed for $basename: $@" );
+			$logger->error( "Indexing failed for $dist_basename: $at" );
 			$info = bless {}, $Indexer; # XXX TODO make this a real class
 			$info->setup_dist_info( $dist );
 			$info->setup_run_info;
@@ -96,7 +99,7 @@ sub get_task
 			}
 		elsif( ! eval { $info->run_info( 'completed' ) } )
 			{
-			$logger->error( "$basename did not complete\n" );
+			$logger->error( "Indexing for $dist_basename did not complete" );
 			$self->_copy_bad_dist( $info ) if $config->copy_bad_dists;
 			}
 
@@ -104,7 +107,7 @@ sub get_task
 		
 		$coordinator->get_note('reporter')->( $info );
 
-		$logger->debug( "Child process for $basename done" );
+		$logger->debug( "Worker for $dist_basename done" );
 
 		$info;
 		};

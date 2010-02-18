@@ -47,6 +47,7 @@ my %Defaults = (
 	parallel_jobs         => 1,
 	pause_id              => 'MYCPAN',
 	pause_full_name       => "MyCPAN user <CENSORED>",
+	prefer_bin            => 0,
 	queue_class           => 'MyCPAN::Indexer::Queue',
 	report_dir            => $report_dir,
 	reporter_class        => 'MyCPAN::Indexer::Reporter::AsYAML',
@@ -115,6 +116,9 @@ sub adjust_config
 			|| 
 		$coordinator->get_note( 'log4perl_file' )
 			;
+
+	# Adjust for some environment variables
+	$ENV{'PREFER_BIN'} = 1 if $config->get( 'prefer_bin' );
 	
 	$config->set( 'log4perl_file', $log4perl_file ) if $log4perl_file;
 
