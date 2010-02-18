@@ -157,7 +157,12 @@ Expects in C<notes>
 	child_task - the code ref that handles indexing a single dist
 	queue      - the array ref of dist paths
 
-=head1 The Interface class
+=head2 The Collator class
+
+After the Dispatcher class finishes its queue of work, the Collator class
+comes in and does something with the collection of reports.
+
+=head2 The Interface class
 
 The Interface class really has two jobs. It makes the live reporting
 interface  while C<backpan_indexer.pl> runs, at it repeatedly calls

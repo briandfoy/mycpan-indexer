@@ -24,6 +24,7 @@ WriteMakefile(
 		'Module::Extract::Namespaces'      => '0.14',
 		'Module::Extract::Use'             => '0.13',
 		'Module::Extract::VERSION'         => '0.13',
+		'List::Util'                       => '0',
 		'Parallel::ForkManager'            => '0',
 		'Probe::Perl'                      => '0',
 		'Test::More'                       => '0',

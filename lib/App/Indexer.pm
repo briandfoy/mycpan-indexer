@@ -13,6 +13,7 @@ use File::Path qw(mkpath);
 use File::Spec::Functions qw(catfile);
 use File::Temp qw(tempdir);
 use Getopt::Std;
+use List::Util qw(max);
 use Log::Log4perl;
 
 $VERSION = '1.28_06';
@@ -116,6 +117,8 @@ sub adjust_config
 			;
 	
 	$config->set( 'log4perl_file', $log4perl_file ) if $log4perl_file;
+
+	return 1;
 	}
 
 sub new 
@@ -171,17 +174,24 @@ sub handle_config
 	{
 	my( $application ) = @_;
 
-	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 	# Adjust config based on run parameters
 	my $config = $application->init_config( $application->get_option('f') );
 	$application->get_coordinator->set_config( $config );
 	
 	$application->adjust_config;
 
-	if( $application->get_option('c') )
+	if( $application->get_option( 'c' ) )
 		{
-		use Data::Dumper;
-		print STDERR Dumper( $config );
+		my @directives = $config->directives;
+		my $longest = max( map { length } @directives );
+		foreach my $directive ( sort @directives )
+			{
+			printf "%${longest}s   %-10s\n", 
+				$directive, 
+				$config->get( $directive );
+			}
+
 		exit;
 		}
 	}
