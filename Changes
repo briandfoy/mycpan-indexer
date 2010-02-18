@@ -1,5 +1,15 @@
 # Changes for MyCPAN::Indexer
 
+1.28_06 - Thu Feb 18 13:56:09 2010
+	* Added prefer_bin configuration so you can use /bin/tar over Archive::Tar
+	* Made the -c config dump output a little nicer.
+	* The Reporter final_words stuff is now handled by a new Collator
+	component. It's not a special case anymore.
+	* The error messages from Worker.pm are slightly more friendly.
+
+1.28_05 -  Wed Dec 9 19:36:20 2009
+	* Set up Log::Log4perl with MYCPAN_LOG4PERL_FILE and MYCPAN_LOGLEVEL
+
 1.28_02 - Mon Nov 30 17:43:05 2009
 	* Added a temporary module finding technique - look_in_cwd_and_lib
 	to handle things like DBI and HTML::Parser that have XS and Pure

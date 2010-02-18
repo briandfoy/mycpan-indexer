@@ -17,7 +17,7 @@ BEGIN {
 
 use base qw(MyCPAN::Indexer::Component);
 use vars qw($VERSION $logger);
-$VERSION = '1.28_06';
+$VERSION = '1.28_07';
 
 use Log::Log4perl;
 use Tk;
