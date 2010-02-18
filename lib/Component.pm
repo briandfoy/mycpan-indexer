@@ -6,7 +6,7 @@ use vars qw($VERSION);
 
 use Carp qw(croak);
 
-$VERSION = '1.28_04';
+$VERSION = '1.28_06';
 
 =head1 NAME
 
@@ -131,12 +131,13 @@ sub set_coordinator
 	
 }
 
-sub queue_type      { 'queue'      }
+sub collator_type   { 'collator'   }
 sub dispatcher_type { 'dispatcher' }
-sub worker_type     { 'worker'     }
-sub reporter_type   { 'reporter'   }
-sub interface_type  { 'interface'  }
 sub indexer_type    { 'indexer'    }
+sub interface_type  { 'interface'  }
+sub queue_type      { 'queue'      }
+sub reporter_type   { 'reporter'   }
+sub worker_type     { 'worker'     }
 
 =back
 
@@ -152,7 +153,7 @@ brian d foy, C<< <bdfoy@cpan.org> >>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2008-2009, brian d foy, All Rights Reserved.
+Copyright (c) 2008-2010, brian d foy, All Rights Reserved.
 
 You may redistribute this under the same terms as Perl itself.
 

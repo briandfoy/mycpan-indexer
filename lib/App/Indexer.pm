@@ -15,7 +15,7 @@ use File::Temp qw(tempdir);
 use Getopt::Std;
 use Log::Log4perl;
 
-$VERSION = '1.28_04';
+$VERSION = '1.28_06';
 
 $|++;
 
@@ -35,6 +35,7 @@ my $report_dir = catfile( $cwd, 'indexer_reports' );
 my %Defaults = (
 	alarm                 => 15,
 	copy_bad_dists        => 0,
+	collator_class        => 'MyCPAN::Indexer::Collater::Null',
 	dispatcher_class      => 'MyCPAN::Indexer::Dispatcher::Parallel',
 	error_report_subdir   => catfile( $report_dir, 'errors'  ),
 	indexer_class         => 'MyCPAN::Indexer',
@@ -44,6 +45,7 @@ my %Defaults = (
 	organize_dists        => 0,
 	parallel_jobs         => 1,
 	pause_id              => 'MYCPAN',
+	pause_full_name       => "MyCPAN user <CENSORED>",
 	queue_class           => 'MyCPAN::Indexer::Queue',
 	report_dir            => $report_dir,
 	reporter_class        => 'MyCPAN::Indexer::Reporter::AsYAML',
@@ -92,7 +94,7 @@ sub adjust_config
 		# At the moment, you can only set string values, so we have to
 		# cheat a bit. This should really come in as a ConfigReader
 		# subclass
-		$config->set( 'backpan_dir', @argv ? join( ' ', @argv ) : cwd() );
+		$config->set( 'backpan_dir', @argv ? join( "\x00", @argv ) : cwd() );
 		}
 
 	if( $config->exists( 'report_dir' ) )
@@ -228,12 +230,12 @@ sub run_components
 		
 	foreach my $tuple ( @components )
 		{
-		my( $directive, $default_class, $method ) = @$tuple;
+		my( $component_type, $default_class, $method ) = @$tuple;
 
-		my $class = $config->get( "${directive}_class" ) || $default_class;
+		my $class = $config->get( "${component_type}_class" ) || $default_class;
 
 		eval "require $class; 1" or die "$@\n";
-		die "$directive [$class] does not implement $method()"
+		die "$component_type [$class] does not implement $method()"
 			unless $class->can( $method );
 
 		$logger->debug( "Calling $class->$method()" );
@@ -242,7 +244,7 @@ sub run_components
 		$component->set_coordinator( $coordinator );
 		$component->$method();
 		
-		my $set_method = "set_$directive";
+		my $set_method = "set_${component_type}";
 		$coordinator->$set_method( $component );
 		}
 	}
@@ -318,8 +320,8 @@ sub components
 	[ qw( dispatcher MyCPAN::Indexer::Dispatcher::Parallel get_dispatcher ) ],
 	[ qw( reporter   MyCPAN::Indexer::Reporter::AsYAML     get_reporter   ) ],
 	[ qw( worker     MyCPAN::Indexer::Worker               get_task       ) ],
+	[ qw( collator   MyCPAN::Indexer::Collator::Null       get_collator   ) ],
 	[ qw( interface  MyCPAN::Indexer::Interface::Curses    do_interface   ) ],
-	[ qw( reporter   MyCPAN::Indexer::Reporter::AsYAML     final_words    ) ],
 	)
 	}
 
