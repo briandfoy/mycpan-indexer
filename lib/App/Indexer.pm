@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use vars qw($VERSION);
+use vars qw($VERSION $Starting_dir);
 
 use Carp;
 use Cwd qw(cwd);
@@ -24,7 +24,10 @@ my $logger = Log::Log4perl->get_logger( 'backpan_indexer' );
 
 #$SIG{__DIE__} = \&Carp::confess;
 
-$SIG{INT} = sub { exit() };
+# If we catch an INT we're probably in one of the temporary directories
+# and have some files open. To clean up the temp dirs, we have to move 
+# above them, so change back to the original directory.
+$SIG{INT} = sub { print "Caught SIGINT\n"; chdir $Starting_dir; exit() };
 
 __PACKAGE__->activate( @ARGV ) unless caller;
 
@@ -234,7 +237,8 @@ sub activate_steps
 sub activate
 	{
 	my( $class, @argv ) = @_;
-	use vars qw( %Options );
+	use vars qw( %Options $Starting_dir);
+	$Starting_dir = cwd(); # remember this so we can change out of temp dirs in abnormal cleanup
 	local %ENV = %ENV;
 
 	my $application = $class->new( @argv );
