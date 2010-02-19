@@ -108,7 +108,7 @@ sub _get_file_list
 	
 	$logger->debug( "Taking dists from [@dirs]" );
 	my( $wanted, $reporter ) = 
-		File::Find::Closures::find_by_regex( qr/\.(t?gz|zip)$/ );
+		File::Find::Closures::find_by_regex( qr/\.(?:(?:tar\.|t)gz|zip)$/ );
 
 	find( $wanted, @dirs );
 	
@@ -182,10 +182,9 @@ sub _file_md5
 	require Digest::MD5;
 	
 	open my( $fh ), '<', $file or return '';
-	my $ctx = Digest::MD5::md5_hex;
 
+	my $ctx = Digest::MD5->new;
 	$ctx->addfile($fh);
-
  	$ctx->hexdigest;
 	}
 1;

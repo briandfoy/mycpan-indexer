@@ -137,13 +137,16 @@ sub examine_dist
 		
 		unless( $self->$method() )
 			{
-			$logger->error( $error_msg );
 			$self->set_run_info( 'fatal_error', $error_msg );
 
 			if( $die_on_error ) # only if failure is fatal
 				{
 				$logger->error( "Fatal error, stopping: $error_msg" );
 				return;
+				}
+			else
+				{
+				$logger->error( $error_msg );
 				}
 			}
 		}
@@ -417,16 +420,17 @@ sub unpack_dist
 
 	$self->set_dist_info( 'dist_archive_type', $extractor->type );
 
+
 	my $rc = $extractor->extract( to => scalar $self->dist_info( 'unpack_dir' ) );
 	$logger->debug( "Archive::Extract returns [$rc] for $dist" );
 
+	# I should fail here, but Archive::Extract 0.26 on Windows fails
+	# even when it succeeds, so just log the error and keep going
 	unless( $rc or $^O =~ /Win32/ )
 		{
-		$logger->error( "Archive::Extract could not extract $dist: " . $extractor->error(0) );
-		$self->set_dist_info( 'extraction_error', $extractor->error(0) );
-		# I should fail here, but Archive::Extract 0.26 on Windows fails
-		# even when it succeeds, so just log the error and keep going
-		# return;
+		$self->set_dist_info( 'extraction_error', $extractor->error );
+		$logger->error( "Archive::Extract could not extract $dist" );
+		return;
 		}
 
 	$self->set_dist_info( 'dist_extract_path', $extractor->extract_path );
