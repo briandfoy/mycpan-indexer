@@ -60,8 +60,10 @@ sub get_queue
 	my( $self ) = @_;
 	
 	my @dirs = 
+		( 
 		$self->get_config->backpan_dir, 
-		@{ $self->get_config->merge_dirs || [] }
+		split /\x00/, $self->get_config->merge_dirs || ''
+		)
 		;
 
 	foreach my $dir ( @dirs )

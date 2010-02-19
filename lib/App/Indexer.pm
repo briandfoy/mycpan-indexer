@@ -35,6 +35,7 @@ my $report_dir = catfile( $cwd, 'indexer_reports' );
 
 my %Defaults = (
 	alarm                 => 15,
+#	backpan_dir           => cwd(),	
 	copy_bad_dists        => 0,
 	collator_class        => 'MyCPAN::Indexer::Collater::Null',
 	dispatcher_class      => 'MyCPAN::Indexer::Dispatcher::Parallel',
@@ -43,7 +44,7 @@ my %Defaults = (
 	indexer_id            => 'Joe Example <joe@example.com>',
 	interface_class       => 'MyCPAN::Indexer::Interface::Text',
 	log_file_watch_time   => 30,
-	merge_dirs            => undef,
+#	merge_dirs            => undef,
 	organize_dists        => 0,
 	parallel_jobs         => 1,
 	pause_id              => 'MYCPAN',
@@ -89,22 +90,29 @@ sub adjust_config
 	my $coordinator = $application->get_coordinator;
 	my $config      = $coordinator->get_config;
 	
-	my @argv = @{ $application->{args} };
+	my( $backpan_dir, @merge_dirs ) = @{ $application->{args} };
+	
+	$config->set( 'backpan_dir', $backpan_dir ) if defined $backpan_dir;
+	$config->set( 'merge_dirs', join "\x00", @merge_dirs ) if @merge_dirs;
 	
 	# set the directories to index, either set in:
-		# config file
 		# first argument on the command line
+		# config file
 		# current working directory
-	unless( $config->exists( 'backpan_dir') )
+	unless( $config->get( 'backpan_dir' ) )
 		{
-		$config->set( 'backpan_dir', $argv[0] || cwd() );
+		$config->set( 'backpan_dir', cwd() );
 		}
 
-	unless( $config->exists( 'merge_dirs') )
+	# in the config file, it's all a single line
+	if( $config->get( 'merge_dirs' ) )
 		{
-		my @a = @argv;
-		shift @a;
-		$config->set( 'merge_dirs', [ @argv ] || [] );
+		my @dirs = 
+			grep { length } 
+			split /(?<!\\) /, 
+				$config->get( 'merge_dirs' ) || '';
+				
+		$config->set( 'merge_dirs', join "\x00", @dirs );
 		}
 
 	if( $config->exists( 'report_dir' ) )
@@ -158,6 +166,7 @@ sub process_options
 	$application->{args} = [ @ARGV ]; # XXX: yuck
 
 	$Options{f} ||= catfile( $run_dir, "$script.conf" );
+	
 	#$Options{l} ||= catfile( $run_dir, "$script.log4perl" );
 	
 	$application->{options} = \%Options;
