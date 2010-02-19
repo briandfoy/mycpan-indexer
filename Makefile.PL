@@ -45,6 +45,8 @@ WriteMakefile(
 		'lib/Dispatcher/Parallel.pm' => '$(INST_LIBDIR)/Indexer/Dispatcher/Parallel.pm',
 		'lib/Dispatcher/Serial.pm'   => '$(INST_LIBDIR)/Indexer/Dispatcher/Serial.pm',
 
+		'lib/Collator/Null.pm'       => '$(INST_LIBDIR)/Indexer/Collator/Null.pm',
+
 		'lib/Indexer.pm'             => '$(INST_LIBDIR)/Indexer.pm',
 		'lib/NullTester.pm'          => '$(INST_LIBDIR)/Indexer/NullTester.pm',
 		'lib/Queue.pm'               => '$(INST_LIBDIR)/Indexer/Queue.pm',

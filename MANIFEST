@@ -10,6 +10,7 @@ examples/backpan_indexer.pl
 examples/dpan
 examples/time_summary.pl
 lib/App/Indexer.pm
+lib/Collator/Null.pm
 lib/Component.pm
 lib/Coordinator.pm
 lib/Dispatcher/Parallel.pm
