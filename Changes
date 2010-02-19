@@ -1,5 +1,11 @@
 # Changes for MyCPAN::Indexer
 
+1.28_07 - Thu Feb 18 17:42:10 2010
+	* Use the configuration directive merge_dirs to specify extra
+	directories to find distros in
+	* organize_dists now copies instead of renames, to work across
+	mounts and partitions.
+	
 1.28_06 - Thu Feb 18 13:56:09 2010
 	* Added prefer_bin configuration so you can use /bin/tar over Archive::Tar
 	* Made the -c config dump output a little nicer.
