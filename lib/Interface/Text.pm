@@ -55,7 +55,7 @@ sub do_interface
 		"\n";
 
 	print 'Processing ' . @{ $self->get_note('queue') } . " distributions\n";
-	print "One * = 1 distribution\n";
+	print "One + = 1 distribution\n";
 
 	my $count = 0;
 	while( 1 )

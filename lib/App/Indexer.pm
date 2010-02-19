@@ -43,6 +43,7 @@ my %Defaults = (
 	indexer_id            => 'Joe Example <joe@example.com>',
 	interface_class       => 'MyCPAN::Indexer::Interface::Text',
 	log_file_watch_time   => 30,
+	merge_dirs            => undef,
 	organize_dists        => 0,
 	parallel_jobs         => 1,
 	pause_id              => 'MYCPAN',
@@ -90,13 +91,20 @@ sub adjust_config
 	
 	my @argv = @{ $application->{args} };
 	
-	# set the directories to index
+	# set the directories to index, either set in:
+		# config file
+		# first argument on the command line
+		# current working directory
 	unless( $config->exists( 'backpan_dir') )
 		{
-		# At the moment, you can only set string values, so we have to
-		# cheat a bit. This should really come in as a ConfigReader
-		# subclass
-		$config->set( 'backpan_dir', @argv ? join( "\x00", @argv ) : cwd() );
+		$config->set( 'backpan_dir', $argv[0] || cwd() );
+		}
+
+	unless( $config->exists( 'merge_dirs') )
+		{
+		my @a = @argv;
+		shift @a;
+		$config->set( 'merge_dirs', [ @argv ] || [] );
 		}
 
 	if( $config->exists( 'report_dir' ) )
