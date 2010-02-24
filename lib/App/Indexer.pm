@@ -16,7 +16,7 @@ use Getopt::Std;
 use List::Util qw(max);
 use Log::Log4perl;
 
-$VERSION = '1.28_09';
+$VERSION = '1.28_10';
 
 $|++;
 

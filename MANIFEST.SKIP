@@ -33,3 +33,4 @@ hook_test
 extract_test
 ~$
 DISTS_TO_CHECK
+omni
