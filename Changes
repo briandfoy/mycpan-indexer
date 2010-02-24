@@ -1,5 +1,8 @@
 # Changes for MyCPAN::Indexer
 
+1.28_10 - Tue Feb 23 20:06:45 2010
+	* Fix the file MD5 comparison stuff
+
 1.28_07 - Thu Feb 18 17:42:10 2010
 	* Use the configuration directive merge_dirs to specify extra
 	directories to find distros in
