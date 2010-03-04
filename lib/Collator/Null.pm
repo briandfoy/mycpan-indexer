@@ -2,6 +2,7 @@ package MyCPAN::Indexer::Collator::Null;
 use strict;
 use warnings;
 
+use base qw(MyCPAN::Indexer::Component);
 use vars qw($VERSION $logger);
 $VERSION = '1.28_10';
 
