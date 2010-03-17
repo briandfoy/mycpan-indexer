@@ -137,10 +137,9 @@ sub examine_dist
 		
 		unless( $self->$method() )
 			{
-			$self->set_run_info( 'fatal_error', $error_msg );
-
 			if( $die_on_error ) # only if failure is fatal
 				{
+				$self->set_run_info( 'fatal_error', $error_msg );
 				$logger->error( "Fatal error, stopping: $error_msg" );
 				return;
 				}
@@ -822,7 +821,7 @@ sub parse_meta_files
 		$_[0]->set_dist_info( 'META.yml', $yaml );
 		return $yaml;
 		}
-
+	
 	return;
 	}
 
