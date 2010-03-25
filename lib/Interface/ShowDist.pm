@@ -67,7 +67,8 @@ sub do_interface
 
 		my $info = $self->get_note('interface_callback')->();
 
-		printf "[%*d/%d] %s\n", $width, ++$count, $total, $info->{dist_basename};
+		printf "[%*d/%d] %s\n", $width, ++$count, $total, 
+			$info->{dist_info}{dist_basename} || '(unknown dist???)';
 		}
 	
 	my $collator = $self->get_coordinator->get_note( 'collator' );
