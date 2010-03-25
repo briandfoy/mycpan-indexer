@@ -58,22 +58,23 @@ sub get_task
 
 	my $coordinator = $self->get_coordinator;
 	
+	my $Indexer = $config->indexer_class || 'MyCPAN::Indexer';
+
 	my $child_task = sub {
 		my $dist = shift;
 
 		my $dist_basename = basename( $dist );
 		
 		my $basename = $coordinator->get_reporter->check_for_previous_successful_result( $dist );
-		return { 
+		return bless { 
 			dist_info => {
-				dist_basename => $basename
+				dist_path     => $dist,
+				dist_basename => $dist_basename
 				},
 			skipped => 1, 
-			} unless $basename;
+			}, $Indexer unless $basename;
 
 		$logger->info( "Starting Worker for $dist_basename\n" );
-
-		my $Indexer = $config->indexer_class || 'MyCPAN::Indexer';
 
 		eval "require $Indexer" or die;
 
