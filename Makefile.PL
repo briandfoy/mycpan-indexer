@@ -41,6 +41,7 @@ WriteMakefile(
 		'lib/Interface/Text.pm'      => '$(INST_LIBDIR)/Indexer/Interface/Text.pm',
 		'lib/Interface/Curses.pm'    => '$(INST_LIBDIR)/Indexer/Interface/Curses.pm',
 		'lib/Interface/Tk.pm'        => '$(INST_LIBDIR)/Indexer/Interface/Tk.pm',
+		'lib/Interface/ShowDist.pm'  => '$(INST_LIBDIR)/Indexer/Interface/ShowDist.pm',
 
 		'lib/Dispatcher/Parallel.pm' => '$(INST_LIBDIR)/Indexer/Dispatcher/Parallel.pm',
 		'lib/Dispatcher/Serial.pm'   => '$(INST_LIBDIR)/Indexer/Dispatcher/Serial.pm',
