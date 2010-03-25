@@ -64,7 +64,12 @@ sub get_task
 		my $dist_basename = basename( $dist );
 		
 		my $basename = $coordinator->get_reporter->check_for_previous_successful_result( $dist );
-		return { skipped => 1 } unless $basename;
+		return { 
+			dist_info => {
+				dist_basename => $basename
+				},
+			skipped => 1, 
+			} unless $basename;
 
 		$logger->info( "Starting Worker for $dist_basename\n" );
 
@@ -150,6 +155,7 @@ sub _copy_bad_dist
 			while( <$in> ) { print { $out } $_ }
 			close $in;
 			close $out;
+			
 			}
 		}
 	}

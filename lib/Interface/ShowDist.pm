@@ -66,9 +66,15 @@ sub do_interface
 		local $| = 1;
 
 		my $info = $self->get_note('interface_callback')->();
-
-		printf "[%*d/%d] %s\n", $width, ++$count, $total, 
-			$info->{dist_info}{dist_basename} || '(unknown dist???)';
+		my $status = do {
+			if( exists $info->{skipped} )    { 'skipped' }
+			elsif( 0 )                       { 'error' }
+			elsif( exists $info->{run_info}{completed} ) { 'completed' }
+			};
+			
+		printf "[%*d/%d] %s %s\n", $width, ++$count, $total, 
+			$info->{dist_info}{dist_basename} || '(unknown dist???)',
+			$status;
 		}
 	
 	my $collator = $self->get_coordinator->get_note( 'collator' );
