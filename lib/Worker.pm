@@ -60,6 +60,9 @@ sub get_task
 	
 	my $Indexer = $config->indexer_class || 'MyCPAN::Indexer';
 
+	$logger->debug( "Worker class is " . __PACKAGE__ );
+	$logger->debug( "Indexer class is $Indexer" );
+
 	my $child_task = sub {
 		my $dist = shift;
 
@@ -86,9 +89,12 @@ sub get_task
 			exit 255;
 			}
 
+		$logger->debug( sprintf "Setting alarm for %d seconds", $config->alarm );
 		local $SIG{ALRM} = sub { die "Alarm rang for $dist_basename!\n" };
 		alarm( $config->alarm || 15 );
+		$logger->debug( "Examining $dist_basename" );
 		my $info = eval { $Indexer->run( $dist ) };
+		$logger->debug( "Done examining $dist_basename" );
 		my $at = $@; chomp $at;
 		alarm 0;
 
