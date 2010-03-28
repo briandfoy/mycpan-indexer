@@ -1019,26 +1019,12 @@ sub run_something
 
 	my( $self, $command, $info_key ) = @_;
 
-	{
-	require IPC::Open2;
+	require IPC::System::Simple;
 	$logger->debug( "Running $command" );
-	my $pid = IPC::Open2::open2(
-		my $read,
-		my $write,
-		"$command 2>&1 < /dev/null"
+	my $output = IPC::System::Simple::capturex(
+		$command
 		);
-
-	close $write;
-
-	{
-	local $/;
-	my $output = <$read>;
 	$self->set_dist_info( $info_key, $output );
-	}
-
-	waitpid $pid, 0;
-	}
-
 	}
 
 =item get_module_info_tasks
