@@ -68,11 +68,11 @@ sub do_interface
 		my $info = $self->get_note('interface_callback')->();
 		my $status = do {
 			if( exists $info->{skipped} )    { 'skipped' }
-			elsif( 0 )                       { 'error' }
+			elsif( exists $info->{error} )   { 'previous error (skipped)' }
 			elsif( exists $info->{run_info}{completed} ) { 'completed' }
 			};
 			
-		printf "[%*d/%d] %s %s\n", $width, ++$count, $total, 
+		printf "[%*d/%d] %s ---> %s\n", $width, ++$count, $total, 
 			$info->{dist_info}{dist_basename} || '(unknown dist???)',
 			$status;
 		}
