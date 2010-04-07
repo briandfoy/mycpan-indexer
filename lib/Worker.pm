@@ -103,6 +103,7 @@ sub get_task
 
 		$logger->debug( sprintf "Setting alarm for %d seconds", $config->alarm );
 		local $SIG{ALRM} = sub { die "Alarm rang for $dist_basename!\n" };
+		local $SIG{CHLD} = 'IGNORE';
 		alarm( $config->alarm || 15 );
 		$logger->debug( "Examining $dist_basename" );
 		my $info = eval { $Indexer->run( $dist ) };
