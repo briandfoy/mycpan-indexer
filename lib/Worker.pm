@@ -86,7 +86,7 @@ sub get_task
 				dist_path    => $dist,
                                 dist_basename => $dist_basename,
                                 },
-                        error => 1,
+                        skip_error => 1,
                         }, $Indexer if $error;
 
 		$logger->info( "Starting Worker for $dist_basename\n" );
