@@ -69,6 +69,7 @@ sub get_task
 		my $dist_basename = basename( $dist );
 		
 		my $basename = $coordinator->get_reporter->check_for_previous_successful_result( $dist );
+		$logger->debug( "Found successful report for $dist_basename" ) unless $basename;
 		return bless { 
 			dist_info => {
 				dist_path     => $dist,
@@ -76,6 +77,17 @@ sub get_task
 				},
 			skipped => 1, 
 			}, $Indexer unless $basename;
+
+		my $error = $coordinator->get_reporter->check_for_previous_error_result( $dist );
+		$logger->debug( "Error report returned $error" );
+		$logger->debug( "Found error report for $dist_basename" ) if $error;
+		return bless {
+			dist_info => {
+				dist_path    => $dist,
+                                dist_basename => $dist_basename,
+                                },
+                        skip_error => 1,
+                        }, $Indexer if $error;
 
 		$logger->info( "Starting Worker for $dist_basename\n" );
 
@@ -91,6 +103,7 @@ sub get_task
 
 		$logger->debug( sprintf "Setting alarm for %d seconds", $config->alarm );
 		local $SIG{ALRM} = sub { die "Alarm rang for $dist_basename!\n" };
+		local $SIG{CHLD} = 'IGNORE';
 		alarm( $config->alarm || 15 );
 		$logger->debug( "Examining $dist_basename" );
 		my $info = eval { $Indexer->run( $dist ) };

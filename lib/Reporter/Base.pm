@@ -145,6 +145,18 @@ sub get_successful_report_path
 			)
 		);
 	}
+
+sub get_error_report_path
+	{
+	my $self = shift;
+
+	catfile(
+		map { $self->$_( @_ ) } qw(
+			get_error_report_dir
+			get_report_filename
+			)
+		);
+	}
 	
 sub get_success_report_subdir { 'success' }
 
@@ -166,7 +178,7 @@ sub get_error_report_dir
 		);
 	}
 
-=item check_for_previous_successful_result( $info, $Notes )
+=item check_for_previous_successful_result( $dist )
 
 Returns false (!) if it looks like there is already a successful report
 for the noted distribution. If there is not a successful report,
@@ -182,6 +194,19 @@ sub check_for_previous_successful_result
 	return if -e $path;
 	
 	basename( $path );
+	}
+
+=item check_for_previous_error_result( $dist )
+
+Returns true if there was an error report for $dist.
+
+=cut
+
+sub check_for_previous_error_result
+	{
+	my( $self, $dist ) = @_;
+	my $path = $self->get_error_report_path( $dist );
+	return -e $path ? 1 : 0;;
 	}
 
 =back

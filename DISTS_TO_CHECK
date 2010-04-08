@@ -1,6 +1,7 @@
 JSON (what's up with lib/JSON/PPBoolean.pm)
 DateTime::Locale::LocaleCatalog
 Compress::Zlib shows up in IO::Compress and Compress::Zlib
+Imager
 Log::Log4perl::FAQ doesn't declare a package
 
 Could not add  undef from T/TH/THIRDPARTY/Log-Log4perl-1.21.tar.gz!  was already
