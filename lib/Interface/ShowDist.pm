@@ -69,7 +69,7 @@ sub do_interface
 		my $status = do {
 			   if( exists $info->{skipped} )             { 'skipped' }
 			elsif( exists $info->{skip_error} )          { 'previous error (skipped)' }
-			elsif( exists $info->{error} )               { $self->get_error($info) }
+			elsif( exists $info->{run_info}{error} )     { $self->get_error($info) }
 			elsif( exists $info->{run_info}{completed} ) { 'completed' }
 			else                                         { 'unknown'   }
 			};
