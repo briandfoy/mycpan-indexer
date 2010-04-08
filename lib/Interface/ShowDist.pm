@@ -102,7 +102,7 @@ sub get_error
 	
 	foreach my $pattern ( @patterns )
 		{
-		return ${^MATCH} if $error[0] =~ m/$pattern/p;
+		return ${^MATCH} if $errors[0] =~ m/$pattern/p;
 		}
 	
 	}
