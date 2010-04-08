@@ -67,8 +67,8 @@ sub do_interface
 
 		my $info = $self->get_note('interface_callback')->();
 		my $status = do {
-			if( exists $info->{skipped} )    { 'skipped' }
-			elsif( 0 )                       { 'error' }
+			   if( exists $info->{skipped} )             { 'skipped' }
+			elsif( exists $info->{error} )               { $self->get_error($info) }
 			elsif( exists $info->{run_info}{completed} ) { 'completed' }
 			};
 			
@@ -83,6 +83,28 @@ sub do_interface
 
 	}
 
+BEGIN {
+my @patterns = (
+	qr/Malformed UTF-8/,
+	qr/No child process/,
+	qr/Alarm rang/,
+	);
+	
+sub get_error
+	{
+	my( $self, $info ) = @_;
+	
+	my $r = $info->{run_info};
+	
+	my @errors = grep { $r->{$_} } qw(error);
+	
+	foreach my $pattern ( @patterns )
+		{
+		return ${^MATCH} if $error[0] =~ m/$pattern/p;
+		}
+	
+	}
+	
 =back
 
 
