@@ -821,6 +821,10 @@ sub parse_meta_files
 		$_[0]->set_dist_info( 'META.yml', $yaml );
 		return $yaml;
 		}
+	else
+		{
+		$logger->info( "Did not find a META.yml" );
+		}
 	
 	return;
 	}
