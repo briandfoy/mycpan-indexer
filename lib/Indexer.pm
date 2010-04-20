@@ -1019,11 +1019,8 @@ sub run_something
 
 	my( $self, $command, $info_key ) = @_;
 
-	require IPC::System::Simple;
 	$logger->debug( "Running $command" );
-	my $output = IPC::System::Simple::capture(
-		"$command 2>&1"
-		);
+	my $output = `$command 2>&1`;
 	$self->set_dist_info( $info_key, $output );
 	}
 

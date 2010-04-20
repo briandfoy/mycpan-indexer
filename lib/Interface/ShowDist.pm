@@ -87,9 +87,9 @@ sub do_interface
 
 BEGIN {
 my @patterns = (
-	qr/Malformed UTF-8/,
-	qr/No child process/,
-	qr/Alarm rang/,
+	qr/Malformed UTF-8/p,
+	qr/No child process/p,
+	qr/Alarm rang/p,
 	);
 	
 sub get_error
@@ -98,8 +98,8 @@ sub get_error
 	
 	my $r = $info->{run_info};
 	
-	my @errors = grep { $r->{$_} } qw(error);
-	
+	my @errors = map { $r->{$_} || () } qw(error fatal_error);
+print STDERR "\@errors: @errors\n";	
 	foreach my $pattern ( @patterns )
 		{
 		return ${^MATCH} if $errors[0] =~ m/$pattern/p;
