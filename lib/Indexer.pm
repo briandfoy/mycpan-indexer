@@ -312,7 +312,8 @@ sub setup_dist_info
 		" dist date " . $self->dist_info( 'dist_date' )
 		);
 
-	my( undef, undef, $author ) = $dist =~ m|/([A-Z])/\1([A-Z])/(\1\2[A-Z]+)/|;
+	my $c = '[A-Z0-9-]';
+	my( undef, undef, $author ) = $dist =~ m|/($c)/\1($c)/(\1\2$c*)/|;
 	$self->set_dist_info( 'dist_author', $author );
 	$logger->debug( "dist author [$author]" );
 
