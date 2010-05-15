@@ -14,6 +14,7 @@ WriteMakefile(
 	'PREREQ_PM'    => { 
 		'Archive::Extract'                 => '0', # 0.32 when it's available
 		'Archive::Tar'                     => '0',
+		'Archive::Zip'                     => '0',
 		'ConfigReader::Simple'             => '0',
 		'Data::UUID'                       => '0',
 		'Distribution::Guess::BuildSystem' => '0.11',
@@ -27,6 +28,7 @@ WriteMakefile(
 		'List::Util'                       => '0',
 		'Parallel::ForkManager'            => '0',
 		'Probe::Perl'                      => '0',
+		'Proc::ProcessTable'               => '0',
 		'Test::More'                       => '0',
 		'Test::Output'                     => '0.13',
 		'YAML'                             => '0',
