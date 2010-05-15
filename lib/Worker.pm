@@ -11,6 +11,7 @@ use File::Basename;
 use File::Spec::Functions qw(catfile);
 use Log::Log4perl;
 use MyCPAN::Indexer;
+use Proc::ProcessTable;
 use YAML;
 
 =head1 NAME
@@ -102,7 +103,15 @@ sub get_task
 			}
 
 		$logger->debug( sprintf "Setting alarm for %d seconds", $config->alarm );
-		local $SIG{ALRM} = sub { die "Alarm rang for $dist_basename!\n" };
+		local $SIG{ALRM} = sub {
+			kill 9,
+				map  { $_->{pid} }
+				grep { $_->{'ppid'} == $$ }
+				@{ Proc::ProcessTable->new->table }; 
+	
+			die "Alarm rang for $dist_basename!\n";
+			};
+
 		local $SIG{CHLD} = 'IGNORE';
 		alarm( $config->alarm || 15 );
 		$logger->debug( "Examining $dist_basename" );
