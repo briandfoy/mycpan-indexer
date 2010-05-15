@@ -54,7 +54,8 @@ sub do_interface
 		),
 		"\n";
 
-	print 'Processing ' . @{ $self->get_note('queue') } . " distributions\n";
+	my $total = @{ $self->get_note('queue') };
+	print "Processing $total distributions\n";
 	print "One + = 1 distribution\n";
 
 	my $count = 0;
@@ -78,7 +79,7 @@ sub do_interface
 		$method = 'success_tick';
 
 		print $self->$method();
-		print "\n" unless ++$count % 70;
+		printf "\n[%6d/%6d]", $count, $total unless ++$count % 70;
 
 		}
 	print "\n";
