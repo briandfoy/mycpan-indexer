@@ -28,6 +28,7 @@ use Cwd;
 use Data::Dumper;
 use File::Basename;
 use File::Path;
+use File::Spec::Functions qw(catfile);
 use Log::Log4perl;
 use Probe::Perl;
 
@@ -115,6 +116,7 @@ sub examine_dist_steps
 		[ 'unpack_dist',        "Could not unpack distribution!",    1 ],
 		[ 'find_dist_dir',      "Did not find distro directory!",    1 ],
 		[ 'get_file_list',      'Could not get file list',           1 ],
+		[ 'run_build_file',     "Could not run build file!",         0 ],
 		[ 'parse_meta_files',   "Could not parse META.yml!",         0 ],
 		[ 'find_modules',       "Could not find modules!",           1 ],
 		[ 'examine_modules',    "Could not process modules!",        0 ],
@@ -135,17 +137,24 @@ sub examine_dist
 		my( $method, $error_msg, $die_on_error ) = @$tuple;
 		$logger->debug( "Running examine_dist step [$method]" );
 		
-		unless( $self->$method() )
+		local $@;
+		unless( eval { $self->$method() } )
 			{
+			my $at = $@;
 			if( $die_on_error ) # only if failure is fatal
 				{
 				$self->set_run_info( 'fatal_error', $error_msg );
 				$logger->error( "Fatal error, stopping: $error_msg" );
 				return;
 				}
+			elsif( $at )
+				{
+				$logger->error( "Program error! stopping: $at" );
+				return;
+				}
 			else
 				{
-				$logger->error( $error_msg );
+				$logger->error( $error_msg . " [" . $self->dist_info( 'dist_basename' ) . "]" );
 				}
 			}
 		}
@@ -548,6 +557,7 @@ sub get_file_list
 	$logger->trace( sub { get_caller_info } );
 
 	$logger->debug( "Cwd is " . cwd() );
+	$logger->info( "Cwd is " . cwd() );
 
 	unless( -e 'Makefile.PL' or -e 'Build.PL' )
 		{
@@ -621,9 +631,9 @@ sub get_blib_file_list
 	{
 	$logger->trace( sub { get_caller_info } );
 
-	unless( -d 'blib/lib' )
+	unless( -d catfile( qw(blib lib) ) )
 		{
-		$logger->error( "No blib/lib found!" );
+		$logger->error( "No blib/lib found for " . $_[0]->dist_info( 'dist_basename' ) );
 		$_[0]->set_dist_info( 'blib', [] );
 
 		return;
@@ -814,16 +824,28 @@ sub parse_meta_files
 	{
 	$logger->trace( sub { get_caller_info } );
 
-	if( -e 'META.yml'  )
+	$logger->debug( 'Parsing META.yml for ' . $_[0]->dist_info( 'dist_basename' ) );
+	$logger->debug( 'Working directory is ' . cwd() );
+	
+	my $generated_meta_file = eval{ $_[0]->make_meta_file };
+	$logger->error( $@ ) if $@;
+	$logger->debug( "generated META is file $generated_meta_file" );
+	
+	my( $meta_file ) = grep { -e } ( 'META.yml', $generated_meta_file );
+	$logger->info( "Using META file $meta_file for " . $_[0]->dist_info( 'dist_basename' ) );
+	$_[0]->set_dist_info( 'meta_file', $meta_file );
+	$_[0]->set_dist_info( 'generated_meta_file', $generated_meta_file );
+	
+	if( defined $meta_file )
 		{
 		require YAML;
-		my $yaml = YAML::LoadFile( 'META.yml' );
+		my $yaml = YAML::LoadFile( $meta_file );
 		$_[0]->set_dist_info( 'META.yml', $yaml );
 		return $yaml;
 		}
 	else
 		{
-		$logger->info( "Did not find a META.yml" );
+		$logger->info( "Did not find a META.yml for " . $_[0]->dist_info( 'dist_basename' ) );
 		}
 	
 	return;
@@ -919,6 +941,7 @@ sub run_build_file
 	foreach my $method ( qw(
 		choose_build_file setup_build run_build get_blib_file_list ) )
 		{
+		$logger->debug( "Running $method for " . $_[0]->dist_info( 'dist_basename' ) );
 		$_[0]->$method() or return;
 		}
 
@@ -1009,6 +1032,40 @@ sub run_build
 	$_[0]->run_something( $command, 'build_output' );
 	}
 
+=item make_meta_file
+
+Run the build file (Build.PL, Makefile) to create the META.yml file. 
+Run C<setup_build> first.
+
+Sets these items in dist_info:
+	build_meta_output
+	make_meta_file_output
+
+=cut
+
+sub make_meta_file
+	{
+	$logger->trace( sub { get_caller_info } );
+
+	my $file = $_[0]->dist_info( 'build_file' );
+	$logger->debug( "build file in make_meta_file is $file" );
+	unless( $file )
+		{
+		$logger->error( "There's nothing in build_file! Can't try to make the meta files" );
+		return;
+		}
+
+	$_[0]->run_something( "$^X $file", 'make_meta_file_output' );
+
+	my $command = $file eq 'Build.PL' ? "$^X ./Build distmeta" : "make distmeta";
+	$_[0]->run_something( $command, 'build_meta_output' );
+		
+	my @meta_files = glob( "*/META.yml" );	
+	$logger->debug( "Found META.ymls at [@meta_files]" );
+	
+	return $meta_files[0];
+	}
+
 =item run_something( COMMAND, KEY )
 
 Run the shell command and record the output in the dist_info for KEY. This
@@ -1022,8 +1079,7 @@ sub run_something
 	$logger->trace( sub { get_caller_info } );
 
 	my( $self, $command, $info_key ) = @_;
-
-	$logger->debug( "Running $command" );
+	
 	my $output = `$command 2>&1`;
 	$self->set_dist_info( $info_key, $output );
 	}
@@ -1061,7 +1117,7 @@ the hash, including the version and package information.
 
 sub get_modules_info
 	{
-        my $self = shift;
+    my $self = shift;
 	my @file_info = ();
 	foreach my $file ( @{ $self->dist_info( 'modules' ) } )
 		{
