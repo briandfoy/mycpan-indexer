@@ -104,12 +104,8 @@ sub get_task
 
 		$logger->debug( sprintf "Setting alarm for %d seconds", $config->alarm );
 		local $SIG{ALRM} = sub {
-			kill 9,
-				map  { $_->{pid} }
-				grep { $_->{'ppid'} == $$ }
-				@{ Proc::ProcessTable->new->table }; 
-	
-			die "Alarm rang for $dist_basename!\n";
+			$self->_cleanup_children;
+			die "Alarm rang for $dist_basename in process $$!\n";
 			};
 
 		local $SIG{CHLD} = 'IGNORE';
@@ -143,12 +139,26 @@ sub get_task
 
 		$logger->debug( "Worker for $dist_basename done" );
 
+        # some things hang anyway, so just to be careful we'll cleanup
+        # everything here.
+		$self->_cleanup_children; 
+		
 		$info;
 		};
 
 	$coordinator->set_note( 'child_task', $child_task );
 	
 	1;
+	}
+
+sub _cleanup_children
+	{
+	$logger->warn( "Cleaning up after $$" );
+	kill 9,
+		map  { $_->{pid} }
+		grep { $_->{'ppid'} == $$ }
+		@{ Proc::ProcessTable->new->table };
+	return;
 	}
 
 sub _copy_bad_dist
