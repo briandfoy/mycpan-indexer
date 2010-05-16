@@ -147,6 +147,11 @@ sub examine_dist
 				$logger->error( "Fatal error, stopping: $error_msg" );
 				return;
 				}
+			elsif( $at =~ /Alarm rang/i )
+				{
+				$logger->error( $at );
+				return;
+				}
 			elsif( $at )
 				{
 				$logger->error( "Program error! stopping: $at" );
@@ -385,16 +390,45 @@ Sets these items in dist_info:
 
 sub unpack_dist
 	{
+	my $self = shift;
 	$logger->trace( sub { get_caller_info } );
 
 	require Archive::Tar;
 	require Archive::Extract;
-
+	require Archive::Zip;
+	
 	local $Archive::Extract::DEBUG = $logger->is_debug;
 	local $Archive::Extract::WARN  = $logger->is_warn;
 	local $Archive::Tar::WARN      = $Archive::Extract::WARN; # sent in patch for this rt.cpan.org #40472
 	local $Archive::Extract::PREFER_BIN = defined $ENV{PREFER_BIN} ? $ENV{PREFER_BIN} : 0;
 	
+	local *Archive::Tar::_error = sub {
+		my( $archivetar, $error ) = @_;
+		$logger->error( 
+			sprintf "Archive::Tar complained about %s: %s",
+			$self->dist_info( 'dist_basename' ),
+			$error 
+			);
+		$self->set_dist_info( 'unpack_dist_archive_tar_error', $error );
+		
+		$archivetar->{_error}    = $error;
+        $archivetar->{_longmess} = Carp::longmess($error);
+
+		return;
+		};
+	
+	Archive::Zip::setErrorHandler(
+		sub { 
+			my( $error ) = shift;
+			$logger->error( 
+				sprintf "Archive::Zip complained about %s: %s",
+				$self->dist_info( 'dist_basename' ),
+				$error 
+				);
+			$self->set_dist_info( 'unpack_dist_archive_zip_error', $error );
+			}
+		);
+
 	foreach my $var ( qw( DEBUG WARN PREFER_BIN ) )
 		{
 		no strict 'refs';
@@ -402,7 +436,6 @@ sub unpack_dist
 		$logger->debug( qq|\$Archive::Extract::$var is |, ${"Archive::Extract::$var"} );	
 		}
 		
-	my $self = shift;
 	my $dist = $self->dist_info( 'dist_file' );
 	$logger->debug( "Unpacking dist $dist" );
 
