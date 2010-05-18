@@ -64,11 +64,19 @@ sub get_reporter
 			}
 
 		my $out_path = $self->get_report_path( $info );
-
-		open my($fh), ">", $out_path or $logger->fatal( "Could not open $out_path: $!" );
-		print $fh Dump( $info );
-
 		$logger->error( "$out_path is missing!" ) unless -e $out_path;
+
+		open my($fh), ">:utf8", $out_path or $logger->fatal( "Could not open $out_path: $!" );
+		
+		{
+		my $dist = $self->dist_info( 'dist_basename' );
+		
+		local $SIG{WARN} = sub {
+			$logger->warn( "Error writing to YAML output for $dist: @_" );
+			};
+		
+		print $fh Dump( $info );
+		}
 
 		1;
 		};
