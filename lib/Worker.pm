@@ -154,10 +154,19 @@ sub get_task
 sub _cleanup_children
 	{
 	$logger->warn( "Cleaning up after $$" );
-	kill 9,
-		map  { $_->{pid} }
+	
+	my %children =
+		map  { $_->{pid}, 1 }
 		grep { $_->{'ppid'} == $$ }
 		@{ Proc::ProcessTable->new->table };
+		
+	my @grandchildren =
+		map  { $_->{pid} }
+		grep { exists $children{ $_->{'ppid'} } }
+		@{ Proc::ProcessTable->new->table };
+
+	kill 9, keys %children, @grandchildren;
+	
 	return;
 	}
 
