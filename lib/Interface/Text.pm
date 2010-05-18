@@ -59,9 +59,20 @@ sub do_interface
 	print "One + = 1 distribution\n";
 
 	my $count = 0;
+	my $timer = time;
+	
 	while( 1 )
 		{
 		last if $self->get_note('Finished');
+
+		unless( $count++ % 70 )
+			{
+			my $elapsed = time - $timer;
+			$timer = time;
+			
+			print " $elapsed" unless $count < 70;
+			printf "\n[%6d/%6d]", $count, $total;
+			}
 
 		local $| = 1;
 
@@ -79,7 +90,6 @@ sub do_interface
 		$method = 'success_tick';
 
 		print $self->$method();
-		printf "\n[%6d/%6d]", $count, $total unless ++$count % 70;
 
 		}
 	print "\n";
