@@ -150,6 +150,7 @@ sub examine_dist
 			elsif( $at =~ /Alarm rang/i )
 				{
 				$logger->error( $at );
+				$self->set_run_info( 'alarm_error', $error_msg );
 				return;
 				}
 			elsif( $at )
@@ -409,7 +410,7 @@ sub unpack_dist
 			$self->dist_info( 'dist_basename' ),
 			$error 
 			);
-		$self->set_dist_info( 'unpack_dist_archive_tar_error', $error );
+		$self->set_run_info( 'unpack_dist_archive_tar_error', $error );
 		
 		$archivetar->{_error}    = $error;
         $archivetar->{_longmess} = Carp::longmess($error);
@@ -425,7 +426,7 @@ sub unpack_dist
 				$self->dist_info( 'dist_basename' ),
 				$error 
 				);
-			$self->set_dist_info( 'unpack_dist_archive_zip_error', $error );
+			$self->set_run_info( 'unpack_dist_archive_zip_error', $error );
 			}
 		);
 
@@ -857,7 +858,9 @@ sub parse_meta_files
 	{
 	$logger->trace( sub { get_caller_info } );
 
-	$logger->debug( 'Parsing META.yml for ' . $_[0]->dist_info( 'dist_basename' ) );
+	my $self = shift;
+	
+	$logger->debug( 'Parsing META.yml for ' . $self->dist_info( 'dist_basename' ) );
 	$logger->debug( 'Working directory is ' . cwd() );
 	
 	my $generated_meta_file = eval{ $_[0]->make_meta_file };
@@ -865,20 +868,37 @@ sub parse_meta_files
 	$logger->debug( "generated META is file $generated_meta_file" );
 	
 	my( $meta_file ) = grep { -e } ( 'META.yml', $generated_meta_file );
-	$logger->info( "Using META file $meta_file for " . $_[0]->dist_info( 'dist_basename' ) );
-	$_[0]->set_dist_info( 'meta_file', $meta_file );
-	$_[0]->set_dist_info( 'generated_meta_file', $generated_meta_file );
+	$logger->info( "Using META file $meta_file for " . $self->dist_info( 'dist_basename' ) );
+	$self->set_dist_info( 'meta_file', $meta_file );
+	$self->set_dist_info( 'generated_meta_file', $generated_meta_file );
 	
 	if( defined $meta_file )
 		{
+		local *YAML::Base::die = sub {
+			my $yaml = shift;
+			require YAML::Error;
+		
+			my $code  = shift || 'unknown error';
+			my $error = YAML::Error->new(code => $code);
+			$error->line($self->line) if $yaml->can('line');
+			$error->document($self->document) if $yaml->can('document');
+			$error->arguments([@_]);
+			$error->type('Error');
+
+			my $warning = $error->format_message;
+			
+			$logger->warn( $warning );
+			$self->set_run_info( 'parse_meta_files_yaml_error', $warning );
+			};
+			
 		require YAML;
 		my $yaml = YAML::LoadFile( $meta_file );
-		$_[0]->set_dist_info( 'META.yml', $yaml );
+		$self->set_dist_info( 'META.yml', $yaml );
 		return $yaml;
 		}
 	else
 		{
-		$logger->info( "Did not find a META.yml for " . $_[0]->dist_info( 'dist_basename' ) );
+		$logger->info( "Did not find a META.yml for " . $self->dist_info( 'dist_basename' ) );
 		}
 	
 	return;
