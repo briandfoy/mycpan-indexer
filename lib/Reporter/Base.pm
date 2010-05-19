@@ -198,7 +198,8 @@ sub check_for_previous_successful_result
 
 =item check_for_previous_error_result( $dist )
 
-Returns true if there was an error report for $dist.
+Return the report filename if there was an error report for $dist,
+and false otherwise.
 
 =cut
 
@@ -206,7 +207,7 @@ sub check_for_previous_error_result
 	{
 	my( $self, $dist ) = @_;
 	my $path = $self->get_error_report_path( $dist );
-	return -e $path ? 1 : 0;;
+	return -e $path ? basename( $path ) : ();
 	}
 
 =back
