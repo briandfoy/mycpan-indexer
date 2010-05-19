@@ -9,7 +9,7 @@ $VERSION = '1.28_10';
 use File::Basename;
 use File::Find;
 use File::Find::Closures  qw( find_by_regex );
-use File::Path            qw(mkpath);
+use File::Path            qw( mkpath );
 use File::Spec::Functions qw( catfile rel2abs );
 use Log::Log4perl;
 
