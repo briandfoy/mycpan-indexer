@@ -34,11 +34,17 @@ WriteMakefile(
 		'YAML'                             => '0',
 		'CPAN::PackageDetails'             => '0.21',
 		'CPAN::Checksums'                  => '0',
+		'YAML'                             => '0',
 		},
 
 	'PM'           => {
-		'lib/Reporter/Base.pm'       => '$(INST_LIBDIR)/Indexer/Reporter/Base.pm',
-		'lib/Reporter/AsYAML.pm'     => '$(INST_LIBDIR)/Indexer/Reporter/AsYAML.pm',
+		'lib/Collator/Null.pm'       => '$(INST_LIBDIR)/Indexer/Collator/Null.pm',
+
+		'lib/Dispatcher/Parallel.pm' => '$(INST_LIBDIR)/Indexer/Dispatcher/Parallel.pm',
+		'lib/Dispatcher/Serial.pm'   => '$(INST_LIBDIR)/Indexer/Dispatcher/Serial.pm',
+
+		'lib/Indexers/TestCensus.pm'   => '$(INST_LIBDIR)/Indexer/TestCensus.pm',
+		'lib/Indexers/BackPANstats.pm' => '$(INST_LIBDIR)/Indexer/BackPANstats.pm',
 
 		'lib/Interface/Curses.pm'    => '$(INST_LIBDIR)/Indexer/Interface/Curses.pm',
 		'lib/Interface/Null.pm'      => '$(INST_LIBDIR)/Indexer/Interface/Null.pm',
@@ -46,17 +52,16 @@ WriteMakefile(
 		'lib/Interface/Text.pm'      => '$(INST_LIBDIR)/Indexer/Interface/Text.pm',
 		'lib/Interface/Tk.pm'        => '$(INST_LIBDIR)/Indexer/Interface/Tk.pm',
 
-		'lib/Dispatcher/Parallel.pm' => '$(INST_LIBDIR)/Indexer/Dispatcher/Parallel.pm',
-		'lib/Dispatcher/Serial.pm'   => '$(INST_LIBDIR)/Indexer/Dispatcher/Serial.pm',
+		'lib/Queue.pm'               => '$(INST_LIBDIR)/Indexer/Queue.pm',
+		'lib/Queue/ErrorReports.pm'  => '$(INST_LIBDIR)/Indexer/Queue/ErrorReports.pm',
+		'lib/Queue/NewFiles.pm'      => '$(INST_LIBDIR)/Indexer/Queue/NewFiles.pm',
+		'lib/Queue/FromList.pm'      => '$(INST_LIBDIR)/Indexer/Queue/FromList.pm',
 
-		'lib/Collator/Null.pm'       => '$(INST_LIBDIR)/Indexer/Collator/Null.pm',
-
-		'lib/Indexers/TestCensus.pm' => '$(INST_LIBDIR)/Indexer/TestCensus.pm',
-		'lib/Indexers/BackPANstats.pm' => '$(INST_LIBDIR)/Indexer/BackPANstats.pm',
+		'lib/Reporter/Base.pm'       => '$(INST_LIBDIR)/Indexer/Reporter/Base.pm',
+		'lib/Reporter/AsYAML.pm'     => '$(INST_LIBDIR)/Indexer/Reporter/AsYAML.pm',
 
 		'lib/Indexer.pm'             => '$(INST_LIBDIR)/Indexer.pm',
 		'lib/NullTester.pm'          => '$(INST_LIBDIR)/Indexer/NullTester.pm',
-		'lib/Queue.pm'               => '$(INST_LIBDIR)/Indexer/Queue.pm',
 		'lib/Tutorial.pm'            => '$(INST_LIBDIR)/Indexer/Tutorial.pm',
 		'lib/Worker.pm'              => '$(INST_LIBDIR)/Indexer/Worker.pm',
 		'lib/Coordinator.pm'         => '$(INST_LIBDIR)/Indexer/Coordinator.pm',
