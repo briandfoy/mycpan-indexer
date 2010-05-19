@@ -79,16 +79,34 @@ sub get_task
 			skipped => 1, 
 			}, $Indexer unless $basename;
 
-		my $error = $coordinator->get_reporter->check_for_previous_error_result( $dist );
-		$logger->debug( "Error report returned $error" );
-		$logger->debug( "Found error report for $dist_basename" ) if $error;
-		return bless {
-			dist_info => {
-				dist_path    => $dist,
-                                dist_basename => $dist_basename,
-                                },
-                        skip_error => 1,
-                        }, $Indexer if $error;
+		my $previous_error_basename = $coordinator->get_reporter->check_for_previous_error_result( $dist );
+		$logger->debug( "Error report returned $previous_error_basename" );
+		$logger->debug( "Found error report for $dist_basename" ) if $previous_error_basename;
+		
+		# we used to handle this by just deleting all the old error
+		# reports in setup_dirs over in MyCPAN::App::BackPAN::Indexer
+		# deleting all the reports before we got started made it 
+		# impossible to get a list of error reports to retry
+		if( $previous_error_basename and ! $config->retry_errors )
+			{
+			return bless {
+				dist_info => {
+					dist_path    => $dist,
+									dist_basename => $dist_basename,
+									},
+							skip_error => 1,
+							};
+			}
+		elsif( $previous_error_basename and $config->retry_errors )
+			{
+			# if we are re-trying errors and there is already a report
+			# unlink the previous report
+			my $report_full_path =  $self->get_error_report_path( $dist );
+			
+			$logger->debug( "Trying to unlink $report_full_path" );
+			my $rc = unlink $report_full_path;
+			$logger->debug( ($rc ? 'unlinked ' : 'failed to unlink ') . $report_full_path );		
+			}
 
 		$logger->info( "Starting Worker for $dist_basename\n" );
 

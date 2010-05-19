@@ -423,10 +423,7 @@ sub setup_dirs # XXX big ugly mess to clean up
 
 	if( $config->retry_errors )
 		{
-		my $glob = catfile( $config->get( 'error_report_subdir' ), "*.yml" );
-		$glob =~ s/( +)/(\\$1)/g;
-
-		unlink glob( $glob );
+		$logger->warn( 'retry_errors no longer deletes error reports, but the worker should skip them if the setting is false' );
 		}
 	}
 
