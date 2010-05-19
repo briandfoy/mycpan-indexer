@@ -79,7 +79,7 @@ sub get_task
 			skipped => 1, 
 			}, $Indexer unless $basename;
 
-		my $previous_error_basename = $coordinator->get_reporter->check_for_previous_error_result( $dist );
+		my $previous_error_basename = $coordinator->get_reporter->check_for_previous_error_result( $dist ) || '';
 		$logger->debug( "Error report returned $previous_error_basename" );
 		$logger->debug( "Found error report for $dist_basename" ) if $previous_error_basename;
 		
