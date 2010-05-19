@@ -31,6 +31,8 @@ indexing errors by extracting the distribution path from the error
 report. If the distribution isn't in the same place it was during
 the original indexing, it won't be in the queue.
 
+=over
+
 =cut
 
 sub _get_file_list
