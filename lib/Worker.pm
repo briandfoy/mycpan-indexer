@@ -101,7 +101,7 @@ sub get_task
 			{
 			# if we are re-trying errors and there is already a report
 			# unlink the previous report
-			my $report_full_path =  $self->get_error_report_path( $dist );
+			my $report_full_path =  $coordinator->get_reporter->get_error_report_path( $dist );
 			
 			$logger->debug( "Trying to unlink $report_full_path" );
 			my $rc = unlink $report_full_path;

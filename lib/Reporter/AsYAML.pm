@@ -71,7 +71,7 @@ sub get_reporter
 		{
 		my $dist = $info->{dist_info}{dist_basename};
 		
-		local $SIG{WARN} = sub {
+		local $SIG{__WARN__} = sub {
 			$logger->warn( "Error writing to YAML output for $dist: @_" );
 			};
 		
