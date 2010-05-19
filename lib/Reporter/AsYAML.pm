@@ -69,7 +69,7 @@ sub get_reporter
 		open my($fh), ">:utf8", $out_path or $logger->fatal( "Could not open $out_path: $!" );
 		
 		{
-		my $dist = $self->dist_info( 'dist_basename' );
+		my $dist = $info->{dist_info}{dist_basename};
 		
 		local $SIG{WARN} = sub {
 			$logger->warn( "Error writing to YAML output for $dist: @_" );
