@@ -351,9 +351,9 @@ sub setup_logging
 sub components
 	{
 	(
+	[ qw( reporter   MyCPAN::Indexer::Reporter::AsYAML     get_reporter   ) ],
 	[ qw( queue      MyCPAN::Indexer::Queue                get_queue      ) ],
 	[ qw( dispatcher MyCPAN::Indexer::Dispatcher::Parallel get_dispatcher ) ],
-	[ qw( reporter   MyCPAN::Indexer::Reporter::AsYAML     get_reporter   ) ],
 	[ qw( worker     MyCPAN::Indexer::Worker               get_task       ) ],
 	[ qw( collator   MyCPAN::Indexer::Collator::Null       get_collator   ) ],
 	[ qw( interface  MyCPAN::Indexer::Interface::Curses    do_interface   ) ],
