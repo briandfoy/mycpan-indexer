@@ -4,7 +4,8 @@ use warnings;
 
 use vars qw($VERSION);
 
-use Carp qw(croak);
+use Carp         qw( croak );
+use Scalar::Util qw( weaken );
 
 $VERSION = '1.28_10';
 
@@ -126,7 +127,11 @@ sub set_coordinator
 	croak "Coordinator object is missing these methods: @missing"
 		if @missing;
 		
-	$self->{_coordinator} = $coordinator
+	$self->{_coordinator} = $coordinator;
+
+	weaken( $self->{_coordinator} );
+	
+	return $self->{_coordinator};
 	}
 	
 }
