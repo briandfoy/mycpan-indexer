@@ -1465,17 +1465,20 @@ sub get_caller_info
 	return join " : ", $package, $filename, $line, $subroutine;
 	}
 
-=item get_md5
+=item get_md5_of_file_contents
 
 =cut
 
-sub get_md5
+sub get_md5_of_file_contents
 	{
 	require Digest::MD5;
 
 	my $context = Digest::MD5->new;
-	$context->add( $_[1] );
-	$context->hexdigest;
+	
+	open my $fh, '<', $file or return;
+	
+	$context->addfile( $fh );
+	lc $context->hexdigest;
 	}
 
 =item getppid
