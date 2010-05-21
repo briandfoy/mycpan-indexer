@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use vars qw($VERSION $Starting_dir);
+use vars qw($VERSION $Starting_dir $logger);
 
 use Carp;
 use Cwd qw(cwd);
@@ -19,15 +19,6 @@ use Log::Log4perl;
 $VERSION = '1.28_10';
 
 $|++;
-
-my $logger = Log::Log4perl->get_logger( 'backpan_indexer' );
-
-#$SIG{__DIE__} = \&Carp::confess;
-
-# If we catch an INT we're probably in one of the temporary directories
-# and have some files open. To clean up the temp dirs, we have to move 
-# above them, so change back to the original directory.
-$SIG{INT} = sub { print "Caught SIGINT\n"; chdir $Starting_dir; exit() };
 
 __PACKAGE__->activate( @ARGV ) unless caller;
 
@@ -227,7 +218,8 @@ sub activate_steps
 	setup_coordinator 
 	setup_environment 
 	handle_config
-	setup_logging 
+	setup_logging
+	disable_the_missiles
 	setup_dirs 
 	run_components 
 	activate_end
@@ -346,6 +338,38 @@ sub setup_logging
 		
 		Log::Log4perl->easy_init( $hash{$level} );
 		}
+		
+	$logger = Log::Log4perl->get_logger( 'backpan_indexer' );
+	}
+
+sub disable_the_missiles
+	{
+	my( $self ) = @_;
+
+	$self->install_int_handler;
+	$self->install_warn_handler;
+	}
+	
+sub install_int_handler
+	{
+	#$SIG{__DIE__} = \&Carp::confess;
+	
+	# If we catch an INT we're probably in one of the temporary directories
+	# and have some files open. To clean up the temp dirs, we have to move 
+	# above them, so change back to the original directory.
+	$SIG{INT} = sub { 
+		$logger->error("Caught SIGINT in $$" ); 
+		chdir $Starting_dir; 
+		exit() 
+		};
+	}
+
+
+sub install_warn_handler
+	{
+	$SIG{__WARN__} = sub { 
+		$logger->warn( @_ );
+		};
 	}
 
 sub components
