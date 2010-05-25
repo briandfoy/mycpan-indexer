@@ -14,7 +14,7 @@ BEGIN {
 
 =head1 NAME
 
-MyCPAN::Indexer::Queue::ErrorReports - Try to index distributions listed in a file
+MyCPAN::Indexer::Queue::FromList - Try to index distributions listed in a file
 
 =head1 SYNOPSIS
 
@@ -85,7 +85,7 @@ brian d foy, C<< <bdfoy@cpan.org> >>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2008-2010, brian d foy, All Rights Reserved.
+Copyright (c) 2010, brian d foy, All Rights Reserved.
 
 You may redistribute this under the same terms as Perl itself.
 
