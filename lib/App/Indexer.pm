@@ -289,14 +289,21 @@ sub setup_environment
 	{
 	my %pass_through = map { $_, 1 } qw( 
 		DISPLAY USER HOME PWD TERM 
-		), grep { /^(?:D|MY)CPAN_/ } keys %ENV;
+		), grep { /\A(?:D|MYC)PAN_/ } keys %ENV;
 
 	foreach my $key ( keys %ENV )
 		{
 		delete $ENV{$key} unless exists $pass_through{$key}
 		}
 
+	# Testers conventions
 	$ENV{AUTOMATED_TESTING}++;
+
+	# Makemaker
+	$ENV{PERL_MM_USE_DEFAULT}++; 
+
+	# Module::Install
+	$ENV{PERL_EXTUTILS_AUTOINSTALL} = '--skipdeps';
 	}
 
 sub setup_logging
