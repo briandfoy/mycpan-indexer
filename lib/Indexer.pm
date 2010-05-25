@@ -322,7 +322,7 @@ sub setup_dist_info
 	$self->set_dist_info( 'dist_size',     -s $dist                );
 	$self->set_dist_info( 'dist_basename', basename($dist)         );
 	$self->set_dist_info( 'dist_date',    (stat($dist))[9]         );
-	$self->set_dist_info( 'dist_md5',     $self->get_md5( $dist )  );
+	$self->set_dist_info( 'dist_md5',     $self->get_md5_of_file_contents( $dist )  );
 	$logger->debug( "dist size " . $self->dist_info( 'dist_size' ) .
 		" dist date " . $self->dist_info( 'dist_date' )
 		);
@@ -634,7 +634,7 @@ sub get_file_info
 	my $hash = { name => $file };
 
 	# file digest
-	$hash->{md5} = $self->get_md5( $file );
+	$hash->{md5} = $self->get_md5_of_file_contents( $file );
 
 	# mtime
 	$hash->{mtime} = ( stat $file )[9];
@@ -1145,7 +1145,7 @@ to do. Each anonymous array holds:
 	0. method to call
 	1. description of technique
 
-The default list includes C<extract_module_namespaces>, C<exract_module_version>,
+The default list includes C<extract_module_namespaces>, C<extract_module_version>,
 and C<extract_module_dependencies>. If you don't like that list, you can prune
 or expand it in a subclass.
 
@@ -1471,6 +1471,8 @@ sub get_caller_info
 
 sub get_md5_of_file_contents
 	{
+	my( $self, $file ) = @_;
+	
 	require Digest::MD5;
 
 	my $context = Digest::MD5->new;
