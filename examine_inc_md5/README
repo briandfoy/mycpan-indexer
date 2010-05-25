@@ -1,0 +1,7 @@
+The examine_inc_md5 directory holds the extra stuff to compare the
+results of a BackPAN index and your @INC.
+
+	* extract the MD5 values for all the files
+	* create a SQLite database
+	* import the into a database
+	* iterate through @INC looking for matching digests
