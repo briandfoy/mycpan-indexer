@@ -556,9 +556,9 @@ sub find_dist_dir
 
 	# we want the shortest path
 	my @found = sort { length $a <=> length $b } $reporter->();
-	$logger->debug( "Found files @found" );
+	$logger->debug( "Found files [@found]" );
 
-	$logger->debug( "Found dist file at $found[0]" );
+	$logger->debug( "Found dist file at [$found[0]]" );
 
 	unless( $found[0] )
 		{
@@ -1133,7 +1133,15 @@ sub run_something
 
 	my( $self, $command, $info_key ) = @_;
 	
-	my $output = `$command 2>&1`;
+	require IPC::Open2;
+	my $pid = open2( my( $out_fh, $in_fh ), $command );
+	$logger->debug( "command [$command] starts as pid $pid" );
+	
+	close $in_fh;
+	
+	my $output = do { local $/; <$out_fh> };
+	$logger->debug( "command [$command] outputs [$output]" );
+	
 	$self->set_dist_info( $info_key, $output );
 	}
 
