@@ -32,7 +32,7 @@ foreach my $dir ( @dirs )
 
 		if( $yaml->{run_info}{indexer_id} =~ /joe\@example\.com/ )
 			{
-			$yaml->{run_info}{indexer_id} = 'brian d foy <brian.d.foy@gmail.com';
+			$yaml->{run_info}{indexer_id} = 'brian d foy <brian.d.foy@gmail.com>';
 			}
 
 		my $dist_file = $yaml->{dist_info}{dist_file};
