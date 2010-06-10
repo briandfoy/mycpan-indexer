@@ -30,6 +30,11 @@ foreach my $dir ( @dirs )
 			next FILE;
 			}
 
+		if( $yaml->{run_info}{indexer_id} =~ /joe\@example\.com/ )
+			{
+			$yaml->{run_info}{indexer_id} = 'brian d foy <brian.d.foy@gmail.com';
+			}
+
 		my $dist_file = $yaml->{dist_info}{dist_file};
 		unless( defined $yaml->{dist_info}{dist_file} )
 			{
@@ -87,7 +92,6 @@ HEADER
 				);
 			}
 
-		last if $count++ > 15;
 		}
 
 	}
