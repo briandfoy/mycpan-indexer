@@ -64,7 +64,6 @@ sub get_reporter
 			}
 
 		my $out_path = $self->get_report_path( $info );
-		$logger->error( "$out_path is missing!" ) unless -e $out_path;
 
 		open my($fh), ">:utf8", $out_path or $logger->fatal( "Could not open $out_path: $!" );
 		
@@ -77,6 +76,7 @@ sub get_reporter
 		
 		print $fh Dump( $info );
 		}
+		$logger->error( "$out_path is missing!" ) unless -e $out_path;
 
 		1;
 		};
