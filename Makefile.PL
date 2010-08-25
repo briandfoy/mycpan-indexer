@@ -55,7 +55,7 @@ WriteMakefile(
 		'YAML'                             => '0',
 		'CPAN::PackageDetails'             => '0.21',
 		'CPAN::Checksums'                  => '0',
-		'YAML'                             => '0',
+		'YAML::XS'                         => '0',
 		},
 
 	'PM'           => {
@@ -84,11 +84,12 @@ WriteMakefile(
 		'lib/Indexer.pm'             => '$(INST_LIBDIR)/Indexer.pm',
 		'lib/NullTester.pm'          => '$(INST_LIBDIR)/Indexer/NullTester.pm',
 		'lib/Tutorial.pm'            => '$(INST_LIBDIR)/Indexer/Tutorial.pm',
-		'lib/Worker.pm'              => '$(INST_LIBDIR)/Indexer/Worker.pm',
 		'lib/Coordinator.pm'         => '$(INST_LIBDIR)/Indexer/Coordinator.pm',
 		'lib/Component.pm'           => '$(INST_LIBDIR)/Indexer/Component.pm',
 		'lib/Notes.pm'               => '$(INST_LIBDIR)/Indexer/Notes.pm',
-		
+
+		'lib/Worker.pm'              => '$(INST_LIBDIR)/Indexer/Worker.pm',
+		'lib/Worker/JustShowDist.pm' => '$(INST_LIBDIR)/Indexer/Worker/JustShowDist.pm',	
 		'lib/App/Indexer.pm'         => '$(INST_LIBDIR)/App/BackPAN/Indexer.pm',
 		},
 

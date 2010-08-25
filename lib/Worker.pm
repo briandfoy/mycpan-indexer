@@ -89,13 +89,14 @@ sub get_task
 		# impossible to get a list of error reports to retry
 		if( $previous_error_basename and ! $config->retry_errors )
 			{
+			$logger->debug( "By config, skipping $dist because I'm not retrying errors" );
 			return bless {
 				dist_info => {
 					dist_path    => $dist,
-									dist_basename => $dist_basename,
-									},
-							skip_error => 1,
-							};
+					dist_basename => $dist_basename,
+					},
+				skip_error => 1,
+				};
 			}
 		elsif( $previous_error_basename and $config->retry_errors )
 			{

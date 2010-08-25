@@ -10,7 +10,7 @@ use Carp;
 use File::Basename;
 use File::Spec::Functions qw(catfile);
 use Log::Log4perl;
-use YAML;
+use YAML::XS qw(Dump);
 
 BEGIN {
 	$logger = Log::Log4perl->get_logger( 'Reporter' );
