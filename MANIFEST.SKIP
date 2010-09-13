@@ -40,3 +40,4 @@ scripts/
 examine_inc_md5/
 examples/extract_errors.pl
 extra_reports_creator/create_extra_reports.pl
+sub-projects/
