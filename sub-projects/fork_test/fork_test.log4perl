@@ -1,0 +1,29 @@
+# trace debug info warn error fatal
+log4perl.rootLogger               =    DEBUG, File
+log4perl.logger.backpan_indexer   =    DEBUG, File
+log4perl.logger.Indexer           =    DEBUG, File
+log4perl.logger.Worker            =    ERROR, Null
+log4perl.logger.Interface         =    ERROR, Null
+log4perl.logger.Dispatcher        =    ERROR, Null
+log4perl.logger.Queue             =    WARN, File
+log4perl.logger.Reporter          =    DEBUG, File
+
+
+log4perl.appender.Screen            = Log::Log4perl::Appender::Screen
+log4perl.appender.Screen.stderr     = 0
+log4perl.appender.Screen.layout     = PatternLayout
+log4perl.appender.Screen.layout.ConversionPattern=[%p|%c|%P|l%L] %m%n
+
+log4perl.appender.File           = Log::Log4perl::Appender::File
+log4perl.appender.File.autoflush = 1
+log4perl.appender.File.filename  = backpan_indexer.log
+log4perl.appender.File.mode      = append
+log4perl.appender.File.layout     = PatternLayout
+log4perl.appender.File.layout.ConversionPattern=[%p|%c|%P|l%L] %m%n
+
+log4perl.appender.Null           = Log::Log4perl::Appender::File
+log4perl.appender.Null.autoflush = 1
+log4perl.appender.Null.filename  = /dev/null
+log4perl.appender.Null.mode      = append
+log4perl.appender.Null.layout     = PatternLayout
+log4perl.appender.Null.layout.ConversionPattern=[%p|%c|%P|l%L] %m%n

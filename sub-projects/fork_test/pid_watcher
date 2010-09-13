@@ -1,0 +1,37 @@
+#!perl
+use strict;
+use warnings;
+
+use Data::Dumper;
+
+my %pids;
+
+while( 1 )
+	{
+	open my($ps), 'ps |' or die "Could not open ps pipe\n";
+	
+	my %seen;
+	while( <$ps> )
+		{
+		my( $pid, undef, $state, $time, $command ) = split /\s+/, $_, 5;
+		next unless $pid;
+		$seen{$pid}++;
+		$pids{$pid}++;
+		}
+	
+	foreach my $pid ( keys %pids )
+		{
+		delete $pids{$pid} unless exists $seen{$pid};
+		}
+		
+	my $active_pids  = keys %seen;
+	my $stalled_pids = grep { $pids{$_} > 2 } keys %pids;
+	
+	printf "[%s] active:%d stalled:%d %s\n",
+		scalar localtime,
+		$active_pids,
+		$stalled_pids,
+		join " ", sort { $a <=> $b } grep { $pids{$_} > 2 } keys %pids;
+	
+	sleep 10;
+	}
