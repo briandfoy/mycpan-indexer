@@ -1167,7 +1167,7 @@ sub run_build_target
 	$self->run_build;
 	
 	my $command = join ' ',
-		$self->get_dist_info( 'build_system_guesser' )->preferred_build_command,
+		$self->dist_info( 'build_system_guesser' )->preferred_build_command,
 		$target;
 
 	$self->run_something( $command, 'build_target_${target}_output'  );		
