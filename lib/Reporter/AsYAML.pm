@@ -10,6 +10,7 @@ use Carp;
 use File::Basename;
 use File::Spec::Functions qw(catfile);
 use Log::Log4perl;
+use Clone qw(clone);
 use YAML::XS qw(Dump);
 
 BEGIN {
@@ -68,13 +69,22 @@ sub get_reporter
 		open my($fh), ">:utf8", $out_path or $logger->fatal( "Could not open $out_path: $!" );
 		
 		{
-		my $dist = $info->{dist_info}{dist_basename};
+		# now that indexer is a component, it has references to all the other
+		# objects, making for a big dump. We don't want the keys starting
+		# with _
+		# Storable doesn't work because it can't handle the CODE refs
+		my $clone = clone( $info ); # hack until we get an info class
+		my $dist = $clone->{dist_info}{dist_basename};
 		
 		local $SIG{__WARN__} = sub {
 			$logger->warn( "Error writing to YAML output for $dist: @_" );
 			};
 		
-		print $fh Dump( $info );
+		foreach my $key ( keys %$clone ) {
+			delete $clone->{$key} if $key =~ /^_/;
+			}
+
+		print $fh Dump( $clone );
 		}
 		$logger->error( "$out_path is missing!" ) unless -e $out_path;
 
