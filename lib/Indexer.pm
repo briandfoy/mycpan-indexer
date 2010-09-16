@@ -174,7 +174,7 @@ sub examine_dist
 	$self->set_run_info( 'examine_time',
 		$self->run_info('examine_end_time') - $self->run_info('examine_start_time')
 		);
-print STDERR "Returning 1 at examine dists\n";
+
 	return 1;
 	}
 
@@ -376,6 +376,9 @@ sub dist_info
 
 	my( $self, $key ) = @_;
 
+	$logger->warn( "There is $key in dist_info"  )
+		unless exists $self->{dist_info}{$key};
+	
 	$logger->debug( "dist info for $key is " . $self->{dist_info}{$key} );
 	$self->{dist_info}{$key};
 	}
@@ -1033,7 +1036,6 @@ sub choose_build_file
 		dist_dir => $_[0]->dist_info( 'dist_dir' )
 		);
 
-
 	$_[0]->set_dist_info(
 		'build_system_guess',
 		$guesser
@@ -1087,7 +1089,9 @@ sub run_build
 	{
 	$logger->trace( sub { get_caller_info } );
 
-	my $build_command = $_[0]->dist_info( 'build_system_guess' )->preferred_build_command;
+	my $guesser = $_[0]->dist_info( 'build_system_guess' );
+	
+	my $build_command = $guesser->preferred_build_command;
 	$_[0]->run_something( $build_command, 'build_output' );
 	
 	return 1;
@@ -1166,8 +1170,10 @@ sub run_build_target
 	
 	$self->run_build;
 	
+	my $guesser = $self->dist_info( 'build_system_guess' );
+	
 	my $command = join ' ',
-		$self->dist_info( 'build_system_guesser' )->preferred_build_command,
+		$guesser->preferred_build_command,
 		$target;
 
 	$self->run_something( $command, 'build_target_${target}_output'  );		
