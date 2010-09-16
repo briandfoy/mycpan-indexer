@@ -76,9 +76,7 @@ sub get_task
 
 		$logger->info( "Child [$$] processing $dist\n" );
 
-		my $Indexer = $Config->indexer_class || 'MyCPAN::Indexer';
-
-		eval "require $Indexer" or die;
+		my $indexer = $self->get_coordinator->get_component( 'indexer' );
 
 		unless( chdir $Config->temp_dir )
 			{
@@ -88,7 +86,7 @@ sub get_task
 
 		local $SIG{ALRM} = sub { die "alarm\n" };
 		alarm( $Config->alarm || 15 );
-		my $info = eval { $Indexer->run( $dist ) };
+		my $info = eval { $indexer->run( $dist ) };
 
 		unless( defined $info )
 			{

@@ -37,6 +37,18 @@ on the dispatcher_class.
 
 =over 4
 
+=item Indexer class: get_indexer( HASH_REF )
+
+C<get_indexer> adds a C<indexer_callback> key to HASH_REF. The value of
+C<indexer_callback> is a no-op subroutine.
+
+The C<run> subroutine is a no-op too.
+
+=cut
+
+sub get_indexer { $_[0]->set_note( 'indexer_callback', sub { 1 } ) }
+sub run         { 1 }
+
 =item Queue class: get_queue( HASH_REF )
 
 C<get_queue> adds a C<queue> key to HASH_REF. The value of

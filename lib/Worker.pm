@@ -59,11 +59,11 @@ sub get_task
 
 	my $coordinator = $self->get_coordinator;
 	
-	my $Indexer = $config->indexer_class || 'MyCPAN::Indexer';
+	my $indexer = $coordinator->get_component( 'indexer' );
 
 	$logger->debug( "Worker class is " . __PACKAGE__ );
-	$logger->debug( "Indexer class is $Indexer" );
-
+	$logger->debug( "Indexer class is " . $indexer->class );
+	
 	my $child_task = sub {
 		my $dist = shift;
 
@@ -77,7 +77,7 @@ sub get_task
 				dist_basename => $dist_basename
 				},
 			skipped => 1, 
-			}, $Indexer unless $basename;
+			}, $indexer->class unless $basename;
 
 		my $previous_error_basename = $coordinator->get_reporter->check_for_previous_error_result( $dist ) || '';
 		$logger->debug( "Error report returned $previous_error_basename" );
@@ -96,7 +96,7 @@ sub get_task
 					dist_basename => $dist_basename,
 					},
 				skip_error => 1,
-				};
+				}, $self->get_config->indexer_class;
 			}
 		elsif( $previous_error_basename and $config->retry_errors )
 			{
@@ -110,8 +110,6 @@ sub get_task
 			}
 
 		$logger->info( "Starting Worker for $dist_basename\n" );
-
-		eval "require $Indexer" or die;
 
 		my $starting_dir = cwd();
 
@@ -130,7 +128,7 @@ sub get_task
 		local $SIG{CHLD} = 'IGNORE';
 		alarm( $config->alarm || 15 );
 		$logger->debug( "Examining $dist_basename" );
-		my $info = eval { $Indexer->run( $dist ) };
+		my $info = eval { $indexer->run( $dist ) };
 		$logger->debug( "Done examining $dist_basename" );
 		my $at = $@; chomp $at;
 		alarm 0;
@@ -140,7 +138,7 @@ sub get_task
 		unless( defined $info )
 			{
 			$logger->error( "Indexing failed for $dist_basename: $at" );
-			$info = bless {}, $Indexer; # XXX TODO make this a real class
+			$info = bless {}, $self->get_config->indexer_class; # XXX TODO make this a real class
 			$info->setup_dist_info( $dist );
 			$info->setup_run_info;
 			$info->set_run_info( qw(completed 0) );

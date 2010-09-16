@@ -44,6 +44,22 @@ __PACKAGE__->run( @ARGV ) unless caller;
 
 =over 4
 
+=item get_indexer()
+
+A stand in for run_components later on.
+
+=cut
+
+sub get_indexer
+	{
+	my( $self ) = @_;	
+	
+	1;
+	}
+
+sub component_type { $_[0]->indexer_type }
+sub class { __PACKAGE__ }
+
 =item setup_run_info
 
 Like C<setup_run_info> in C<MyCPAN::Indexer>, but it remembers fewer

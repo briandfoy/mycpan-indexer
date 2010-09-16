@@ -1,11 +1,10 @@
-#!/usr/bin/perl
-
 package MyCPAN::Indexer;
 use strict;
 
 use warnings;
 no warnings;
 
+use base qw(MyCPAN::Indexer::Component);
 use subs qw(get_caller_info);
 use vars qw($VERSION $logger);
 
@@ -40,6 +39,22 @@ __PACKAGE__->run( @ARGV ) unless caller;
 
 =over 4
 
+=item get_indexer()
+
+A stand in for run_components later on.
+
+=cut
+
+sub get_indexer
+	{
+	my( $self ) = @_;	
+	
+	1;
+	}
+
+sub component_type { $_[0]->indexer_type }
+sub class { __PACKAGE__ }
+
 =item run( DISTS )
 
 Takes a list of distributions and indexes them.
@@ -50,9 +65,7 @@ sub run
 	{
 	$logger->trace( sub { get_caller_info } );
 
-	my( $class, @args ) = @_;
-
-	my $self = $class->new;
+	my( $self, @args ) = @_;
 
 	$self->setup_run_info;
 
@@ -82,15 +95,6 @@ sub run
 
 	$self;
 	}
-
-=item new
-
-Create a new Indexer object. If you call C<run>, this is done for
-you.
-
-=cut
-
-sub new { bless {}, $_[0] }
 
 =item examine_dist
 
@@ -141,6 +145,7 @@ sub examine_dist
 		unless( eval { $self->$method() } )
 			{
 			my $at = $@;
+			print STDERR "AT is $@\n";
 			if( $die_on_error ) # only if failure is fatal
 				{
 				$self->set_run_info( 'fatal_error', $error_msg );
@@ -169,7 +174,7 @@ sub examine_dist
 	$self->set_run_info( 'examine_time',
 		$self->run_info('examine_end_time') - $self->run_info('examine_start_time')
 		);
-
+print STDERR "Returning 1 at examine dists\n";
 	return 1;
 	}
 
@@ -863,7 +868,7 @@ sub parse_meta_files
 	$logger->debug( 'Parsing META.yml for ' . $self->dist_info( 'dist_basename' ) );
 	$logger->debug( 'Working directory is ' . cwd() );
 	
-	my $generated_meta_file = eval{ $_[0]->make_meta_file };
+	my $generated_meta_file = eval{ $self->make_meta_file };
 	$logger->error( $@ ) if $@;
 	$logger->debug( "generated META is file $generated_meta_file" );
 	
@@ -1008,10 +1013,13 @@ sub run_build_file
 
 =item choose_build_file
 
-Guess what the build file for the distribution is, using C<Distribution::Guess::BuildSystem>.
+Guess what the build file for the distribution is, using 
+C<Distribution::Guess::BuildSystem>.
 
 Sets these items in dist_info:
-	build_file
+
+	build_file         - the build file to use
+	build_system_guess - the Distribution::Guess::BuildSystem object
 
 =cut
 
@@ -1025,9 +1033,10 @@ sub choose_build_file
 		dist_dir => $_[0]->dist_info( 'dist_dir' )
 		);
 
+
 	$_[0]->set_dist_info(
 		'build_system_guess',
-		$guesser->just_give_me_a_hash
+		$guesser
 		);
 
 	my $file = eval { $guesser->preferred_build_file };
@@ -1050,6 +1059,7 @@ Runs the build setup file (Build.PL, Makefile.PL) to prepare for the
 build. You need to run C<choose_build_file> first.
 
 Sets these items in dist_info:
+
 	build_file_output
 
 =cut
@@ -1058,11 +1068,9 @@ sub setup_build
 	{
 	$logger->trace( sub { get_caller_info } );
 
-	my $file = $_[0]->dist_info( 'build_file' );
+	my $program = $_[0]->dist_info( 'build_file' );
 
-	my $command = "$^X $file";
-
-	$_[0]->run_something( $command, 'build_file_output' );
+	$_[0]->run_perl_program( $program, 'build_file_output' );
 	}
 
 =item run_build
@@ -1070,6 +1078,7 @@ sub setup_build
 Run the build file (Build.PL, Makefile). Run C<setup_build> first.
 
 Sets these items in dist_info:
+
 	build_output
 
 =cut
@@ -1078,11 +1087,10 @@ sub run_build
 	{
 	$logger->trace( sub { get_caller_info } );
 
-	my $file = $_[0]->dist_info( 'build_file' );
-
-	my $command = $file eq 'Build.PL' ? "$^X ./Build" : "make";
-
-	$_[0]->run_something( $command, 'build_output' );
+	my $build_command = $_[0]->dist_info( 'build_system_guess' )->preferred_build_command;
+	$_[0]->run_something( $build_command, 'build_output' );
+	
+	return 1;
 	}
 
 =item make_meta_file
@@ -1108,10 +1116,7 @@ sub make_meta_file
 		return;
 		}
 
-	$_[0]->run_something( "$^X $file", 'make_meta_file_output' );
-
-	my $command = $file eq 'Build.PL' ? "$^X ./Build distmeta" : "make distmeta";
-	$_[0]->run_something( $command, 'build_meta_output' );
+	$_[0]->run_build_target( 'distdir' );
 		
 	my @meta_files = glob( "*/META.yml" );	
 	$logger->debug( "Found META.ymls at [@meta_files]" );
@@ -1132,9 +1137,9 @@ sub run_something
 	$logger->trace( sub { get_caller_info } );
 
 	my( $self, $command, $info_key ) = @_;
-	
+
 	require IPC::Open2;
-	my $pid = open2( my( $out_fh, $in_fh ), $command );
+	my $pid = IPC::Open2::open2( my( $out_fh, $in_fh ), $command );
 	$logger->debug( "command [$command] starts as pid $pid" );
 	
 	close $in_fh;
@@ -1143,6 +1148,55 @@ sub run_something
 	$logger->debug( "command [$command] outputs [$output]" );
 	
 	$self->set_dist_info( $info_key, $output );
+	}
+
+=item run_build_target( TARGET )
+
+Run the shell command and record the output in the dist_info for KEY. This
+merges the outputs into stdout and closes stdin by redirecting /dev/null into
+COMMAND.
+
+=cut
+
+sub run_build_target
+	{
+	$logger->trace( sub { get_caller_info } );
+
+	my( $self, $target ) = @_;
+	
+	$self->run_build;
+	
+	my $command = join ' ',
+		$self->get_dist_info( 'build_system_guesser' )->preferred_build_command,
+		$target;
+
+	$self->run_something( $command, 'build_target_${target}_output'  );		
+
+	return 1;
+	}
+
+=item run_perl_program( PROGRAM, KEY )
+
+Run the shell command and record the output in the dist_info for KEY. This
+merges the outputs into stdout and closes stdin by redirecting /dev/null into
+COMMAND.
+
+=cut
+
+sub run_perl_program
+	{
+	$logger->trace( sub { get_caller_info } );
+
+	my( $self, $program, $key ) = @_;
+	
+	my $coordinator = $self->get_coordinator;
+	my $config      = $coordinator->get_config;
+
+	my $perl = $config->perl || $^X;
+
+	$self->run_something( "$perl $program", $key );		
+
+	return 1;
 	}
 
 =item get_module_info_tasks

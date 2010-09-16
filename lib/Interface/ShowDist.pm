@@ -45,12 +45,11 @@ sub do_interface
 
 	my $config = $self->get_config;
 	
-	my $i = $config->indexer_class;
-	eval "require $i; 1";
+	my $indexer = $self->get_coordinator->get_component( 'indexer' );
 	
 	print join( " ", 
 		$config->indexer_class, 
-		$config->indexer_class->VERSION 
+		$indexer->VERSION 
 		),
 		"\n";
 
@@ -99,7 +98,7 @@ sub get_error
 	my $r = $info->{run_info};
 	
 	my @errors = map { $r->{$_} || () } qw(error fatal_error);
-print STDERR "\@errors: @errors\n";	
+
 	foreach my $pattern ( @patterns )
 		{
 		return ${^MATCH} if $errors[0] =~ m/$pattern/p;

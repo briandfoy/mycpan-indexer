@@ -96,8 +96,6 @@ sub do_interface
 	
 	my $collator = $self->get_coordinator->get_note( 'collator' );
 	$collator->();
-	
-
 	}
 
 sub skip_tick    { '.' }

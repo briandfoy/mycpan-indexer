@@ -10,11 +10,15 @@ use Carp;
 use Cwd qw(cwd);
 use File::Basename;
 use File::Path qw(mkpath);
-use File::Spec::Functions qw(catfile);
+use File::Spec::Functions qw(catfile file_name_is_absolute rel2abs);
 use File::Temp qw(tempdir);
 use Getopt::Std;
 use List::Util qw(max);
 use Log::Log4perl;
+
+BEGIN {
+	$logger = Log::Log4perl->get_logger( 'backpan_indexer' );
+	}
 
 $VERSION = '1.28_10';
 
@@ -51,7 +55,50 @@ my %Defaults = (
 	success_report_subdir => catfile( $report_dir, 'success' ),
 	system_id             => 'an unnamed system',
 	worker_class          => 'MyCPAN::Indexer::Worker',
+	perl                  => remember_perl( $^X ),
 	);
+
+=over 4
+
+=item remember_perl
+
+We need to remember the C<perl> that started our program. We want to use the
+same binary to fire off other processes. WE have to do this very early because 
+we are going to discard most of the environment. After we do that, we can't
+search the PATH to find the C<perl> binary.
+
+=back
+
+=cut
+
+
+sub remember_perl
+	{	
+	require File::Which;
+
+	my $perl = do {
+		   if( file_name_is_absolute( $^X )      )  { $^X }
+		elsif( my $f = File::Which::which( $^X ) )  { $f  }
+		elsif( my $g = rel2abs( $^X )            )  { $g  }
+		else                                        { undef }
+		};
+
+	$logger->debug( "I think the perl binary is $perl" );
+	
+	   if( not defined $perl ) {
+		$logger->debug( "I couldn't find a perl! This may cause problems later." );
+	   	}
+	elsif( -x $perl ) {
+		$logger->debug( "$perl is executable" );
+		return $perl;
+		}
+	else {
+		$logger->debug( "$perl is not executable. This may cause problems later." );
+	
+		}
+
+	return;
+	}
 
 sub default_keys { keys %Defaults }
 
@@ -385,6 +432,7 @@ sub components
 	[ qw( reporter   MyCPAN::Indexer::Reporter::AsYAML     get_reporter   ) ],
 	[ qw( queue      MyCPAN::Indexer::Queue                get_queue      ) ],
 	[ qw( dispatcher MyCPAN::Indexer::Dispatcher::Parallel get_dispatcher ) ],
+	[ qw( indexer    MyCPAN::Indexer                       get_indexer    ) ],
 	[ qw( worker     MyCPAN::Indexer::Worker               get_task       ) ],
 	[ qw( collator   MyCPAN::Indexer::Collator::Null       get_collator   ) ],
 	[ qw( interface  MyCPAN::Indexer::Interface::Curses    do_interface   ) ],

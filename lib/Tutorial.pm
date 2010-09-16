@@ -50,7 +50,9 @@ that components use to pass information around.
 
 See C<MyCPAN::Indexer::Coordinator>.
 
-=head1 The Indexer
+=head1 Components
+
+=head1 The Indexer class
 
 Most of the work to examine a Perl distribution is in C<MyCPAN::Indexer>. When
 it gets down to it, everything C<MyCPAN> knows about Perl distributions is in
@@ -58,14 +60,25 @@ there. It has a C<run()> method which handles the examination. It kicks off
 C<examine>, which figures out what to do by getting a list of steps from
 C<examine_dist_steps>.
 
-This technique is common throughout C<MyCPAN::Indexer>. One method returns a 
-list of methods to run. This way, a subclass can control the process by overriding
-the method that returns the steps.
+This technique is common throughout C<MyCPAN::Indexer>. One method
+returns a list of methods to run. This way, a subclass can control the
+process by overriding the method that returns the steps.
 
-The basic class is C<MyCPAN::Indexer>, but C<MyCPAN::Indexer::TestCensus> is
-an example of another indexing class.
+The basic class is C<MyCPAN::Indexer>, but
+C<MyCPAN::Indexer::TestCensus> is an example of another indexing
+class.
 
-=head1 Components
+Implements:
+
+	get_indexer()
+
+Creates in C<notes>:
+
+	indexer_callback - a sub reference that wraps its run routine
+
+Expects in C<notes>:
+
+	nothing
 
 =head2 The Queue class
 
