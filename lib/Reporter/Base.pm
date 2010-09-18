@@ -33,6 +33,14 @@ a unique extension by which it can recognize its own reports.
 
 =over 4
 
+=item component_type
+
+This returns the C<reporter_type>.
+
+=cut
+
+sub component_type { $_[0]->reporter_type }
+
 =item get_report_path( $info, $Notes )
 
 Returns the path of the file that stores the run results. It puts
@@ -42,8 +50,6 @@ the distribution name, and the distribution extension.
 You should probably leave this alone.
 
 =cut
-
-sub component_type { $_[0]->reporter_type }
 
 sub get_report_path
 	{
@@ -59,7 +65,7 @@ sub get_report_path
 
 =item get_report_subdir
 
-Return the subdirectory under the report_dir for the report, depending
+Return the subdirectory under the C<report_dir> for the report, depending
 on the success of the indexing.
 
 =cut
@@ -112,12 +118,11 @@ sub get_report_filename
 	
 =item get_report_file_extension
 
-Returns the filename portion of the report path based on the 
-examined distribution name. This is an abstract method which 
-you must override.
+Returns the filename portion of the report path based on the examined
+distribution name. This is an abstract method which you must override.
 
-Every reporter should chose their own extension. This allows 
-each reporter to recognize their previous results.
+Every reporter should chose their own extension. This allows each
+reporter to recognize their previous results.
 
 =cut
 
@@ -126,11 +131,11 @@ sub get_report_file_extension
 	croak 'You must implement get_report_file_extension in a derived class!' 
 	}
 
-=item get_successful_report_path
+=item get_successful_report_path( DIST )
 
 Returns the filename for a successful report. This is slightly different
 from C<get_report_filename> which might also return the 
-filename for an error report.
+filename for an success report.
 
 =cut
 
@@ -146,6 +151,14 @@ sub get_successful_report_path
 		);
 	}
 
+=item get_error_report_path( DIST )
+
+Returns the filename for a error report. This is slightly different
+from C<get_report_filename> which might also return the 
+filename for an error report.
+
+=cut
+
 sub get_error_report_path
 	{
 	my $self = shift;
@@ -158,9 +171,29 @@ sub get_error_report_path
 		);
 	}
 	
+=item get_success_report_subdir
+
+=item get_error_report_subdir
+
+Returns the subdirectory name for a report. This is just the subdirectory,
+not the full path.
+
+The defaults are F<success> and F<error>.
+
+=cut
+
 sub get_success_report_subdir { 'success' }
 
 sub get_error_report_subdir   { 'error'   }
+
+=item get_success_report_dir
+
+=item get_error_report_dir
+
+Returns the path to the report directory. This combines the subdirectory
+name and the report path.
+
+=cut
 
 sub get_success_report_dir 
 	{
