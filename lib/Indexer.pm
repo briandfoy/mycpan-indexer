@@ -145,7 +145,6 @@ sub examine_dist
 		unless( eval { $self->$method() } )
 			{
 			my $at = $@;
-			print STDERR "AT is $@\n";
 			if( $die_on_error ) # only if failure is fatal
 				{
 				$self->set_run_info( 'fatal_error', $error_msg );
@@ -675,7 +674,7 @@ sub get_blib_file_list
 
 	unless( -d catfile( qw(blib lib) ) )
 		{
-		$logger->error( "No blib/lib found for " . $_[0]->dist_info( 'dist_basename' ) );
+		$logger->info( "No blib/lib found for " . $_[0]->dist_info( 'dist_basename' ) );
 		$_[0]->set_dist_info( 'blib', [] );
 
 		return;
@@ -888,8 +887,8 @@ sub parse_meta_files
 		
 			my $code  = shift || 'unknown error';
 			my $error = YAML::Error->new(code => $code);
-			$error->line($self->line) if $yaml->can('line');
-			$error->document($self->document) if $yaml->can('document');
+			$error->line($yaml->line) if $yaml->can('line');
+			$error->document($yaml->document) if $yaml->can('document');
 			$error->arguments([@_]);
 			$error->type('Error');
 
@@ -1142,16 +1141,19 @@ sub run_something
 
 	my( $self, $command, $info_key ) = @_;
 
-	require IPC::Open2;
-	my $pid = IPC::Open2::open2( my( $out_fh, $in_fh ), $command );
+	require IPC::Open3;
+	my $pid = IPC::Open3::open3( my( $in_fh, $out_fh, $err_fh ), $command );
 	$logger->debug( "command [$command] starts as pid $pid" );
 	
 	close $in_fh;
 	
 	my $output = do { local $/; <$out_fh> };
+	my $error  = do { local $/; <$err_fh> };
 	$logger->debug( "command [$command] outputs [$output]" );
 	
 	$self->set_dist_info( $info_key, $output );
+	$self->set_dist_info( "${info_key}_error", $error );
+	waitpid $pid, 0;
 	}
 
 =item run_build_target( TARGET )
@@ -1176,7 +1178,7 @@ sub run_build_target
 		$guesser->preferred_build_command,
 		$target;
 
-	$self->run_something( $command, 'build_target_${target}_output'  );		
+	$self->run_something( $command, "build_target_${target}_output"  );		
 
 	return 1;
 	}
