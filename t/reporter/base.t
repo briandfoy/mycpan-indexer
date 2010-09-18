@@ -56,12 +56,12 @@ $reporter->set_coordinator( $coordinator );
 bless $reporter, 'Mock::derived';
 
 is( $reporter->get_report_subdir( $info ), 'success' );
-is( $reporter->get_report_path( $info ), catfile( qw(success Foo-Bar-0.01.test) ) );
+is( $reporter->get_report_path( $info ), catfile( qw(success F Fo Foo-Bar-0.01.test) ) );
 
 $info->{error} = 1;
 
 is( $reporter->get_report_subdir( $info ), 'error' );
-is( $reporter->get_report_path( $info ), catfile( qw(error Foo-Bar-0.01.test  ) ) );
+is( $reporter->get_report_path( $info ), catfile( qw(error F Fo Foo-Bar-0.01.test  ) ) );
 }
 
 
