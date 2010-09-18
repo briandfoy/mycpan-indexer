@@ -62,6 +62,8 @@ BEGIN {
 	$logger = Log::Log4perl->get_logger( 'Worker' );
 	}
 
+sub component_type { $_[0]->worker_type }
+
 sub get_task
 	{
 	my( $self ) = @_;
