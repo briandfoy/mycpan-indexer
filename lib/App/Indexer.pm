@@ -16,10 +16,6 @@ use Getopt::Std;
 use List::Util qw(max);
 use Log::Log4perl;
 
-BEGIN {
-	$logger = Log::Log4perl->get_logger( 'backpan_indexer' );
-	}
-
 $VERSION = '1.28_10';
 
 $|++;
@@ -81,19 +77,16 @@ sub remember_perl
 		elsif( my $g = rel2abs( $^X )            )  { $g  }
 		else                                        { undef }
 		};
-
-	$logger->debug( "I think the perl binary is $perl" );
 	
 	   if( not defined $perl ) {
-		$logger->debug( "I couldn't find a perl! This may cause problems later." );
+		#XXX $logger->debug( "I couldn't find a perl! This may cause problems later." );
 	   	}
 	elsif( -x $perl ) {
-		$logger->debug( "$perl is executable" );
+		#XXX $logger->debug( "$perl is executable" );
 		return $perl;
 		}
 	else {
-		$logger->debug( "$perl is not executable. This may cause problems later." );
-	
+		#XXX $logger->debug( "$perl is not executable. This may cause problems later." );
 		}
 
 	return;
