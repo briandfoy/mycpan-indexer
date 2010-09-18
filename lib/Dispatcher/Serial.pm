@@ -32,13 +32,19 @@ out to the code that will do the work.
 
 =over 4
 
+=item component_type
+
+This is the dispatcher type.
+
+=cut
+
+sub component_type { $_[0]->dispatcher_type }
+
 =item get_dispatcher
 
 Adds the C<dispatcher> key with a code reference.
 
 =cut
-
-sub component_type { $_[0]->dispatcher_type }
 
 sub get_dispatcher
 	{
