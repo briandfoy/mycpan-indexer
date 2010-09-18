@@ -71,7 +71,6 @@ search the PATH to find the C<perl> binary.
 
 =cut
 
-
 sub remember_perl
 	{	
 	require File::Which;
