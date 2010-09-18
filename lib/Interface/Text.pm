@@ -36,7 +36,17 @@ BEGIN {
 	$logger = Log::Log4perl->get_logger( 'Interface' );
 	}
 
+=item component_type
+
+This is an interface type
+
+=cut
+
 sub component_type { $_[0]->interface_type }
+
+=item do_interface
+
+=cut
 
 sub do_interface
 	{
@@ -98,6 +108,16 @@ sub do_interface
 	$collator->();
 	}
 
+=item skip_tick
+
+=item success_tick
+
+=item error_tick
+
+Return a grapheme to represent what just happened.
+
+=cut
+
 sub skip_tick    { '.' }
 
 sub success_tick { '+' }
@@ -106,7 +126,6 @@ sub error_tick   { '!' }
 
 
 =back
-
 
 =head1 SEE ALSO
 

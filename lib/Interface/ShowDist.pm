@@ -27,16 +27,24 @@ This class presents the information as the indexer runs, using plain text.
 
 =over 4
 
-=item do_interface( $Notes )
-
-
 =cut
 
 BEGIN {
 	$logger = Log::Log4perl->get_logger( 'Interface' );
 	}
 
+=item component_type
+
+This is an interface type
+
+=cut
+
 sub component_type { $_[0]->interface_type }
+
+=item do_interface()
+
+
+=cut
 
 sub do_interface
 	{
@@ -80,8 +88,6 @@ sub do_interface
 	
 	my $collator = $self->get_coordinator->get_note( 'collator' );
 	$collator->();
-	
-
 	}
 
 BEGIN {
@@ -90,7 +96,13 @@ my @patterns = (
 	qr/No child process/p,
 	qr/Alarm rang/p,
 	);
-	
+
+=item get_error
+
+Returns the error message that most likely was the big problem.
+
+=cut
+
 sub get_error
 	{
 	my( $self, $info ) = @_;
@@ -108,7 +120,6 @@ sub get_error
 }
 	
 =back
-
 
 =head1 SEE ALSO
 
