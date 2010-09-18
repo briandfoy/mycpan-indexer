@@ -27,15 +27,30 @@ want to do nothing:
 =head1 DESCRIPTION
 
 This class implements all of the methods needed by all of the
-component classes. Thes methods don't do anything, so they can
-be useful to ignore parts of the system while you focus on
-developing another. For instance, you might use this module
-as the reporter_class, since it does nothing, which you work
-on the dispatcher_class.
+component classes. Thes methods don't do anything, so they can be
+useful to ignore parts of the system while you focus on developing
+another. For instance, you might use this module as the
+reporter_class, since it does nothing, which you work on the
+dispatcher_class.
 
 =head2 Methods
 
 =over 4
+
+=item component_type
+
+This is a composite component, although you don't have to use all of them
+at the same time.
+
+=cut
+
+sub component_type 
+	{ 
+	$_[0]->combine_types(
+		map { my $m = "${_}_type"; $_[0]->$m() }
+		qw(indexer queue worker dispatcher reporter interface)
+		);
+	}
 
 =item Indexer class: get_indexer( HASH_REF )
 
@@ -67,14 +82,14 @@ C<child_task> is a code reference that returns 1 and does nothing else.
 
 sub get_task { $_[0]->set_note( 'child_task', sub { 1 } ) }
 
-=item Storage class: get_storer( HASH_REF )
+=item Reporter class: get_reporter( HASH_REF )
 
-C<get_storer> adds a C<reporter> key to HASH_REF. The value of
+C<get_reporter> adds a C<reporter> key to HASH_REF. The value of
 C<reporter> is a code reference that returns 1 and does nothing else.
 
 =cut
 
-sub get_storer { $_[0]->set_note( 'reporter', sub { 1 } ) }
+sub get_reporter { $_[0]->set_note( 'reporter', sub { 1 } ) }
 
 =item Dispatcher class: get_dispatcher()
 
