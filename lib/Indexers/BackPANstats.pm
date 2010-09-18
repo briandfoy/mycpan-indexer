@@ -1,5 +1,3 @@
-#!/usr/bin/perl
-
 package MyCPAN::Indexer::BackPANstats;
 use strict;
 
