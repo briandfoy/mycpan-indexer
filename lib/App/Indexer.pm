@@ -78,6 +78,7 @@ sub remember_perl
 		else                                        { undef }
 		};
 	
+	# XXX: logging isn't set up yet
 	   if( not defined $perl ) {
 		#XXX $logger->debug( "I couldn't find a perl! This may cause problems later." );
 	   	}
@@ -258,13 +259,20 @@ sub activate_steps
 	setup_environment 
 	handle_config
 	setup_logging
+	adjust_config
 	disable_the_missiles
 	setup_dirs 
 	run_components 
 	activate_end
 	);
 	}
-	
+
+=item activate
+
+Start the process.
+
+=cut
+
 sub activate
 	{
 	my( $class, @argv ) = @_;
@@ -281,6 +289,12 @@ sub activate
 		
 	$application;
 	}
+
+=item run_components
+
+Do the work.
+
+=cut
 
 sub run_components
 	{
@@ -315,6 +329,12 @@ sub run_components
 		}
 	}
 
+=item activate_end
+
+Do stuff before we quit.
+
+=cut
+
 sub activate_end
 	{
 	my( $application ) = @_;
@@ -323,7 +343,28 @@ sub activate_end
 
 	$application->_exit;
 	}
+
+=item setup_environment
+
+Delete what we don't want and set what we need. 
+
+We don't want most of the environment, just the minimal to make things not
+break. We especially want to cleanse PATH. We keep these:
+
+	DISPLAY 
+	USER 
+	HOME 
+	PWD 
+	TERM
+
+Some of the things we need are:
+
+	AUTOMATED_TESTING
+	PERL_MM_USE_DEFAULT
+	PERL_EXTUTILS_AUTOINSTALL
 	
+=cut
+
 sub setup_environment
 	{
 	my %pass_through = map { $_, 1 } qw( 
@@ -344,6 +385,24 @@ sub setup_environment
 	# Module::Install
 	$ENV{PERL_EXTUTILS_AUTOINSTALL} = '--skipdeps';
 	}
+
+=item setup_logging
+
+Initialize C<Log4perl>.
+
+In the configuration, you can set
+
+	log4perl_file
+	log_file_watch_time
+
+You can also use the environment to set the values:
+
+	MYCPAN_LOG4PERL_FILE
+	MYCPAN_LOGLEVEL (defaults to ERROR)
+
+The environment takes precedence.
+
+=cut
 
 sub setup_logging
 	{
@@ -388,6 +447,39 @@ sub setup_logging
 	$logger = Log::Log4perl->get_logger( 'backpan_indexer' );
 	}
 
+=item adjust_config_post_logging
+
+Logging has to happen after we read the config, but there are some things I'd
+like to check and log, so I must wait to log. 
+
+=cut
+
+sub adjust_config_post_logging
+	{
+	my $self = shift;
+	
+	my $perl = $self->get_config->perl;
+	
+	   if( not defined $perl ) {
+		$logger->warn( "I couldn't find a perl! This may cause problems later." );
+	   	}
+	elsif( -x $perl ) {
+		$logger->debug( "$perl is executable" );
+		}
+	else {
+		$logger->warn( "$perl is not executable. This may cause problems later." );
+		}
+	
+	1;
+	}
+	
+=item disable_the_missiles
+
+Catch INT signals and set up error handlers to direct things toward Log4perl.
+Some of this stuff is a bit dangerous, maybe.
+
+=cut
+
 sub disable_the_missiles
 	{
 	my( $self ) = @_;
@@ -396,6 +488,12 @@ sub disable_the_missiles
 	$self->install_warn_handler;
 	}
 	
+=item install_int_handler
+
+Catch INT signals so we can log it, clean up, and exit nicely.
+
+=cut
+
 sub install_int_handler
 	{
 	#$SIG{__DIE__} = \&Carp::confess;
@@ -410,6 +508,11 @@ sub install_int_handler
 		};
 	}
 
+=item install_warn_handler
+
+Make C<warn> go to C<Log4perl>.
+
+=cut
 
 sub install_warn_handler
 	{
@@ -417,6 +520,14 @@ sub install_warn_handler
 		$logger->warn( @_ );
 		};
 	}
+
+=item components
+
+An array of arrays that list the components to load and the method each
+component needs to implement. You can override the implementing class through
+the configuration.
+
+=cut
 
 sub components
 	{
@@ -430,6 +541,12 @@ sub components
 	[ qw( interface  MyCPAN::Indexer::Interface::Curses    do_interface   ) ],
 	)
 	}
+
+=item cleanup
+
+Clean up on the way out. We're already done with the run.
+
+=cut
 
 sub cleanup
 	{
@@ -460,6 +577,12 @@ sub _exit
 		
 	exit 0;
 	}
+
+=item setup_dirs
+
+Setup the temporary directories, report directories, and so on, etc.
+
+=cut
 
 sub setup_dirs # XXX big ugly mess to clean up
 	{
@@ -497,6 +620,12 @@ sub setup_dirs # XXX big ugly mess to clean up
 		$logger->warn( 'retry_errors no longer deletes error reports, but the worker should skip them if the setting is false' );
 		}
 	}
+
+=item get_uuid
+
+Generate a unique identifier for this indexer run.
+
+=cut
 
 sub get_uuid
 	{
