@@ -139,9 +139,31 @@ foreach my $method ( @methods_to_dispatch_to_notes )
 
 }
 
+=head2 Organic methods
+
+These methods are defined in this class and work to interact with some 
+of the things the coordinator is tracking.
+
+=item get_config
+
+=item set_config( CONFIG )
+
+Get or set the configuration objects.
+
+=cut
+
 sub get_config { $_[0]->{config}         }
 sub set_config { $_[0]->{config} = $_[1] }
 	
+=item get_info
+
+=item set_info( INFO_OBJ )
+
+Get or set the info object. This is the thing that records the data
+collected during the index.
+
+=cut
+
 sub get_info   { $_[0]->{info}           }
 sub set_info   { $_[0]->{info}   = $_[1] }
 
@@ -150,7 +172,7 @@ BEGIN {
 	[qw( queue       get_queue     )],
 	[qw( dispatcher  get_dispatcher)],
 	[qw( worker      get_task      )],
-	[qw( indexer     examine_dist  )],
+	[qw( indexer     run           )],
 	[qw( reporter    get_reporter  )],
 	[qw( interface   do_interface  )],
 	[qw( application activate      )],
