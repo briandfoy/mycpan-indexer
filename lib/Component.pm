@@ -18,8 +18,9 @@ MyCPAN::Indexer::Component - base class for MyCPAN components
 	package MyCPAN::Indexer::NewComponent;
 	
 	use base qw(MyCPAN::Indexer::Component);
-	
 
+	sub component_type { $_[0]->reporter_type }
+	
 =head1 DESCRIPTION
 
 This module implements features common to all C<MyCPAN::Indexer>
@@ -88,7 +89,6 @@ to these methods:
 	get_note_list_element
 	set_note_unless_defined
 
-
 =cut
 
 BEGIN {
@@ -100,6 +100,7 @@ my @methods_to_dispatch_to_coordinator = qw(
 	set_note
 	get_config
 	set_config
+	get_component
 	increment_note
 	decrement_note
 	push_onto_note
@@ -108,7 +109,6 @@ my @methods_to_dispatch_to_coordinator = qw(
 	set_note_unless_defined
 	);
 
-	
 foreach my $method ( @methods_to_dispatch_to_coordinator )
 	{
 	no strict 'refs';
@@ -122,7 +122,8 @@ sub set_coordinator
 	{ 
 	my( $self, $coordinator ) = @_;
 	
-	my @missing = grep { ! $coordinator->can( $_ ) } @methods_to_dispatch_to_coordinator;
+	my @missing = grep { ! $coordinator->can( $_ ) } 
+		@methods_to_dispatch_to_coordinator;
 	
 	croak "Coordinator object is missing these methods: @missing"
 		if @missing;
@@ -136,14 +137,101 @@ sub set_coordinator
 	
 }
 
-sub collator_type   { 'collator'   }
-sub dispatcher_type { 'dispatcher' }
-sub indexer_type    { 'indexer'    }
-sub interface_type  { 'interface'  }
-sub queue_type      { 'queue'      }
-sub reporter_type   { 'reporter'   }
-sub worker_type     { 'worker'     }
+=item null_type
 
+=item collator_type
+
+=item dispatcher_type
+
+=item indexer_type
+
+=item interface_type
+
+=item queue_type
+
+=item reporter_type
+
+=item worker_type
+
+Returns the magic number that identifies the component type. You shouldn't
+ever have to look at the particular number. Some components might have
+several types.
+
+=cut
+
+sub null_type       { 0 }
+sub collator_type   { 0b00000001 }
+sub dispatcher_type { 0b00000010 }
+sub indexer_type    { 0b00000100 }
+sub interface_type  { 0b00001000 }
+sub queue_type      { 0b00010000 }
+sub reporter_type   { 0b00100000 }
+sub worker_type     { 0b01000000 }
+
+=item combine_types( TYPES )
+
+For components that implement several roles, create a composite type:
+
+	my $custom_type = $self->combine_types(
+		map { $self->$_() } qw( queue_type worker_type );
+		}
+
+If you want to test that value, use the C<is_type> methods.
+
+=cut
+
+sub combine_types
+	{
+	my( $self, @types ) = @_;
+	
+	my $combined_type = 0;
+	
+	foreach my $type ( @types )
+		{
+		$combined_type |= $type;
+		}
+	
+	return $combined_type;
+	}
+
+=item is_type( CONCRETE, TEST )
+
+Tests a CONCRETE type (the one a component claims to be) with the TYPE
+that you want to check. This is the general test.
+
+=cut
+
+sub is_type { $_[1] & $_[2]	}
+
+=item is_null_type
+
+=item is_collator_type
+
+=item is_dispatcher_type
+
+=item is_indexer_type
+
+=item is_interface_type
+
+=item is_queue_type
+
+=item is_reporter_type
+
+=item is_worker_type
+
+These are curried versions of C<is_type>. They should be a bit easier to use.
+
+=cut
+
+sub is_null_type       { $_[1] == 0 }
+sub is_collator_type   { $_[0]->is_type( $_[1], $_[0]->collator_type   ) }
+sub is_dispatcher_type { $_[0]->is_type( $_[1], $_[0]->dispatcher_type ) }
+sub is_indexer_type    { $_[0]->is_type( $_[1], $_[0]->indexer_type    ) }
+sub is_interface_type  { $_[0]->is_type( $_[1], $_[0]->interface_type  ) }
+sub is_queue_type      { $_[0]->is_type( $_[1], $_[0]->queue_type      ) }
+sub is_reporter_type   { $_[0]->is_type( $_[1], $_[0]->reporter_type   ) }
+sub is_worker_type     { $_[0]->is_type( $_[1], $_[0]->worker_type     ) }
+	
 =back
 
 =head1 SOURCE AVAILABILITY
