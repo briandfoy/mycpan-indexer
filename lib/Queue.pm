@@ -51,6 +51,10 @@ If the C<organize_dists> configuration value is true, it also copies
 any distributions it finds into a PAUSE-like structure using the
 value of the C<pause_id> configuration to create the path.
 
+This queue component tries to skip any distributions that already have
+a report to make the list of distributions to examine much shorter. It
+relies on the 
+
 =cut
 
 sub component_type { $_[0]->queue_type }
@@ -112,14 +116,65 @@ sub _get_file_list
 
 	find( $wanted, @dirs );
 	
-	return [
+	{
+	my $count = () = $reporter->();
+	$logger->info( "Found $count distributions to possibly index" );
+	}
+	
+	my $files_to_examine = [
+		grep { $self->no_report_exists_yet( $_ ) }
 		map  { rel2abs($_) }
 		grep { ! /.(data|txt).gz$/ and ! /02packages/ }
 		$reporter->()
 		];
-	
+
+	{
+	my $count = () = @$files_to_examine;
+	$logger->info( "Found $count distributions to actually index" );
+	}
+
+	return $files_to_examine;
 	}
 	
+=item no_report_exists_yet( DIST )
+
+This method goes through this process to decide what to return:
+
+=over 4
+
+=item Return false if the C<fresh_start> configuration is true 
+(so existing reports don't matter).
+
+=item Return true if there is a successful report already.
+
+=item Return false if C<retry_errors> is true.
+
+=item Return true if there is already an error report.
+
+=item Return false as the default case.
+
+=back
+
+=cut
+
+sub no_report_exists_yet
+	{
+	my( $self, $dist ) = @_;
+	
+	return 0 if $self->get_config->fresh_start;
+	
+	my $reporter = $self->get_coordinator->get_component( 'reporter' );
+	
+	my $success_report = $reporter->get_successful_report_path( $dist );
+	return 1 if -e $expected_report;	
+	return 0 unless $self->get_config->retry_errors;
+	
+	my $error_report = $reporter->get_error_report_path( $dist );
+	return 1 if -e $error_report;
+
+	return 0;
+	}
+
 sub _setup_organize_dists
 	{
 	my( $self, $base_dir ) = @_;
