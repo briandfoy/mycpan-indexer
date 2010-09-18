@@ -49,7 +49,17 @@ BEGIN {
 	$logger = Log::Log4perl->get_logger( 'Worker' );
 	}
 
+=item component_type
+
+This is a worker component.
+
+=cut
+
 sub component_type { $_[0]->worker_type }
+
+=item get_task
+
+=cut
 
 sub get_task
 	{
@@ -247,7 +257,6 @@ sub _add_run_info
 	}
 
 =back
-
 
 =head1 SEE ALSO
 
