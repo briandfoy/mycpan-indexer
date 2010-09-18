@@ -93,8 +93,8 @@ sub get_report_subdir
 	
 =item get_report_filename
 
-Returns the filename portion of the report path based on the 
-examined distribution name. 
+Returns the filename portion of the report path based on the examined
+distribution name.
 
 You should probably leave this alone.
 
@@ -113,9 +113,34 @@ sub get_report_filename
 	no warnings 'uninitialized';
 	( my $basename = basename( $dist_file ) ) =~ s/\.(tgz|tar\.gz|zip)$//;
 	
-	join '.', $basename, $self->get_report_file_extension;
+	my $rel_path = $self->get_dist_report_subdir(
+		join '.', $basename, $self->get_report_file_extension
+		);
 	}
+
+=item get_dist_report_subdir( FILENAME )
+
+Creates a subdirectory path from a report name. There are 150,000
+distributions so we shouldn't put all of those in one directory.
+
+For a report such as F<HTTP-Size-0.01.yml>, the subdirectory path is
+F<H/HT/HTTP-Size-0.01.yml>. The method is fairly dumb about it since
+it does not care what the first two characters are. If the report name
+is F<-0.01.yml> (yep, there really is), the path is F<-/-0/-0.01.yml>.
+
+=cut
+
+sub get_dist_report_subdir
+	{
+	my( $self, $filename ) = @_;
 	
+	catfile(
+		substr( $filename, 0, 1 ),
+		substr( $filename, 0, 2 ),
+		$filename
+		);
+	}
+
 =item get_report_file_extension
 
 Returns the filename portion of the report path based on the examined
@@ -133,8 +158,8 @@ sub get_report_file_extension
 
 =item get_successful_report_path( DIST )
 
-Returns the filename for a successful report. This is slightly different
-from C<get_report_filename> which might also return the 
+Returns the filename for a successful report. This is slightly
+different from C<get_report_filename> which might also return the
 filename for an success report.
 
 =cut
