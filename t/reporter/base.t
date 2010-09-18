@@ -97,6 +97,7 @@ BEGIN {
 	sub unshift_onto_note  { 1 }
 	sub get_note_list_element { 1 } 
 	sub set_note_unless_defined	 { 1 }
+	sub get_component { 1 }
 	}
 
 	{

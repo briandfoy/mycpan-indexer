@@ -46,7 +46,7 @@ __PACKAGE__->run( @ARGV ) unless caller;
 
 =over 4
 
-=item
+=item component_type
 
 This is an indexer component.
 

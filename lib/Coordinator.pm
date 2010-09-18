@@ -144,6 +144,8 @@ foreach my $method ( @methods_to_dispatch_to_notes )
 These methods are defined in this class and work to interact with some 
 of the things the coordinator is tracking.
 
+=over 4
+
 =item get_config
 
 =item set_config( CONFIG )
@@ -192,6 +194,8 @@ BEGIN {
 			};
 		}
 	}
+
+=back
 
 =head1 TO DO
 
