@@ -33,7 +33,13 @@ the original indexing, it won't be in the queue.
 
 =over
 
+=item component_type
+
+This is a queue type
+
 =cut
+
+sub component_type { $_[0]->queue_type }
 
 sub _get_file_list
 	{
@@ -67,7 +73,6 @@ sub _get_file_list
 1;
 
 =back
-
 
 =head1 SEE ALSO
 

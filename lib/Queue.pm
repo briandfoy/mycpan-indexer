@@ -37,6 +37,14 @@ indexer to process.
 
 =over 4
 
+=item component_type
+
+This is a queue type
+
+=cut
+
+sub component_type { $_[0]->queue_type }
+
 =item get_queue
 
 C<get_queue> sets the key C<queue> in C<$Notes> hash reference. It
@@ -56,8 +64,6 @@ a report to make the list of distributions to examine much shorter. It
 relies on the 
 
 =cut
-
-sub component_type { $_[0]->queue_type }
 
 sub get_queue
 	{
