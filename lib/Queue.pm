@@ -172,7 +172,7 @@ sub no_report_exists_yet
 	my $reporter = $self->get_coordinator->get_component( 'reporter' );
 	
 	my $success_report = $reporter->get_successful_report_path( $dist );
-	return 1 if -e $expected_report;	
+	return 1 if -e $success_report;	
 	return 0 unless $self->get_config->retry_errors;
 	
 	my $error_report = $reporter->get_error_report_path( $dist );

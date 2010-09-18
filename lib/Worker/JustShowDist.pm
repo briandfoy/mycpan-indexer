@@ -53,6 +53,7 @@ sub get_task
 	my $config  = $self->get_config;
 
 	my $indexer = $self->get_coordinator->get_component( 'indexer' );
+	my $coordinator = $self->get_coordinator;
 	
 	$logger->debug( "Worker class is " . __PACKAGE__ );
 	$logger->debug( "Indexer class is " . $indexer->class );

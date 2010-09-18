@@ -41,6 +41,7 @@ WriteMakefile(
 		'Distribution::Guess::BuildSystem' => '0.11',
 		'File::Find'                       => '0',
 		'File::Find::Closures'             => '0',
+		'File::Which'                      => '0',
 		'Log::Log4perl'                    => '0',
 		'Digest::MD5'                      => '0',
 		'Module::Extract::Namespaces'      => '0.14',
