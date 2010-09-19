@@ -55,7 +55,6 @@ sub get_indexer
 	1;
 	}
 
-sub component_type { $_[0]->indexer_type }
 sub class { __PACKAGE__ }
 
 =item setup_run_info

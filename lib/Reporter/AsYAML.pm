@@ -47,8 +47,6 @@ and should do.
 
 =cut
 
-sub component_type { $_[0]->reporter_type }
-
 sub get_reporter
 	{
 	#TRACE( sub { get_caller_info } );

@@ -46,14 +46,6 @@ __PACKAGE__->run( @ARGV ) unless caller;
 
 =over 4
 
-=item component_type
-
-This is an indexer component.
-
-=cut
-
-sub component_type { $_[0]->indexer_type }
-
 =item examine_dist
 
 Given a distribution, unpack it, look at it, and report the findings.

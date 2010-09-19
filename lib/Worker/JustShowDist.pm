@@ -44,8 +44,6 @@ BEGIN {
 	$logger = Log::Log4perl->get_logger( 'Worker' );
 	}
 
-sub component_type { $_[0]->worker_type }
-
 sub get_task
 	{
 	my( $self ) = @_;
@@ -94,7 +92,6 @@ sub get_task
 	}
 
 =back
-
 
 =head1 SEE ALSO
 

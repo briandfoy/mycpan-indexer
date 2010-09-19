@@ -52,13 +52,7 @@ If the C<organize_dists> configuration value is true, it also copies
 any distributions it finds into a PAUSE-like structure using the
 value of the C<pause_id> configuration to create the path.
 
-=item component_type
-
-This is a queue type
-
 =cut
-
-sub component_type { $_[0]->queue_type }
 
 sub _get_file_list
 	{
@@ -81,7 +75,6 @@ sub _get_file_list
 1;
 
 =back
-
 
 =head1 SEE ALSO
 

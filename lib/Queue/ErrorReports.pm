@@ -37,14 +37,6 @@ the original indexing, it won't be in the queue.
 
 =over 4
 
-=item component_type
-
-This is a queue type
-
-=cut
-
-sub component_type { $_[0]->queue_type }
-
 =item get_queue
 
 C<get_queue> sets the key C<queue> in C<$Notes> hash reference. It
