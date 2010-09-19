@@ -88,6 +88,10 @@ sub remember_perl
 		else                                        { undef }
 		};
 
+=pod
+
+# All of this takes place before we have an object. :(
+
 	my $sub = sub {
 		my $perl = $self->get_config->perl;
 	
@@ -103,8 +107,10 @@ sub remember_perl
 		};
 	
 	$self->push_onto_note( 'pre_logging_items', $sub );
-	
-	return;
+
+=cut
+
+	return $perl;
 	}
 
 =item default_keys
@@ -122,6 +128,7 @@ Return the default value for KEY.
 =cut
 
 sub default { $Defaults{$_[1]} }
+
 
 =item config_class
 
@@ -554,6 +561,9 @@ sub reference onto the C<pre_logging_items> note.
 sub post_setup_logging_tasks
 	{
 	my $self = shift;
+
+	# this stuff happened too early to set a pre_logging_items
+	$self->_log_perl;
 	
 	my @items = $self->get_note( 'pre_logging_items' );
 	
@@ -565,7 +575,24 @@ sub post_setup_logging_tasks
 	
 	1;
 	}
+
+sub _log_perl
+	{
+	my( $self ) = @_;
 	
+	my $perl = $self->get_config->perl;
+
+	   if( not defined $perl ) {
+		$logger->warn( "I couldn't find a perl! This may cause problems later." );
+		}
+	elsif( -x $perl ) {
+		$logger->debug( "$perl is executable" );
+		}
+	else {
+		$logger->warn( "$perl is not executable. This may cause problems later." );
+		}
+	}
+
 =item disable_the_missiles
 
 Catch INT signals and set up error handlers to direct things toward Log4perl.
