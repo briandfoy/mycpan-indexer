@@ -57,7 +57,7 @@ string, reference, and so on.
 
 sub get_note { $_[0]->{$_[1]}         }
 
-=item set_note( NOTE )
+=item set_note( NOTE, SOMETHING )
 
 Set the note named C<NOTE>. This could be anything you like: a string,
 reference, and so on.
