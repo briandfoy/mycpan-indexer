@@ -18,6 +18,18 @@ use Log::Log4perl;
 
 $VERSION = '1.28_10';
 
+=head1 NAME
+
+MyCPAN::App::BackPAN::Indexer - The BackPAN indexer application
+
+=head1 SYNOPSIS
+
+	use MyCPAN::Indexer;
+
+=head1 DESCRIPTION
+
+=cut
+
 $|++;
 
 __PACKAGE__->activate( @ARGV ) unless caller;
@@ -63,8 +75,6 @@ same binary to fire off other processes. WE have to do this very early because
 we are going to discard most of the environment. After we do that, we can't
 search the PATH to find the C<perl> binary.
 
-=back
-
 =cut
 
 sub remember_perl
@@ -77,27 +87,57 @@ sub remember_perl
 		elsif( my $g = rel2abs( $^X )            )  { $g  }
 		else                                        { undef }
 		};
-	
-	# XXX: logging isn't set up yet
-	   if( not defined $perl ) {
-		#XXX $logger->debug( "I couldn't find a perl! This may cause problems later." );
-	   	}
-	elsif( -x $perl ) {
-		#XXX $logger->debug( "$perl is executable" );
-		return $perl;
-		}
-	else {
-		#XXX $logger->debug( "$perl is not executable. This may cause problems later." );
-		}
 
+	my $sub = sub {
+		my $perl = $self->get_config->perl;
+	
+		   if( not defined $perl ) {
+			$logger->warn( "I couldn't find a perl! This may cause problems later." );
+			}
+		elsif( -x $perl ) {
+			$logger->debug( "$perl is executable" );
+			}
+		else {
+			$logger->warn( "$perl is not executable. This may cause problems later." );
+			}
+		};
+	
+	$self->push_onto_note( 'pre_logging_items', $sub );
+	
 	return;
 	}
 
+=item default_keys
+
+Return a list of the default keys.
+
+=cut
+
 sub default_keys { keys %Defaults }
+
+=item default( KEY )
+
+Return the default value for KEY.
+
+=cut
 
 sub default { $Defaults{$_[1]} }
 
+=item config_class
+
+Return the name of the configuration class to use. The default is
+C<ConfigReader::Simple>. Any configuration class should respond to
+the same interface.
+
+=cut
+
 sub config_class { 'ConfigReader::Simple' }
+
+=item init_config
+
+Load the configuration class, create the new object, and set the defaults.
+
+=cut
 
 sub init_config
 	{
@@ -116,6 +156,13 @@ sub init_config
 	$config;
 	}
 }
+
+=item adjust_config
+
+After we setup everything, adjust the config for things that we discovered.
+Set some defaults.
+
+=cut
 
 sub adjust_config
 	{
@@ -175,6 +222,10 @@ sub adjust_config
 	return 1;
 	}
 
+=item new
+
+=cut
+
 sub new 
 	{ 
 	my( $class, @args ) = @_;
@@ -182,8 +233,27 @@ sub new
 	bless { args => [ @args ] }, $class;
 	}
 
+=item get_coordinator
+
+=item set_coordinator
+
+Convenience methods to deal with the coordinator
+
+=cut
+
 sub get_coordinator { $_[0]->{coordinator}         }
 sub set_coordinator { $_[0]->{coordinator} = $_[1] }
+
+=item process_options
+
+Handle the configuration directives from the command line and set default
+values:
+
+	-f  config_file     Default is $script.conf
+	-l  log4perl_file   Default is $script.log4perl
+	-c                  Print the config and exit
+	
+=cut
 
 sub process_options
 	{
@@ -208,6 +278,12 @@ sub process_options
 	
 sub get_option { $_[0]->{options}{$_[1]} }
 
+=item setup_coordinator
+
+Set up the coordinator object and set its initial values.
+
+=cut
+
 sub setup_coordinator
 	{
 	my( $application ) = @_;
@@ -218,13 +294,24 @@ sub setup_coordinator
 	$coordinator->set_application( $application );
 	$application->set_coordinator( $coordinator );
 	
-	$coordinator->set_note( 'UUID',     $application->get_uuid() );
-	$coordinator->set_note( 'tempdirs', [] );
+	$coordinator->set_note( 'UUID',          $application->get_uuid() );
+	$coordinator->set_note( 'tempdirs',      [] );
 	$coordinator->set_note( 'log4perl_file', $application->get_option( 'l' ) );
 	
 	$coordinator;
 	}
 	
+=item handle_config
+
+Load and set the configuration file.
+
+You can set the configuration filename with the C<-f> option on the command
+line.
+
+You can print the configuration and exit with the C<-c> option.
+
+=cut
+
 sub handle_config
 	{
 	my( $application ) = @_;
@@ -236,6 +323,7 @@ sub handle_config
 	
 	$application->adjust_config;
 
+	# If this is a dry run, just print the directives and exit
 	if( $application->get_option( 'c' ) )
 		{
 		my @directives = $config->directives;
@@ -251,6 +339,12 @@ sub handle_config
 		}
 	}
 
+=item activate_steps
+
+Returns a list of the steps to run in C<activate>.
+
+=cut
+
 sub activate_steps
 	{
 	qw(
@@ -259,6 +353,7 @@ sub activate_steps
 	setup_environment 
 	handle_config
 	setup_logging
+	post_setup_logging_tasks
 	adjust_config
 	disable_the_missiles
 	setup_dirs 
@@ -447,27 +542,25 @@ sub setup_logging
 	$logger = Log::Log4perl->get_logger( 'backpan_indexer' );
 	}
 
-=item adjust_config_post_logging
+=item post_setup_logging_tasks
 
-Logging has to happen after we read the config, but there are some things I'd
-like to check and log, so I must wait to log. 
+Logging has to happen after we read the config, but there are some
+things I'd like to check and log, so I must wait to log. Anyone who
+wants to log something before logging has been set up should push a
+sub reference onto the C<pre_logging_items> note.
 
 =cut
 
-sub adjust_config_post_logging
+sub post_setup_logging_tasks
 	{
 	my $self = shift;
 	
-	my $perl = $self->get_config->perl;
+	my @items = $self->get_note( 'pre_logging_items' );
 	
-	   if( not defined $perl ) {
-		$logger->warn( "I couldn't find a perl! This may cause problems later." );
-	   	}
-	elsif( -x $perl ) {
-		$logger->debug( "$perl is executable" );
-		}
-	else {
-		$logger->warn( "$perl is not executable. This may cause problems later." );
+	foreach my $item ( @items )
+		{
+		next unless ref $item eq ref sub {};
+		$item->();
 		}
 	
 	1;
@@ -634,5 +727,35 @@ sub get_uuid
 	my $uuid = $ug->create;
 	$ug->to_string( $uuid );
 	}
+
+=back
+
+=head1 TO DO
+
+=over 4
+
+=item Count the lines in the files
+
+=item Code stats? Lines of code, lines of pod, lines of comments
+
+=back
+
+=head1 SOURCE AVAILABILITY
+
+This code is in Github:
+
+	git://github.com/briandfoy/mycpan-indexer.git
+
+=head1 AUTHOR
+
+brian d foy, C<< <bdfoy@cpan.org> >>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (c) 2008-2010, brian d foy, All Rights Reserved.
+
+You may redistribute this under the same terms as Perl itself.
+
+=cut
 
 1;
