@@ -248,10 +248,10 @@ sub _file_md5
 	$ctx->addfile($fh);
  	$ctx->hexdigest;
 	}
+
 1;
 
 =back
-
 
 =head1 SEE ALSO
 
