@@ -39,6 +39,8 @@ reports, so this example does nothing.
 
 =item component_type
 
+This is a collator component.
+
 =cut
 
 sub component_type { $_[0]->collator_type }
@@ -62,7 +64,7 @@ sub get_collator
 
 	my $collator = sub { 1 };
 
-	$self->set_note( $self->component_type, $collator );
+	$self->set_note( 'collator', $collator );
 
 	1;
 	}
