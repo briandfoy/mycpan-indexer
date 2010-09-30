@@ -90,7 +90,7 @@ sub get_task
 			}, $indexer->class unless $basename;
 
 		my $previous_error_basename = $coordinator->get_reporter->check_for_previous_error_result( $dist ) || '';
-		$logger->debug( "Error report returned $previous_error_basename" );
+		$logger->debug( "Error report returned [$previous_error_basename]" );
 		$logger->debug( "Found error report for $dist_basename" ) if $previous_error_basename;
 		
 		# we used to handle this by just deleting all the old error
@@ -138,7 +138,31 @@ sub get_task
 		local $SIG{CHLD} = 'IGNORE';
 		alarm( $config->alarm || 15 );
 		$logger->debug( "Examining $dist_basename" );
-		my $info = eval { $indexer->run( $dist ) };
+		
+		my $info = do {
+			unless( -e $dist ) 
+				{
+				$logger->warn( "Dist $dist does not exist" );
+				undef;
+				}
+			elsif( ! -s $dist ) 
+				{
+				$logger->warn( "Dist $dist has zero size" );
+				my $info = bless {}, $self->get_config->indexer_class;
+				$info->setup_dist_info( $dist );
+				$info->set_dist_info( 'unindexable', 'zero size' );
+				$info->setup_run_info;
+				$info->set_run_info( qw(completed 1) );
+				$info;
+				}
+			else 
+				{
+				$logger->warn( "Indexing $dist" );
+				eval { $indexer->run( $dist ) };
+				}
+			
+			};
+			
 		$logger->debug( "Done examining $dist_basename" );
 		my $at = $@; chomp $at;
 		alarm 0;
@@ -152,7 +176,7 @@ sub get_task
 			$info->setup_dist_info( $dist );
 			$info->setup_run_info;
 			$info->set_run_info( qw(completed 0) );
-			$info->set_run_info( error => $@ );
+			$info->set_run_info( error => $at );
 			}
 		elsif( ! eval { $info->run_info( 'completed' ) } )
 			{
