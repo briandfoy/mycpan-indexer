@@ -29,24 +29,29 @@ in this tutorial.
 
 The application is the bit that you write when you want to do
 something very specialized with a different process. The application
-object controls the big picture.
+object controls the environment, setting up the configuration, and other
+application-level type things.
 
 See C<MyCPAN::Indexer::App::BackPAN>, the module version, and
 C<backpan_indexer.pl>, the script version.
 
 =head1 The Coordinator
 
-The coordinator is just a way for the components to talk to each other.
-The application starts up, creates a coordinator object, and stores it. The
-application gives a reference to the coordinator to every component.
+The coordinator is just a way for the components to talk to each
+other. The application starts up, creates a coordinator object, and
+stores it. The application gives a reference to the coordinator to
+every component.
 
-When the application creates components, it tells each of about the coordinator.
-Each component can talk to the coordinator to get to parts of the application
-it doesn't directly know about. Each component tells the coordinator about
-itself so the coordinator can talk to any component.
+When the application creates components, it tells each of about the
+coordinator. Each component can talk to the coordinator to get to
+parts of the application it doesn't directly know about. Each
+component tells the coordinator about itself so the coordinator can
+talk to any component.
 
-The coordinator maintains the "notes", which are arbitrary bits of information
-that components use to pass information around.
+The coordinator also maintains the "notes", which are arbitrary bits
+of information that components use to pass information around. The
+notes are like a scratch pad where components can leave information
+for other components.
 
 See C<MyCPAN::Indexer::Coordinator>.
 
@@ -54,11 +59,11 @@ See C<MyCPAN::Indexer::Coordinator>.
 
 =head1 The Indexer class
 
-Most of the work to examine a Perl distribution is in C<MyCPAN::Indexer>. When
-it gets down to it, everything C<MyCPAN> knows about Perl distributions is in
-there. It has a C<run()> method which handles the examination. It kicks off
-C<examine>, which figures out what to do by getting a list of steps from
-C<examine_dist_steps>.
+Most of the work to examine a Perl distribution is in
+C<MyCPAN::Indexer>. When it gets down to it, everything C<MyCPAN>
+knows about Perl distributions is in there. It has a C<run()> method
+which handles the examination. It kicks off C<examine>, which figures
+out what to do by getting a list of steps from C<examine_dist_steps>.
 
 This technique is common throughout C<MyCPAN::Indexer>. One method
 returns a list of methods to run. This way, a subclass can control the
@@ -174,6 +179,18 @@ Expects in C<notes>
 
 After the Dispatcher class finishes its queue of work, the Collator class
 comes in and does something with the collection of reports.
+
+Implements:
+
+	get_collator()
+
+Creates in C<notes>
+
+	collator - a subroutine reference
+
+Expects in C<notes>
+
+	nothing
 
 =head2 The Interface class
 
