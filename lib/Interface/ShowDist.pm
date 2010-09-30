@@ -62,7 +62,7 @@ sub do_interface
 		"\n";
 
 	my $total = @{ $self->get_note('queue') };
-	my $width = int( log($total)/log(10) + 1 );
+	my $width = eval { int( log($total)/log(10) + 1 ) } || 5;
 	print "Processing $total distributions\n";
 
 	my $count = 0;
