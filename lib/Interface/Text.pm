@@ -105,7 +105,7 @@ sub do_interface
 	print "\n";
 	
 	my $collator = $self->get_coordinator->get_note( 'collator' );
-	$collator->();
+	$collator->() if ref $collator eq ref sub {};
 	}
 
 =item skip_tick
