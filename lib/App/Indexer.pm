@@ -560,12 +560,14 @@ sub reference onto the C<pre_logging_items> note.
 
 sub post_setup_logging_tasks
 	{
-	my $self = shift;
+	my $application = shift;
 
 	# this stuff happened too early to set a pre_logging_items
-	$self->_log_perl;
+	$application->_log_perl;
+
+	my $coordinator = $application->get_coordinator;
 	
-	my @items = $self->get_note( 'pre_logging_items' );
+	my @items = $coordinator->get_note( 'pre_logging_items' );
 	
 	foreach my $item ( @items )
 		{
@@ -578,9 +580,12 @@ sub post_setup_logging_tasks
 
 sub _log_perl
 	{
-	my( $self ) = @_;
+	my( $application ) = @_;
+
+	my $coordinator = $application->get_coordinator;
+	my $config      = $coordinator->get_config;
 	
-	my $perl = $self->get_config->perl;
+	my $perl = $config->perl;
 
 	   if( not defined $perl ) {
 		$logger->warn( "I couldn't find a perl! This may cause problems later." );
