@@ -8,6 +8,10 @@ use base qw(MyCPAN::Indexer::Component);
 use vars qw($VERSION $logger);
 $VERSION = '1.28_10';
 
+BEGIN {
+	$logger = Log::Log4perl->get_logger( 'Interface' );
+	}
+
 =head1 NAME
 
 MyCPAN::Indexer::Interface::Null - Don't show anything
@@ -21,21 +25,26 @@ Use this in backpan_indexer.pl by specifying it as the interface class:
 
 =head1 DESCRIPTION
 
-This class doesn't show anything
+This class doesn't show anything. It's a null interface.
 
 =head2 Methods
 
 =over 4
 
-=item do_interface( $Notes )
+=item component_type
+
+This is an interface type.
 
 =cut
 
-BEGIN {
-	$logger = Log::Log4perl->get_logger( 'Interface' );
-	}
-
 sub component_type { $_[0]->interface_type }
+
+=item do_interface( $Notes )
+
+Run the interface_callback until the C<Finished> note is true. Don't do
+anything else.
+
+=cut
 
 sub do_interface
 	{
@@ -50,11 +59,10 @@ sub do_interface
 		}
 	
 	my $collator = $self->get_coordinator->get_note( 'collator' );
-	$collator->();
+	$collator->() if ref $collator eq ref sub {};
 	}
 
 =back
-
 
 =head1 SEE ALSO
 
