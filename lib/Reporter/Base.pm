@@ -3,12 +3,16 @@ use strict;
 use warnings;
 
 use base qw(MyCPAN::Indexer::Component);
-use vars qw($VERSION);
+use vars qw($VERSION $logger);
 $VERSION = '1.28_10';
 
 use Carp qw(croak confess);
 use File::Basename qw(basename);
 use File::Spec::Functions;
+
+BEGIN {
+	$logger = Log::Log4perl->get_logger( 'Reporter' );
+	}
 
 =head1 NAME
 
@@ -74,7 +78,7 @@ sub get_report_subdir
 	{
 	my( $self, $info ) = @_;
 		
-	confess( "Argument doesn't know how to run_info!" ) 
+	$logger->warn( "Argument doesn't know how to run_info!" ) 
 		unless eval { $info->can( 'run_info' ) };
 	
 	my $config = $self->get_config;
@@ -108,7 +112,8 @@ sub get_report_filename
 		if( ref $arg ) { $arg->{dist_info}{dist_file} }
 		elsif( defined $arg ) { $arg }
 		};
-	croak( "Did not get a distribution file name!" ) unless $dist_file;
+	$logger->logcroak( "Did not get a distribution file name!" ) 
+		unless $dist_file;
 		
 	no warnings 'uninitialized';
 	( my $basename = basename( $dist_file ) ) =~ s/\.(tgz|tar\.gz|zip)$//;
@@ -153,7 +158,9 @@ reporter to recognize their previous results.
 
 sub get_report_file_extension 
 	{ 
-	croak 'You must implement get_report_file_extension in a derived class!' 
+	$logger->logcroak(
+		'You must implement get_report_file_extension in a derived class!'
+		);
 	}
 
 =item get_successful_report_path( DIST )
