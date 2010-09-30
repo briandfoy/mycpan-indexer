@@ -419,6 +419,31 @@ This method returns false if any of these steps fail:
 
 =cut
 
+sub unpack_dist
+	{
+	my $self = shift;
+	$logger->trace( sub { get_caller_info } );
+
+	$self->_patch_extractors;
+	
+	my $dist = $self->dist_info( 'dist_file' );
+	$logger->debug( "Unpacking dist $dist" );
+
+	return unless $self->get_unpack_dir;
+
+	my $extractor = $self->_create_extractor( $dist );
+	return unless $extractor;
+
+	my $result = $self->_extract( $extractor );
+	return unless $result;
+
+	$self->_unpatch_extractors;
+	
+	$self->set_dist_info( 'dist_extract_path', $extractor->extract_path );
+
+	1;
+	}
+
 BEGIN {
 # This little bit gets around the limits of dynamic scope and refactoring.
 # I move this all out of the unpack_dist
@@ -438,6 +463,10 @@ sub _archive_extract_subclass { 'Archive::Extract::MyCPANpatch' }
 
 sub _patch_extractors
 	{
+	$logger->trace( sub { get_caller_info } );
+
+	my( $self ) = @_;
+	
 	foreach my $ref ( @refs ) {
 		$self->set_stash( $ref );
 		}
@@ -497,6 +526,8 @@ sub _patch_extractors
 	
 sub _unpatch_extractors
 	{
+	$logger->trace( sub { get_caller_info } );
+
 	foreach my $key ( keys %stash ) {
 		my( $value, $variable_ref ) = @{ $stash{ $key } };
 		$$variable_ref = $value;
@@ -505,6 +536,8 @@ sub _unpatch_extractors
 	
 sub _set_stash
 	{
+	$logger->trace( sub { get_caller_info } );
+
 	my( $self, $variable_ref, $value ) = @_;
 	
 	$stash{ $variable_ref } = [ 
@@ -515,34 +548,11 @@ sub _set_stash
 	
 }
 
-sub unpack_dist
-	{
-	my $self = shift;
-	$logger->trace( sub { get_caller_info } );
-
-	$self->_patch_extractors;
-	
-	my $dist = $self->dist_info( 'dist_file' );
-	$logger->debug( "Unpacking dist $dist" );
-
-	return unless $self->get_unpack_dir;
-
-	my $extractor = $self->_create_extractor( $dist );
-	return unless $extractor;
-
-	my $result = $self->_extract( $extractor );
-	return unless $result;
-
-	$self->_unpatch_extractors;
-	
-	$self->set_dist_info( 'dist_extract_path', $extractor->extract_path );
-
-	1;
-	}
-
 sub _create_extractor
 	{
-	my( $self, $dist ) = @_
+	$logger->trace( sub { get_caller_info } );
+
+	my( $self, $dist ) = @_;
 	
 	my $subclass = $self->_archive_extract_subclass;
 	
@@ -572,7 +582,12 @@ sub _create_extractor
 	
 sub _extract
 	{
+	$logger->trace( sub { get_caller_info } );
+
 	my( $self, $extractor ) = @_;
+	
+	my $dist = basename( $extractor->archive );
+	
 	$logger->debug( "About to extract $dist" );
 	my $rc = $extractor->extract( to => scalar $self->dist_info( 'unpack_dir' ) );
 	$logger->debug( "Archive::Extract returns [$rc] for $dist" );

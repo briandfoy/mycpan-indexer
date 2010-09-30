@@ -9,6 +9,7 @@ $VERSION = '1.28_10';
 use Carp qw(croak confess);
 use File::Basename qw(basename);
 use File::Spec::Functions;
+use Log::Log4perl;
 
 BEGIN {
 	$logger = Log::Log4perl->get_logger( 'Reporter' );
