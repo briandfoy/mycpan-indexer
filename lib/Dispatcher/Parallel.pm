@@ -202,6 +202,21 @@ sub _remove_old_processes
 		}
 	}
 
+sub _remove_stuck_processes
+	{
+	my( $self ) = @_;
+
+	my $pids = $self->get_note( 'PID' );
+	
+	foreach my $pid ( @$pids )
+		{
+		my %children =
+			map  { $_->{pid}, 1 }
+			grep { $_->{'ppid'} == $$ and $_->{'size'} > 1234 } #XXX
+			@{ Proc::ProcessTable->new->table };
+		}
+	}
+
 BEGIN {
 my %hash = ( days => 864000, hours => 3600, minutes => 60 );
 
