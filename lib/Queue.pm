@@ -39,7 +39,7 @@ indexer to process.
 
 =item component_type
 
-This is a queue type
+This is a queue type.
 
 =cut
 
@@ -122,27 +122,33 @@ sub _get_file_list
 
 	find( $wanted, @dirs );
 	
-	{
-	my $count = () = $reporter->();
-	$logger->info( "Found $count distributions to possibly index" );
-	}
-	
+	my $dist_count = () = $reporter->();
+	$logger->info( "Found $dist_count distributions to possibly index" );
+		
 	my $files_to_examine = [
-		grep { $self->no_report_exists_yet( $_ ) }
+		grep { ! $self->report_exists_already( $_ ) }
 		map  { rel2abs($_) }
 		grep { ! /.(data|txt).gz$/ and ! /02packages/ }
 		$reporter->()
 		];
 
 	{
-	my $count = () = @$files_to_examine;
-	$logger->info( "Found $count distributions to actually index" );
+	my $examine_count = () = @$files_to_examine;
+	$logger->info( "Found $examine_count distributions to actually index" );
+	my $success_reports = $self->success_report_count || 0;
+	my $error_reports = $self->error_report_count || 0;
+	
+	my $success_percent = sprintf "%d", 100 * eval { $success_reports / $dist_count } || 0;
+	my $error_percent   = sprintf "%d", 100 * eval { $error_reports / $dist_count } || 0;
+	
+	$logger->info( "Found $success_reports previous success reports ($success_percent%)" );
+	$logger->info( "Found $error_reports previous error reports ($error_percent%)" );
 	}
 
 	return $files_to_examine;
 	}
 	
-=item no_report_exists_yet( DIST )
+=item report_exists_already( DIST )
 
 This method goes through this process to decide what to return:
 
@@ -163,7 +169,11 @@ This method goes through this process to decide what to return:
 
 =cut
 
-sub no_report_exists_yet
+BEGIN {
+my $success_reports;
+my $error_reports;
+
+sub report_exists_already
 	{
 	my( $self, $dist ) = @_;
 	
@@ -172,14 +182,19 @@ sub no_report_exists_yet
 	my $reporter = $self->get_coordinator->get_component( 'reporter' );
 	
 	my $success_report = $reporter->get_successful_report_path( $dist );
-	return 1 if -e $success_report;	
-	return 0 unless $self->get_config->retry_errors;
-	
+	do { $success_reports++; return 1 } if -e $success_report;	
+
+	return 0 if $self->get_config->retry_errors;
 	my $error_report = $reporter->get_error_report_path( $dist );
-	return 1 if -e $error_report;
+	do { $error_reports++; return 1 } if -e $error_report;
 
 	return 0;
 	}
+	
+sub success_report_count { $success_reports }
+
+sub error_report_count { $error_reports }
+}
 
 sub _setup_organize_dists
 	{
