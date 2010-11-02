@@ -468,7 +468,7 @@ sub _patch_extractors
 	my( $self ) = @_;
 	
 	foreach my $ref ( @refs ) {
-		$self->set_stash( $ref );
+		$self->_set_stash( $ref );
 		}
 	
 	$Archive::Extract::DEBUG      = $logger->is_debug;
@@ -1444,7 +1444,6 @@ sub get_modules_info
 	$self->set_dist_info( 'module_info', [ @file_info ] );
 	}
 
-
 sub get_module_info
 	{
 	$logger->trace( sub { get_caller_info } );
@@ -1453,20 +1452,21 @@ sub get_module_info
 
 	my $hash = $self->get_file_info( $file );
 
-	$logger->debug( "get_module_info called with [$file]\n" );
+	$logger->debug( "get_module_info called with [$file]" );
 
 	my @tasks = $self->get_module_info_tasks;
 
 	foreach my $task ( @tasks )
 		{
 		my( $method, $description ) = @$task;
-		$logger->debug( "get_module_info calling [$method]\n" );
+		$logger->debug( "get_module_info calling [$method]" );
 
 		my $result = $self->$method( $file, $hash );
 
 		unless( $result )
 			{
-			$self->set_run_info( 'error', "Problem with $method and $file" );
+			$logger->debug( "Problem with $method and $file" );
+			$hash->{"${method}_error"} = "Problem with $method and $file";
 			}
 		}
 
