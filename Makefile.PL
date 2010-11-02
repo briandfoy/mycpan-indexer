@@ -20,7 +20,11 @@ foreach my $module ( keys %optional )
 	
 	unless( $available )
 		{
-		print "$module not available. Skipping optional modules that use it.\n";
+		print <<"HERE";
+$module not available. Skipping optional modules that use it.
+If you later want to use it, you'll have to reinstall MyCPAN.
+HERE
+
 		delete $optional{ $module };
 		}
 	}
@@ -60,7 +64,7 @@ WriteMakefile(
 		},
 
 	'PM'           => {
-		%optional,
+		map( %$, values %optional ),
 		
 		'lib/Collator/Null.pm'       => '$(INST_LIBDIR)/Indexer/Collator/Null.pm',
 
