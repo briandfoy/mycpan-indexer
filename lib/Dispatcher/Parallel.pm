@@ -9,6 +9,10 @@ $VERSION = '1.28_10';
 use Log::Log4perl;
 
 BEGIN {
+	$logger = Log::Log4perl->get_logger( 'Dispatcher' );
+	}
+
+BEGIN {
 	# override since Tk overrides exit and this needs the real exit
 	no warnings 'redefine';
 	use Parallel::ForkManager;
@@ -210,6 +214,7 @@ sub _remove_stuck_processes
 	
 	foreach my $pid ( @$pids )
 		{
+		$logger->debug( "Trying to remove stuck process $pid" );
 		my %children =
 			map  { $_->{pid}, 1 }
 			grep { $_->{'ppid'} == $$ and $_->{'size'} > 1234 } #XXX
