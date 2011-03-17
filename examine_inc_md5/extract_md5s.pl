@@ -5,23 +5,28 @@ use strict;
 use warnings;
 
 use File::Spec::Functions qw( catfile );
-use YAML qw( LoadFile );
+use YAML::XS qw(  );
 
 my @dirs = @ARGV;
 my $count;
 
-foreach my $dir ( @dirs )
-	{
+DIR: while( my $dir = shift @dirs ) {
 	opendir my $dh, $dir or warn "Could not open $dir: $!\n";
 	
-	FILE: while( my $file = readdir( $dh ) )
-		{
+	FILE: while( my $file = readdir( $dh ) ) {
 		next if $file =~ /^\./;
+		next if $file =~ /\.yamlpm/;
+		my $path = catfile( $dir, $file );
+		if( -d $path ) {
+			push @dirs, $path;
+			next FILE;
+			}
 		
-		my $yaml = eval { LoadFile( catfile( $dir, $file ) ) };
-		unless( defined $yaml )
-			{
-			warn "$file did not parse correctly\n";
+		my $yaml = eval { YAML::XS::LoadFile( $path ) };
+		my $at = $@;
+
+		unless( ref $yaml ) {
+			warn "$path did not parse correctly $@\n";
 			next FILE;
 			}
 
@@ -37,10 +42,17 @@ foreach my $dir ( @dirs )
 			no warnings 'uninitialized';
 				
 			my $version = $module->{version_info}{value};
-			if( $version =~ /[^0-9_.]/ )
-				{
+			$version =~ s/^\s*|\s+$//g;
+
+			if( $version =~ m/[\000-\037]/ ) {
+				print STDERR "Found stupid v version... now is ";
 				my $hex = unpack 'H*', $version;
-				warn "Strange version in $file for $module->{primary_package}: [$version|$hex]\n";
+				$version = 'v' . join '.', map { $_ + 0 } $hex =~ m/(..)/g;
+				print STDERR "$version\n";
+				}
+
+			if( $version =~ /[^0-9a-z_.-]/i ) {
+				warn "Strange version in $path for $module->{primary_package}: [$version]\n";
 				}
 
 			write_line(
