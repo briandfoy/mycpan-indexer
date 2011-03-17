@@ -70,6 +70,15 @@ sub examine_dist_steps
 		);
 	}
 
+=item check_dist_size
+
+We don't care about 0 byte dists, so we always return true so setup_dist_info
+doesn't bail out.
+
+=cut
+
+sub check_dist_size { 1 }
+
 =item collect_info
 
 Given a distribution, unpack it, look at it, and report the findings.
