@@ -131,8 +131,10 @@ sub get_task
 
 		$logger->debug( sprintf "Setting alarm for %d seconds", $config->alarm );
 		local $SIG{ALRM} = sub {
+			$logger->info( "Alarm rang for $dist_basename in process $$!\n" );
 			$self->_cleanup_children;
-			die "Alarm rang for $dist_basename in process $$!\n";
+			$logger->info( "Cleaned up" );
+			die;
 			};
 
 		local $SIG{CHLD} = 'IGNORE';
@@ -194,6 +196,7 @@ sub get_task
         # everything here.
 		$self->_cleanup_children; 
 		
+		$logger->debug( "Cleaned up, returning..." );
 		$info;
 		};
 
@@ -210,13 +213,21 @@ sub _cleanup_children
 		map  { $_->{pid}, 1 }
 		grep { $_->{'ppid'} == $$ }
 		@{ Proc::ProcessTable->new->table };
+	$logger->debug( "Child processes are @{[keys %children]}" );
 		
 	my @grandchildren =
 		map  { $_->{pid} }
 		grep { exists $children{ $_->{'ppid'} } }
 		@{ Proc::ProcessTable->new->table };
+	$logger->debug( "Grandchild processes are @grandchildren" );
 
-	kill 9, keys %children, @grandchildren;
+	my @processes = ( keys %children, @grandchildren );
+	$logger->debug( "There are " . @processes . " processes to clean up" );
+	return unless @processes;
+
+	$logger->debug( "Preparing to kill" );
+
+	kill 9, @processes;
 	
 	return;
 	}
@@ -226,36 +237,39 @@ sub _copy_bad_dist
 	my( $self, $info ) = @_;
 
 	my $config  = $self->get_config;
+	my $bad_dist_dir = $config->copy_bad_dists;
+	return unless $bad_dist_dir;
 	
-	if( my $bad_dist_dir = $config->copy_bad_dists )
+	unless( -d $bad_dist_dir and mkdir $bad_dist_dir ) {
+		$logger->error( "Could not make dist dir [$bad_dist_dir]: $!" );
+		return;
+		}
+	
+	my $dist_file = $info->dist_info( 'dist_file' );
+	my $basename  = $info->dist_info( 'dist_basename' );
+	my $new_name  = catfile( $bad_dist_dir, $basename );
+
+	unless( -e $new_name )
 		{
-		my $dist_file = $info->dist_info( 'dist_file' );
-		my $basename  = $info->dist_info( 'dist_basename' );
-		my $new_name  = catfile( $bad_dist_dir, $basename );
+		$logger->debug( "Copying bad dist" );
 
-		unless( -e $new_name )
+		my( $in, $out );
+
+		unless( open $out, ">", $new_name )
 			{
-			$logger->debug( "Copying bad dist" );
-
-			my( $in, $out );
-
-			unless( open $in, "<", $dist_file )
-				{
-				$logger->fatal( "Could not open bad dist to $dist_file: $!" );
-				return;
-				}
-
-			unless( open $out, ">", $new_name )
-				{
-				$logger->fatal( "Could not copy bad dist to $new_name: $!" );
-				return;
-				}
-
-			while( <$in> ) { print { $out } $_ }
-			close $in;
-			close $out;
-			
+			$logger->fatal( "Could not copy bad dist to $new_name: $!" );
+			return;
 			}
+
+		unless( open $in, "<", $dist_file )
+			{
+			$logger->fatal( "Could not open bad dist to $dist_file: $!" );
+			return;
+			}
+
+		while( <$in> ) { print { $out } $_ }
+		close $in;
+		close $out;
 		}
 	}
 
