@@ -17,21 +17,18 @@ BEGIN {
 	no warnings 'redefine';
 	use Parallel::ForkManager;
 
-	sub Parallel::ForkManager::finish { my ($s, $x) = @_;
-	  if ( $s->{in_child} ) {
-		CORE::exit ($x || 0);
-	  }
-	  if ($s->{max_proc} == 0) { # max_proc == 0
-		$s->on_finish($$, $x ,$s->{processes}->{$$}, 0, 0);
-		delete $s->{processes}->{$$};
-	  }
-	  return 0;
+	sub Parallel::ForkManager::finish { 
+		$logger->debug( "In Parallel::ForkManager::finish" );
+		my ($s, $x) = @_;
+		CORE::exit ($x || 0) if $s->{in_child};
+		if( $s->{max_proc} == 0 ) { # max_proc == 0
+			$s->on_finish($$, $x ,$s->{processes}->{$$}, 0, 0);
+			delete $s->{processes}->{$$};
+			}
+		return 0;
+		}
 	}
-}
 
-BEGIN {
-	$logger = Log::Log4perl->get_logger( 'Dispatcher' );
-	}
 
 =head1 NAME
 
