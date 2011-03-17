@@ -317,14 +317,31 @@ sub setup_dist_info
 	$self->set_dist_info( 'dist_author', $author );
 	$logger->debug( "dist author [$author]" );
 
-	unless( $self->dist_info( 'dist_size' ) )
-		{
-		$logger->error( "Dist size was 0!" );
-		$self->set_run_info( 'fatal_error', "Dist size was 0!" );
-		return;
-		}
+	return unless $self->check_dist_size;
 
 	return 1;
+	}
+
+=item check_dist_size
+
+Some indexers might want to stop if the dist size is 0 (or some other value).
+In particular, you can't unpack zero byte dists, so if you are expecting to
+look at the dist files, a 0 sized dist is a problem.
+
+=cut
+
+sub check_dist_size
+	{
+	my( $self ) = @_;
+
+        unless( $self->dist_info( 'dist_size' ) )
+                {
+                $logger->error( "Dist size was 0!" );
+                $self->set_run_info( 'fatal_error', "Dist size was 0!" );
+                return;
+                }
+
+	1;
 	}
 
 =item set_dist_info( KEY, VALUE )
