@@ -26,16 +26,14 @@ foreach my $dir ( @dirs )
 			}
 
 		my $dist_file = $yaml->{dist_info}{dist_file};
-		unless( defined $yaml->{dist_info}{dist_file} )
-			{
+		unless( defined $yaml->{dist_info}{dist_file} ) {
 			warn "$file did have a dist_file entry\n";
 			next FILE;
 			}
 			
 		$dist_file =~ s/.*authors.id.//;
 		
-		foreach my $module ( @{ $yaml->{dist_info}{module_info} } )
-			{
+		foreach my $module ( @{ $yaml->{dist_info}{module_info} } ) {
 			no warnings 'uninitialized';
 				
 			my $version = $module->{version_info}{value};
@@ -55,8 +53,7 @@ foreach my $dir ( @dirs )
 				);
 			}
 
-		foreach my $file ( @{ $yaml->{dist_info}{manifest_file_info} } )
-			{
+		foreach my $file ( @{ $yaml->{dist_info}{manifest_file_info} } ) {
 			no warnings 'uninitialized';
 			next if $file->{name} =~ m<(^|/)\.(git|svn)/>;
 			
