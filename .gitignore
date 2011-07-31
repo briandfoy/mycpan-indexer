@@ -17,3 +17,5 @@ examples/test_use.db
 indexer_reports
 MyCPAN.bbproject
 Debian*
+*.sqlite
+*.yml
