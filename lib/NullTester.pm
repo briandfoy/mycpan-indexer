@@ -44,8 +44,8 @@ at the same time.
 
 =cut
 
-sub component_type 
-	{ 
+sub component_type
+	{
 	$_[0]->combine_types(
 		map { my $m = "${_}_type"; $_[0]->$m() }
 		qw(indexer queue worker dispatcher reporter interface)

@@ -10,7 +10,7 @@ $VERSION = '1.28_10';
 
 MyCPAN::Indexer::Notes - Tiny class for MyCPAN component note passing
 
-=head1 SYNOPSIS	
+=head1 SYNOPSIS
 
 Use in the coordinator object. This isn't really for the public.
 
@@ -42,9 +42,9 @@ object.
 sub new
 	{
 	my( $class ) = @_;
-	
+
 	my $self = bless {}, $class;
-		
+
 	$self;
 	}
 
@@ -110,7 +110,7 @@ Add a value onto the end of the array reference value for NOTE.
 sub push_onto_note
 	{
 	my( $self, $key, @list ) = @_;
-	
+
 	my $ref = $self->get_note( $key );
 	croak( "Value for note [$key] is not an array reference" )
 		unless ref $ref eq ref [];
@@ -126,13 +126,13 @@ Add a value onto the front of the array reference value for NOTE.
 sub unshift_onto_note
 	{
 	my( $self, $key, @list ) = @_;
-	
+
 	my $ref = $self->get_note( $key );
 	croak( "Value for note [$key] is not an array reference" )
 		unless ref $ref eq ref [];
 	unshift @$ref, @list;
 	}
-	
+
 =item get_note_list_element( NOTE, INDEX )
 
 Return the list element at INDEX for the array reference stored in NOTE.
@@ -155,10 +155,10 @@ sub set_note_unless_defined
 	{
 	my $value = $_[0]->get_note( $_[1] );
 	return $value if defined $value;
-	
+
 	$_[0]->set_note( $_[1], $_[2] );
 	}
-	
+
 =back
 
 =head1 SOURCE AVAILABILITY

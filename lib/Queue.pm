@@ -61,17 +61,17 @@ value of the C<pause_id> configuration to create the path.
 
 This queue component tries to skip any distributions that already have
 a report to make the list of distributions to examine much shorter. It
-relies on the 
+relies on the
 
 =cut
 
 sub get_queue
 	{
 	my( $self ) = @_;
-	
-	my @dirs = 
-		( 
-		$self->get_config->backpan_dir, 
+
+	my @dirs =
+		(
+		$self->get_config->backpan_dir,
 		split /\x00/, $self->get_config->merge_dirs || ''
 		)
 		;
@@ -81,25 +81,25 @@ sub get_queue
 		$logger->error( "Distribution source directory does not exist: [$dir]" )
 			unless -e $dir;
 		}
-	
+
 	@dirs = grep { -d $_ } @dirs;
 	$logger->logdie( "No directories to index!" ) unless @dirs;
-	
+
 	my $queue = $self->_get_file_list( @dirs );
-	
+
 	if( $self->get_config->organize_dists )
 		{
 		$self->_setup_organize_dists( $dirs[0] );
-		
+
 		# I really hate this following line. It's sure to
 		# break on something
 		my $regex = catfile( qw( authors id (.) .. .+? ), '' );
-		
+
 		foreach my $i ( 0 .. $#$queue )
 			{
 			my $file = $queue->[$i];
 			$logger->debug( "Processing $file" );
-			
+
 			next if $file =~ m|$regex|;
 			$logger->debug( "Copying $file into PAUSE structure" );
 
@@ -108,23 +108,23 @@ sub get_queue
 		}
 
 	$self->set_note( 'queue', $queue );
-	
+
 	1;
 	}
 
 sub _get_file_list
 	{
 	my( $self, @dirs ) = @_;
-	
+
 	$logger->debug( "Taking dists from [@dirs]" );
-	my( $wanted, $reporter ) = 
+	my( $wanted, $reporter ) =
 		File::Find::Closures::find_by_regex( qr/\.(?:(?:tar\.|t)gz|zip)$/ );
 
 	find( $wanted, @dirs );
-	
+
 	my $dist_count = () = $reporter->();
 	$logger->info( "Found $dist_count distributions to possibly index" );
-		
+
 	my $files_to_examine = [
 		grep { ! $self->report_exists_already( $_ ) }
 		map  { rel2abs($_) }
@@ -137,24 +137,24 @@ sub _get_file_list
 	$logger->info( "Found $examine_count distributions to actually index" );
 	my $success_reports = $self->success_report_count || 0;
 	my $error_reports = $self->error_report_count || 0;
-	
+
 	my $success_percent = sprintf "%d", 100 * eval { $success_reports / $dist_count } || 0;
 	my $error_percent   = sprintf "%d", 100 * eval { $error_reports / $dist_count } || 0;
-	
+
 	$logger->info( "Found $success_reports previous success reports ($success_percent%)" );
 	$logger->info( "Found $error_reports previous error reports ($error_percent%)" );
 	}
 
 	return $files_to_examine;
 	}
-	
+
 =item report_exists_already( DIST )
 
 This method goes through this process to decide what to return:
 
 =over 4
 
-=item Return false if the C<fresh_start> configuration is true 
+=item Return false if the C<fresh_start> configuration is true
 (so existing reports don't matter).
 
 =item Return true if there is a successful report already.
@@ -176,13 +176,13 @@ my $error_reports;
 sub report_exists_already
 	{
 	my( $self, $dist ) = @_;
-	
+
 	return 0 if $self->get_config->fresh_start;
-	
+
 	my $reporter = $self->get_coordinator->get_component( 'reporter' );
-	
+
 	my $success_report = $reporter->get_successful_report_path( $dist );
-	do { $success_reports++; return 1 } if -e $success_report;	
+	do { $success_reports++; return 1 } if -e $success_report;
 
 	return 0 if $self->get_config->retry_errors;
 	my $error_report = $reporter->get_error_report_path( $dist );
@@ -190,7 +190,7 @@ sub report_exists_already
 
 	return 0;
 	}
-	
+
 sub success_report_count { $success_reports }
 
 sub error_report_count { $error_reports }
@@ -202,9 +202,9 @@ sub _setup_organize_dists
 
 	my $pause_id = eval { $self->get_config->pause_id } || 'MYCPAN';
 
-	eval { mkpath 
-		catfile( $base_dir, $self->_path_parts( $pause_id ) ), 
-		{ mode => 0775 } 
+	eval { mkpath
+		catfile( $base_dir, $self->_path_parts( $pause_id ) ),
+		{ mode => 0775 }
 		};
 	$logger->error( "Could not create PAUSE author path for [$pause_id]: $@" )
 		if $@;
@@ -226,9 +226,9 @@ sub _path_parts
 sub _copy_file
 	{
 	require File::Copy;
-	
+
 	my( $self, $file, $base_dir ) = @_;
-	
+
 	my $pause_id = eval { $self->get_config->pause_id } || 'MYCPAN';
 
 	my $basename = basename( $file );
@@ -238,7 +238,7 @@ sub _copy_file
 		catfile( $base_dir, $self->_path_parts( $pause_id ), $basename )
 		);
 
-	if( -e $new_name and 
+	if( -e $new_name and
 		$self->_file_md5( $new_name ) eq $self->_file_md5( $file ) )
 		{
 		$logger->debug( "Files [$file] and [$new_name] are the same. Not copying" );
@@ -254,9 +254,9 @@ sub _copy_file
 sub _file_md5
 	{
 	my( $self, $file ) = @_;
-	
+
 	require Digest::MD5;
-	
+
 	open my( $fh ), '<', $file or return '';
 
 	my $ctx = Digest::MD5->new;

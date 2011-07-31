@@ -52,12 +52,12 @@ sub do_interface
 	$logger->debug( "Calling do_interface" );
 
 	my $config = $self->get_config;
-	
+
 	my $indexer = $self->get_coordinator->get_component( 'indexer' );
-	
-	print join( " ", 
-		$config->indexer_class, 
-		$indexer->VERSION 
+
+	print join( " ",
+		$config->indexer_class,
+		$indexer->VERSION
 		),
 		"\n";
 
@@ -80,12 +80,12 @@ sub do_interface
 			elsif( exists $info->{run_info}{completed} ) { 'completed' }
 			else                                         { 'unknown'   }
 			};
-			
-		printf "[%*d/%d] %s ---> %s\n", $width, ++$count, $total, 
+
+		printf "[%*d/%d] %s ---> %s\n", $width, ++$count, $total,
 			$info->{dist_info}{dist_basename} || '(unknown dist???)',
 			$status;
 		}
-	
+
 	my $collator = $self->get_coordinator->get_note( 'collator' );
 	$collator->();
 	}
@@ -106,19 +106,19 @@ Returns the error message that most likely was the big problem.
 sub get_error
 	{
 	my( $self, $info ) = @_;
-	
+
 	my $r = $info->{run_info};
-	
+
 	my @errors = map { $r->{$_} || () } qw(error fatal_error);
 
 	foreach my $pattern ( @patterns )
 		{
 		return ${^MATCH} if $errors[0] =~ m/$pattern/p;
 		}
-	
+
 	}
 }
-	
+
 =back
 
 =head1 SEE ALSO

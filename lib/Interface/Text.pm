@@ -54,13 +54,13 @@ sub do_interface
 	$logger->debug( "Calling do_interface" );
 
 	my $config = $self->get_config;
-	
+
 	my $i = $config->indexer_class;
 	eval "require $i; 1";
-	
-	print join( " ", 
-		$config->indexer_class, 
-		$config->indexer_class->VERSION 
+
+	print join( " ",
+		$config->indexer_class,
+		$config->indexer_class->VERSION
 		),
 		"\n";
 
@@ -70,7 +70,7 @@ sub do_interface
 
 	my $count = 0;
 	my $timer = time;
-	
+
 	while( 1 )
 		{
 		last if $self->get_note('Finished');
@@ -79,7 +79,7 @@ sub do_interface
 			{
 			my $elapsed = time - $timer;
 			$timer = time;
-			
+
 			print " $elapsed" unless $count < 70;
 			printf "\n[%6d/%6d]", $count, $total;
 			}
@@ -103,7 +103,7 @@ sub do_interface
 
 		}
 	print "\n";
-	
+
 	my $collator = $self->get_coordinator->get_note( 'collator' );
 	$collator->() if ref $collator eq ref sub {};
 	}

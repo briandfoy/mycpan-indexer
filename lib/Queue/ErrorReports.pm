@@ -28,7 +28,7 @@ Use this in backpan_indexer.pl by specifying it as the queue class:
 =head1 DESCRIPTION
 
 This class returns a list of Perl distributions for the BackPAN
-indexer to process. It selects the distributions that had previous 
+indexer to process. It selects the distributions that had previous
 indexing errors by extracting the distribution path from the error
 report. If the distribution isn't in the same place it was during
 the original indexing, it won't be in the queue.
@@ -56,11 +56,11 @@ value of the C<pause_id> configuration to create the path.
 sub _get_file_list
 	{
 	my( $self ) = @_;
-	
+
 	my @dirs = $self->get_coordinator->get_component( 'reporter' )->get_error_report_dir;
-	
+
 	$logger->debug( "Taking dists from [@dirs]" );
-	my( $wanted, $reporter ) = 
+	my( $wanted, $reporter ) =
 		File::Find::Closures::find_by_regex( qr/\.(?:yml)$/ );
 
 	$logger->debug( "Running File::Find" );
@@ -68,7 +68,7 @@ sub _get_file_list
 
 	my @files = $reporter->();
 	$logger->debug( "Found " . @files . " error reports" );
-	
+
 	my @queue;
 	foreach my $file ( @files )
 		{
@@ -90,7 +90,7 @@ sub _get_file_list
 	print "@queue\n"; exit;
 	return \@queue;
 	}
-	
+
 1;
 
 =back

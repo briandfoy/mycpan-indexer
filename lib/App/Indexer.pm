@@ -41,7 +41,7 @@ my $report_dir = catfile( $cwd, 'indexer_reports' );
 
 my %Defaults = (
 	alarm                 => 15,
-#	backpan_dir           => cwd(),	
+#	backpan_dir           => cwd(),
 	copy_bad_dists        => 0,
 	collator_class        => 'MyCPAN::Indexer::Collator::Null',
 	dispatcher_class      => 'MyCPAN::Indexer::Dispatcher::Parallel',
@@ -71,14 +71,14 @@ my %Defaults = (
 =item remember_perl
 
 We need to remember the C<perl> that started our program. We want to use the
-same binary to fire off other processes. WE have to do this very early because 
+same binary to fire off other processes. WE have to do this very early because
 we are going to discard most of the environment. After we do that, we can't
 search the PATH to find the C<perl> binary.
 
 =cut
 
 sub remember_perl
-	{	
+	{
 	require File::Which;
 
 	my $perl = do {
@@ -94,7 +94,7 @@ sub remember_perl
 
 	my $sub = sub {
 		my $perl = $self->get_config->perl;
-	
+
 		   if( not defined $perl ) {
 			$logger->warn( "I couldn't find a perl! This may cause problems later." );
 			}
@@ -105,7 +105,7 @@ sub remember_perl
 			$logger->warn( "$perl is not executable. This may cause problems later." );
 			}
 		};
-	
+
 	$self->push_onto_note( 'pre_logging_items', $sub );
 
 =cut
@@ -177,12 +177,12 @@ sub adjust_config
 
 	my $coordinator = $application->get_coordinator;
 	my $config      = $coordinator->get_config;
-	
+
 	my( $backpan_dir, @merge_dirs ) = @{ $application->{args} };
-	
+
 	$config->set( 'backpan_dir', $backpan_dir ) if defined $backpan_dir;
 	$config->set( 'merge_dirs', join "\x00", @merge_dirs ) if @merge_dirs;
-	
+
 	# set the directories to index, either set in:
 		# first argument on the command line
 		# config file
@@ -195,11 +195,11 @@ sub adjust_config
 	# in the config file, it's all a single line
 	if( $config->get( 'merge_dirs' ) )
 		{
-		my @dirs = 
-			grep { length } 
-			split /(?<!\\) /, 
+		my @dirs =
+			grep { length }
+			split /(?<!\\) /,
 				$config->get( 'merge_dirs' ) || '';
-				
+
 		$config->set( 'merge_dirs', join "\x00", @dirs );
 		}
 
@@ -213,17 +213,17 @@ sub adjust_config
 				);
 			}
 		}
-	
+
 	# Adjust for some environment variables
-	my $log4perl_file = 
-		$ENV{'MYCPAN_LOG4PERL_FILE'} 
-			|| 
+	my $log4perl_file =
+		$ENV{'MYCPAN_LOG4PERL_FILE'}
+			||
 		$coordinator->get_note( 'log4perl_file' )
 			;
 
 	# Adjust for some environment variables
 	$ENV{'PREFER_BIN'} = 1 if $config->get( 'prefer_bin' );
-	
+
 	$config->set( 'log4perl_file', $log4perl_file ) if $log4perl_file;
 
 	return 1;
@@ -233,10 +233,10 @@ sub adjust_config
 
 =cut
 
-sub new 
-	{ 
+sub new
+	{
 	my( $class, @args ) = @_;
-	
+
 	bless { args => [ @args ] }, $class;
 	}
 
@@ -259,30 +259,30 @@ values:
 	-f  config_file     Default is $script.conf
 	-l  log4perl_file   Default is $script.log4perl
 	-c                  Print the config and exit
-	
+
 =cut
 
 sub process_options
 	{
 	my( $application ) = @_;
-		
+
 	my $run_dir = dirname( $0 );
 	( my $script  = basename( $0 ) ) =~ s/\.\w+$//;
 
 	local @ARGV = @{ $application->{args} };
 	getopts( 'cl:f:', \ my %Options );
-	
+
 	# other things might want to use things from @ARGV, and
 	# we just removed the bits that we wanted.
 	$application->{args} = [ @ARGV ]; # XXX: yuck
 
 	$Options{f} ||= catfile( $run_dir, "$script.conf" );
-	
+
 	#$Options{l} ||= catfile( $run_dir, "$script.log4perl" );
-	
+
 	$application->{options} = \%Options;
 	}
-	
+
 sub get_option { $_[0]->{options}{$_[1]} }
 
 =item setup_coordinator
@@ -294,20 +294,20 @@ Set up the coordinator object and set its initial values.
 sub setup_coordinator
 	{
 	my( $application ) = @_;
-	
+
 	require MyCPAN::Indexer::Coordinator;
 	my $coordinator = MyCPAN::Indexer::Coordinator->new;
-	
+
 	$coordinator->set_application( $application );
 	$application->set_coordinator( $coordinator );
-	
+
 	$coordinator->set_note( 'UUID',          $application->get_uuid() );
 	$coordinator->set_note( 'tempdirs',      [] );
 	$coordinator->set_note( 'log4perl_file', $application->get_option( 'l' ) );
-	
+
 	$coordinator;
 	}
-	
+
 =item handle_config
 
 Load and set the configuration file.
@@ -327,7 +327,7 @@ sub handle_config
 	# Adjust config based on run parameters
 	my $config = $application->init_config( $application->get_option('f') );
 	$application->get_coordinator->set_config( $config );
-	
+
 	$application->adjust_config;
 
 	# If this is a dry run, just print the directives and exit
@@ -337,8 +337,8 @@ sub handle_config
 		my $longest = max( map { length } @directives );
 		foreach my $directive ( sort @directives )
 			{
-			printf "%${longest}s   %-10s\n", 
-				$directive, 
+			printf "%${longest}s   %-10s\n",
+				$directive,
 				$config->get( $directive );
 			}
 
@@ -355,16 +355,16 @@ Returns a list of the steps to run in C<activate>.
 sub activate_steps
 	{
 	qw(
-	process_options 
-	setup_coordinator 
-	setup_environment 
+	process_options
+	setup_coordinator
+	setup_environment
 	handle_config
 	setup_logging
 	post_setup_logging_tasks
 	adjust_config
 	disable_the_missiles
-	setup_dirs 
-	run_components 
+	setup_dirs
+	run_components
 	activate_end
 	);
 	}
@@ -383,12 +383,12 @@ sub activate
 	local %ENV = %ENV;
 
 	my $application = $class->new( @argv );
-	
+
 	foreach my $step ( $application->activate_steps )
 		{
 		$application->$step();
 		}
-		
+
 	$application;
 	}
 
@@ -401,7 +401,7 @@ Do the work.
 sub run_components
 	{
 	my( $application ) = @_;
-	
+
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 	# Load classes and check that they do the right thing
 	my @components = $application->components;
@@ -409,7 +409,7 @@ sub run_components
 	my $coordinator = $application->get_coordinator;
 
 	my $config     = $coordinator->get_config;
-		
+
 	foreach my $tuple ( @components )
 		{
 		my( $component_type, $default_class, $method ) = @$tuple;
@@ -421,11 +421,11 @@ sub run_components
 			unless $class->can( $method );
 
 		$logger->debug( "Calling $class->$method()" );
-		
+
 		my $component = $class->new;
 		$component->set_coordinator( $coordinator );
 		$component->$method();
-		
+
 		my $set_method = "set_${component_type}";
 		$coordinator->$set_method( $component );
 		}
@@ -440,7 +440,7 @@ Do stuff before we quit.
 sub activate_end
 	{
 	my( $application ) = @_;
-	
+
 	$application->cleanup;
 
 	$application->_exit;
@@ -448,15 +448,15 @@ sub activate_end
 
 =item setup_environment
 
-Delete what we don't want and set what we need. 
+Delete what we don't want and set what we need.
 
 We don't want most of the environment, just the minimal to make things not
 break. We especially want to cleanse PATH. We keep these:
 
-	DISPLAY 
-	USER 
-	HOME 
-	PWD 
+	DISPLAY
+	USER
+	HOME
+	PWD
 	TERM
 
 Some of the things we need are:
@@ -464,13 +464,13 @@ Some of the things we need are:
 	AUTOMATED_TESTING
 	PERL_MM_USE_DEFAULT
 	PERL_EXTUTILS_AUTOINSTALL
-	
+
 =cut
 
 sub setup_environment
 	{
-	my %pass_through = map { $_, 1 } qw( 
-		DISPLAY USER HOME PWD TERM 
+	my %pass_through = map { $_, 1 } qw(
+		DISPLAY USER HOME PWD TERM
 		), grep { /\A(?:D|MYC)PAN_/ } keys %ENV;
 
 	foreach my $key ( keys %ENV )
@@ -482,7 +482,7 @@ sub setup_environment
 	$ENV{AUTOMATED_TESTING}++;
 
 	# Makemaker
-	$ENV{PERL_MM_USE_DEFAULT}++; 
+	$ENV{PERL_MM_USE_DEFAULT}++;
 
 	# Module::Install
 	$ENV{PERL_EXTUTILS_AUTOINSTALL} = '--skipdeps';
@@ -518,12 +518,12 @@ sub setup_logging
 			{
 			$ENV{MYCPAN_LOG4PERL_FILE};
 			}
-		elsif( -e $config->get( 'log4perl_file' ) ) 
+		elsif( -e $config->get( 'log4perl_file' ) )
 			{
 			$config->get( 'log4perl_file' );
 			}
 		};
-	
+
 	if( defined $log_config )
 		{
 		Log::Log4perl->init_and_watch(
@@ -532,20 +532,20 @@ sub setup_logging
 			);
 		}
 	else
-		{		
+		{
 		my %hash = (
 			DEBUG => $Log::Log4perl::DEBUG,
 			ERROR => $Log::Log4perl::ERROR,
 			WARN  => $Log::Log4perl::WARN,
 			FATAL => $Log::Log4perl::FATAL,
 			);
-			
-		my $level = defined $ENV{MYCPAN_LOGLEVEL} ? 
+
+		my $level = defined $ENV{MYCPAN_LOGLEVEL} ?
 			$ENV{MYCPAN_LOGLEVEL} : 'ERROR';
-		
+
 		Log::Log4perl->easy_init( $hash{$level} );
 		}
-		
+
 	$logger = Log::Log4perl->get_logger( 'backpan_indexer' );
 	}
 
@@ -566,15 +566,15 @@ sub post_setup_logging_tasks
 	$application->_log_perl;
 
 	my $coordinator = $application->get_coordinator;
-	
+
 	my @items = $coordinator->get_note( 'pre_logging_items' );
-	
+
 	foreach my $item ( @items )
 		{
 		next unless ref $item eq ref sub {};
 		$item->();
 		}
-	
+
 	1;
 	}
 
@@ -584,7 +584,7 @@ sub _log_perl
 
 	my $coordinator = $application->get_coordinator;
 	my $config      = $coordinator->get_config;
-	
+
 	my $perl = $config->perl;
 
 	   if( not defined $perl ) {
@@ -612,7 +612,7 @@ sub disable_the_missiles
 	$self->install_int_handler;
 	$self->install_warn_handler;
 	}
-	
+
 =item install_int_handler
 
 Catch INT signals so we can log it, clean up, and exit nicely.
@@ -622,14 +622,14 @@ Catch INT signals so we can log it, clean up, and exit nicely.
 sub install_int_handler
 	{
 	#$SIG{__DIE__} = \&Carp::confess;
-	
+
 	# If we catch an INT we're probably in one of the temporary directories
-	# and have some files open. To clean up the temp dirs, we have to move 
+	# and have some files open. To clean up the temp dirs, we have to move
 	# above them, so change back to the original directory.
-	$SIG{INT} = sub { 
-		$logger->error("Caught SIGINT in $$" ); 
-		chdir $Starting_dir; 
-		exit() 
+	$SIG{INT} = sub {
+		$logger->error("Caught SIGINT in $$" );
+		chdir $Starting_dir;
+		exit()
 		};
 	}
 
@@ -641,7 +641,7 @@ Make C<warn> go to C<Log4perl>.
 
 sub install_warn_handler
 	{
-	$SIG{__WARN__} = sub { 
+	$SIG{__WARN__} = sub {
 		$logger->warn( @_ );
 		};
 	}
@@ -679,8 +679,8 @@ sub cleanup
 
 	require File::Path;
 
-	my @dirs = 
-		@{ $self->get_coordinator->get_note('tempdirs') }, 
+	my @dirs =
+		@{ $self->get_coordinator->get_note('tempdirs') },
 		$self->get_coordinator->get_config->temp_dir;
 	$logger->debug( "Dirs to remove are @dirs" );
 
@@ -697,9 +697,9 @@ sub cleanup
 sub _exit
 	{
 	my( $self ) = @_;
-	
+
 	$logger->info( "Exiting from ", __PACKAGE__ );
-		
+
 	exit 0;
 	}
 
@@ -723,8 +723,8 @@ sub setup_dirs # XXX big ugly mess to clean up
 	my $temp_dir = $config->temp_dir || tempdir( DIR => cwd(), CLEANUP => 1 );
 	$logger->debug( "temp_dir is [$temp_dir] [" . $config->temp_dir . "]" );
 	$config->set( 'temp_dir', $temp_dir );
-	
-	
+
+
 	my $tempdirs = $self->get_coordinator->get_note( 'tempdirs' );
 	push @$tempdirs, $temp_dir;
 	$self->get_coordinator->set_note( 'tempdirs', $tempdirs );

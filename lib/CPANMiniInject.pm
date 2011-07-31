@@ -111,7 +111,7 @@ sub get_task
 
 		1;
 		};
-		
+
 	$self->set_note( 'child_task', $child_task );
 	}
 
@@ -120,7 +120,7 @@ sub _copy_bad_dist
 	my( $self, $info ) = @_;
 
 	my $config = $self->get_config;
-	
+
 	if( my $bad_dist_dir = $config->copy_bad_dists )
 		{
 		my $dist_file = $info->dist_info( 'dist_file' );

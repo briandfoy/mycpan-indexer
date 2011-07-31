@@ -199,7 +199,7 @@ sub get_reporter
 		};
 
 	$self->set_note( 'reporter', $reporter );
-	
+
 	1;
 	}
 

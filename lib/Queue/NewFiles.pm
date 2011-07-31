@@ -57,19 +57,19 @@ value of the C<pause_id> configuration to create the path.
 sub _get_file_list
 	{
 	my( $self, @dirs ) = @_;
-	
+
 	$logger->debug( "Taking dists from [@dirs]" );
-	my( $wanted, $reporter ) = 
+	my( $wanted, $reporter ) =
 		File::Find::Closures::find_by_modified_after( time - 24*60*60 );
 
 	find( $wanted, @dirs );
-	
+
 	return [
 		map  { rel2abs($_) }
 		grep { ! /.(data|txt).gz$/ and ! /02packages/ }
 		$reporter->()
 		];
-	
+
 	}
 
 1;

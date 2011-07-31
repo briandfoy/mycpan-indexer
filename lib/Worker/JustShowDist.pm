@@ -52,7 +52,7 @@ sub get_task
 
 	my $indexer = $self->get_coordinator->get_component( 'indexer' );
 	my $coordinator = $self->get_coordinator;
-	
+
 	$logger->debug( "Worker class is " . __PACKAGE__ );
 	$logger->debug( "Indexer class is " . $indexer->class );
 
@@ -60,7 +60,7 @@ sub get_task
 		my $dist = shift;
 
 		my $dist_basename = basename( $dist );
-		
+
 		my $basename = $coordinator->get_reporter->check_for_previous_successful_result( $dist );
 
 		my $previous_error_basename = $coordinator->get_reporter->check_for_previous_error_result( $dist ) || '';
@@ -75,19 +75,19 @@ sub get_task
 			$logger->debug( "By config, will retry $dist_basename" ) if $previous_error_basename;
 			}
 
-		my $info = bless { 
+		my $info = bless {
 			dist_info => {
 				dist_path     => $dist,
 				dist_basename => $dist_basename
 				},
-			skipped => 1, 
+			skipped => 1,
 			}, $indexer->class unless $basename;
 
 		$info;
 		};
 
 	$coordinator->set_note( 'child_task', $child_task );
-	
+
 	1;
 	}
 

@@ -16,11 +16,11 @@ MyCPAN::Indexer::Component - base class for MyCPAN components
 =head1 SYNOPSIS
 
 	package MyCPAN::Indexer::NewComponent;
-	
+
 	use base qw(MyCPAN::Indexer::Component);
 
 	sub component_type { $_[0]->reporter_type }
-	
+
 =head1 DESCRIPTION
 
 This module implements features common to all C<MyCPAN::Indexer>
@@ -38,7 +38,7 @@ appropriately.
 
 =item new( [COORDINATOR] )
 
-Create a new component object. This is mostly to have a place to 
+Create a new component object. This is mostly to have a place to
 store a reference to the coordinator object. See C<get_coordinator>.
 
 =cut
@@ -48,15 +48,15 @@ sub component_type { croak "Component classes must implement component_type" }
 sub new
 	{
 	my( $class, $coordinator ) = @_;
-	
+
 	my $self = bless {}, $class;
-	
+
 	if( defined $coordinator )
 		{
 		$self->set_coordinator( $coordinator );
 		$coordinator->set_note( $self->component_type, $self );
 		}
-		
+
 	$self;
 	}
 
@@ -72,7 +72,7 @@ sub get_coordinator { $_[0]->{_coordinator} }
 
 =item set_coordinator( $coordinator )
 
-Set the coordinator object. C<new> already does this for you if you pass it a 
+Set the coordinator object. C<new> already does this for you if you pass it a
 coordinator object. Each component expects the cooridnator object to respond
 to these methods:
 
@@ -118,23 +118,23 @@ foreach my $method ( @methods_to_dispatch_to_coordinator )
 		}
 	}
 
-sub set_coordinator 
-	{ 
+sub set_coordinator
+	{
 	my( $self, $coordinator ) = @_;
-	
-	my @missing = grep { ! $coordinator->can( $_ ) } 
+
+	my @missing = grep { ! $coordinator->can( $_ ) }
 		@methods_to_dispatch_to_coordinator;
-	
+
 	croak "Coordinator object is missing these methods: @missing"
 		if @missing;
-		
+
 	$self->{_coordinator} = $coordinator;
 
 	weaken( $self->{_coordinator} );
-	
+
 	return $self->{_coordinator};
 	}
-	
+
 }
 
 =item null_type
@@ -183,14 +183,14 @@ If you want to test that value, use the C<is_type> methods.
 sub combine_types
 	{
 	my( $self, @types ) = @_;
-	
+
 	my $combined_type = 0;
-	
+
 	foreach my $type ( @types )
 		{
 		$combined_type |= $type;
 		}
-	
+
 	return $combined_type;
 	}
 
@@ -231,7 +231,7 @@ sub is_interface_type  { $_[0]->is_type( $_[1], $_[0]->interface_type  ) }
 sub is_queue_type      { $_[0]->is_type( $_[1], $_[0]->queue_type      ) }
 sub is_reporter_type   { $_[0]->is_type( $_[1], $_[0]->reporter_type   ) }
 sub is_worker_type     { $_[0]->is_type( $_[1], $_[0]->worker_type     ) }
-	
+
 =back
 
 =head1 SOURCE AVAILABILITY

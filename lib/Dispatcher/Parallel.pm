@@ -17,7 +17,7 @@ BEGIN {
 	no warnings 'redefine';
 	use Parallel::ForkManager;
 
-	sub Parallel::ForkManager::finish { 
+	sub Parallel::ForkManager::finish {
 		$logger->debug( "In Parallel::ForkManager::finish" );
 		my ($s, $x) = @_;
 		CORE::exit ($x || 0) if $s->{in_child};
@@ -90,7 +90,7 @@ sub _make_forker
 	my( $self ) = @_;
 
 	Parallel::ForkManager->new(
-		$self->get_config->parallel_jobs || 1 
+		$self->get_config->parallel_jobs || 1
 		);
 	}
 
@@ -102,7 +102,7 @@ sub _make_interface_callback
 		{
 		$self->set_note( $key, [] );
 		}
-	
+
 	$self->set_note( 'Total',    scalar @{ $self->get_note( 'queue' ) } );
 	$self->set_note( 'Left',     $self->get_note('Total') );
 	$self->set_note( 'Errors',   0 );
@@ -116,7 +116,7 @@ sub _make_interface_callback
 		$self->_remove_old_processes;
 
 		$logger->debug( sprintf
-			"Finished: %s Left: %s", 
+			"Finished: %s Left: %s",
 			map { $self->get_note( $_ ) } qw(Finished Left)
 			);
 
@@ -130,43 +130,43 @@ sub _make_interface_callback
 
 		$self->set_note_unless_defined( '_started', time );
 
-		$self->set_note( 
-			'_elapsed', 
+		$self->set_note(
+			'_elapsed',
 			time - $self->get_note( '_started' )
 			);
-			
-		$self->set_note( 
+
+		$self->set_note(
 			'Elapsed',
 			_elapsed( $self->get_note( '_elapsed' ) )
 			);
 
-		my $item = $self->get_note_list_element( 
-			'queue',  
-			$self->increment_note( 'queue_cursor' ) 
+		my $item = $self->get_note_list_element(
+			'queue',
+			$self->increment_note( 'queue_cursor' )
 			);
 
 		my $info;
-		
+
 		if( my $pid = $self->get_note( 'dispatcher' )->start )
 			{ #parent
 			$self->unshift_onto_note( 'PID',    $pid );
 			$self->unshift_onto_note( 'recent', $item );
-			
+
 			$self->increment_note( 'Done' );
 
-			$self->set_note( 
-				'Left', 
+			$self->set_note(
+				'Left',
 				$self->get_note( 'Total' ) - $self->get_note( 'Done' )
 				);
 
-			$logger->debug( 
+			$logger->debug(
 				sprintf "Total: %s Done: %s Left: %s Finished: %s",
 				map { $self->get_note( $_ ) } qw( Total Done Left Finished )
 				);
-				
+
 			no warnings;
-			$self->set_note( 
-				'Rate', 
+			$self->set_note(
+				'Rate',
 				eval { $self->get_note( 'Done' ) / $self->get_note( '_elapsed' ) }
 				);
 
@@ -177,10 +177,10 @@ sub _make_interface_callback
 			$self->get_note( 'dispatcher' )->finish;
 			$logger->error( "The child is still running!" );
 			}
-		
+
 		$info;
 		};
-		
+
 	$self->set_note( 'interface_callback', $interface_callback );
 	}
 
@@ -189,13 +189,13 @@ sub _remove_old_processes
 	my( $self ) = @_;
 
 	my $pid = $self->get_note( 'PID' );
-	
+
 	my @delete_indices = grep
 		{ ! kill 0, $pid->[$_] }
 		0 .. $#$pid;
 
 	my $recent = $self->get_note( 'recent' );
-	
+
 	foreach my $index ( reverse @delete_indices )
 		{
 		splice @$recent, $index, 1;
@@ -208,7 +208,7 @@ sub _remove_stuck_processes
 	my( $self ) = @_;
 
 	my $pids = $self->get_note( 'PID' );
-	
+
 	foreach my $pid ( @$pids )
 		{
 		$logger->debug( "Trying to remove stuck process $pid" );

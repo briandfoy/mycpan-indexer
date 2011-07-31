@@ -50,8 +50,8 @@ A stand in for run_components later on.
 
 sub get_indexer
 	{
-	my( $self ) = @_;	
-	
+	my( $self ) = @_;
+
 	1;
 	}
 
@@ -104,17 +104,17 @@ sub collect_info
 	my( $year, $month, $day ) = @gmtime[ 5,4,3 ];
 	$year += 1900;
 	$month += 1;
-	
-	$self->set_dist_info( 
-		'yyyymmdd_gmt', 
+
+	$self->set_dist_info(
+		'yyyymmdd_gmt',
 		sprintf '%4d%02d%02d', $year, $month, $day
 		);
 
-	$self->set_dist_info( 
-		'calendar_quarter', 
+	$self->set_dist_info(
+		'calendar_quarter',
 		sprintf "%4dQ%d", $year, int( ($month - 1 ) / 3 ) + 1
 		);
-	
+
 	1;
 	}
 
@@ -152,21 +152,21 @@ sub check_for_previous_successful_result { 1 }
 sub check_for_previous_error_result      { 0 }
 sub final_words                          { sub { 1 } }
 
-sub get_reporter { 
+sub get_reporter {
 	my $self = shift;
 
 	my $reporter = sub {
 		my( $info ) = shift;
-		
+
 		print join "\t", map { $info->{dist_info}{$_} }
 			qw(
-				dist_basename dist_name dist_date  yyyymmdd_gmt calendar_quarter 
+				dist_basename dist_name dist_date  yyyymmdd_gmt calendar_quarter
 				dist_size dist_author maturity dist_version
 				);
 		print "\n";
 		};
-		
-	$self->set_note( 'reporter', $reporter ) 
+
+	$self->set_note( 'reporter', $reporter )
 	}
 
 =back

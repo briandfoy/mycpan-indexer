@@ -65,15 +65,15 @@ sub get_reporter
 
 		my $out_path = $self->get_report_path( $info );
 		my $dir = dirname( $out_path );
-		unless( -d $dir ) 
+		unless( -d $dir )
 			{
 			make_path( $dir ) or
 				$logger->fatal( "Could not create directory $dir: $!" );
 			}
-			
-		open my($fh), ">:utf8", $out_path or 
+
+		open my($fh), ">:utf8", $out_path or
 			$logger->fatal( "Could not open $out_path: $!" );
-		
+
 		{
 		# now that indexer is a component, it has references to all the other
 		# objects, making for a big dump. We don't want the keys starting
@@ -85,7 +85,7 @@ sub get_reporter
 		local $SIG{__WARN__} = sub {
 			$logger->warn( "Error writing to YAML output for $dist: @_" );
 			};
-		
+
 		foreach my $key ( keys %$clone ) {
 			delete $clone->{$key} if $key =~ /^_/;
 			}

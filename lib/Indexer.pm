@@ -47,8 +47,8 @@ A stand in for run_components later on.
 
 sub get_indexer
 	{
-	my( $self ) = @_;	
-	
+	my( $self ) = @_;
+
 	1;
 	}
 
@@ -140,7 +140,7 @@ sub examine_dist
 		{
 		my( $method, $error_msg, $die_on_error ) = @$tuple;
 		$logger->debug( "Running examine_dist step [$method]" );
-		
+
 		local $@;
 		unless( eval { $self->$method() } )
 			{
@@ -186,7 +186,7 @@ sub examine_modules
 		$logger->debug( "Processing module $_" );
 		$self->get_module_info( $_ );
 		} @{ $self->dist_info( 'modules' ) || [] };
-	
+
 	$self->set_dist_info( 'module_info', \@file_info );
 	}
 
@@ -198,7 +198,7 @@ sub examine_tests
 		$logger->debug( "Processing test $_" );
 		$self->get_test_info( $_ );
 		} @{ $self->dist_info( 'tests' ) || [] };
-	
+
 	$self->set_dist_info( 'test_info', \@file_info );
 	}
 
@@ -380,10 +380,10 @@ sub dist_info
 
 	$logger->warn( "There is $key in dist_info"  )
 		unless exists $self->{dist_info}{$key};
-	
-	$logger->debug( 
-		"dist info for $key is " . 
-		$self->_display_value ( $self->{dist_info}{$key} ) 
+
+	$logger->debug(
+		"dist info for $key is " .
+		$self->_display_value ( $self->{dist_info}{$key} )
 		);
 	$self->{dist_info}{$key};
 	}
@@ -425,7 +425,7 @@ sub unpack_dist
 	$logger->trace( sub { get_caller_info } );
 
 	$self->_patch_extractors;
-	
+
 	my $dist = $self->dist_info( 'dist_file' );
 	$logger->debug( "Unpacking dist $dist" );
 
@@ -438,7 +438,7 @@ sub unpack_dist
 	return unless $result;
 
 	$self->_unpatch_extractors;
-	
+
 	$self->set_dist_info( 'dist_extract_path', $extractor->extract_path );
 
 	1;
@@ -466,11 +466,11 @@ sub _patch_extractors
 	$logger->trace( sub { get_caller_info } );
 
 	my( $self ) = @_;
-	
+
 	foreach my $ref ( @refs ) {
 		$self->_set_stash( $ref );
 		}
-	
+
 	$Archive::Extract::DEBUG      = $logger->is_debug;
 	$Archive::Extract::WARN       = $logger->is_warn;
 	$Archive::Tar::WARN           = $Archive::Extract::WARN; # sent in patch for this rt.cpan.org #40472
@@ -479,8 +479,8 @@ sub _patch_extractors
 	foreach my $var ( qw( DEBUG WARN PREFER_BIN ) )
 		{
 		no strict 'refs';
-		
-		$logger->debug( qq|\$Archive::Extract::$var is |, ${"Archive::Extract::$var"} );	
+
+		$logger->debug( qq|\$Archive::Extract::$var is |, ${"Archive::Extract::$var"} );
 		}
 
 	{
@@ -490,19 +490,19 @@ sub _patch_extractors
 	}
 
 	$self->_set_stash( \*Archive::Tar::_error, \&Archive::Tar::_error );
-	
+
 	*Archive::Tar::_error = sub {
 		my @caller = caller(1);
 		$logger->debug( "Archive::Tar::_error called from @caller" );
 		my( $archivetar, $error ) = @_;
-		$logger->error( 
+		$logger->error(
 			sprintf "Archive::Tar complained about %s: %s",
 			$self->dist_info( 'dist_basename' ),
-			$error 
+			$error
 			);
 		$self->set_run_info( 'unpack_dist_archive_tar_error', $error );
-		
-		if( ref $archivetar eq ref {} ) 
+
+		if( ref $archivetar eq ref {} )
 			{
 			$archivetar->{_error}    = $error;
 			$archivetar->{_longmess} = Carp::longmess($error);
@@ -512,18 +512,18 @@ sub _patch_extractors
 		};
 
 	Archive::Zip::setErrorHandler(
-		sub { 
+		sub {
 			my( $error ) = shift;
-			$logger->error( 
+			$logger->error(
 				sprintf "Archive::Zip complained about %s: %s",
 				$self->dist_info( 'dist_basename' ),
-				$error 
+				$error
 				);
 			$self->set_run_info( 'unpack_dist_archive_zip_error', $error );
 			}
 		);
 	}
-	
+
 sub _unpatch_extractors
 	{
 	$logger->trace( sub { get_caller_info } );
@@ -533,19 +533,19 @@ sub _unpatch_extractors
 		$$variable_ref = $value;
 		}
 	}
-	
+
 sub _set_stash
 	{
 	$logger->trace( sub { get_caller_info } );
 
 	my( $self, $variable_ref, $value ) = @_;
-	
-	$stash{ $variable_ref } = [ 
-		@_ == 3 ? $value : $$variable_ref, 
-		$variable_ref 
+
+	$stash{ $variable_ref } = [
+		@_ == 3 ? $value : $$variable_ref,
+		$variable_ref
 		];
 	}
-	
+
 }
 
 sub _create_extractor
@@ -553,12 +553,12 @@ sub _create_extractor
 	$logger->trace( sub { get_caller_info } );
 
 	my( $self, $dist ) = @_;
-	
+
 	my $subclass = $self->_archive_extract_subclass;
-	
+
 	my $extractor = eval { $subclass->new( archive => $dist ) };
 	my $error = $@;
-	
+
 	if( $extractor->type eq 'gz' )
 		{
 		$logger->info( "Dist $dist claims to be a gz, so try .tgz instead" );
@@ -576,18 +576,18 @@ sub _create_extractor
 		}
 
 	$self->set_dist_info( 'dist_archive_type', $extractor->type );
-		
+
 	$extractor;
 	}
-	
+
 sub _extract
 	{
 	$logger->trace( sub { get_caller_info } );
 
 	my( $self, $extractor ) = @_;
-	
+
 	my $dist = basename( $extractor->archive );
-	
+
 	$logger->debug( "About to extract $dist" );
 	my $rc = $extractor->extract( to => scalar $self->dist_info( 'unpack_dir' ) );
 	$logger->debug( "Archive::Extract returns [$rc] for $dist" );
@@ -601,7 +601,7 @@ sub _extract
 		$logger->error( "Archive::Extract could not extract $dist" );
 		return;
 		}
-		
+
 	$rc;
 	}
 
@@ -678,7 +678,7 @@ sub find_dist_dir
 	my( $wanted, $reporter ) =
 		File::Find::Closures::find_by_directory_contains( @files );
 
-	File::Find::find( $wanted, $_[0]->dist_info( "unpack_dir" ) );
+	File::Find::find( $wanted, $self->dist_info( "unpack_dir" ) );
 
 	# we want the shortest path
 	my @found = sort { length $a <=> length $b } $reporter->();
@@ -814,11 +814,11 @@ Look in the lib/ directory for .pm files.
 
 sub look_in_lib  { $_[0]->_look_in_dirs( 'lib' );  }
 sub look_in_blib { $_[0]->_look_in_dirs( 'blib' ); }
-				 
+
 sub _look_in_dirs
 	{
 	my( $self, @directories ) = @_;
-		
+
 	$logger->trace( sub { get_caller_info } );
 
 	require File::Find::Closures;
@@ -866,7 +866,7 @@ sub look_in_cwd
 =item look_in_cwd_and_lib
 
 This is instantly deprecated. It's glue until I can figure out a
-better solution. 
+better solution.
 
 =cut
 
@@ -875,7 +875,7 @@ sub look_in_cwd_and_lib
 	$logger->trace( sub { get_caller_info } );
 
 	$_[0]->_look_in_dirs( 'lib' );
-	
+
 	my $lib_modules = $_[0]->dist_info( 'modules' ) || [];
 
 	my @modules = glob( "*.pm" );
@@ -891,13 +891,13 @@ sub look_in_cwd_and_lib
 		$logger->debug( "Did not find any modules in cwd and lib" );
 		return;
 		}
-	
+
 	$_[0]->set_dist_info( 'modules', [ @modules ] );
 
 	return 1;
 	}
 
-	
+
 =item look_in_meta_yml_provides
 
 As an almost-last-ditch effort, decide to beleive META.yml if it
@@ -920,7 +920,7 @@ sub look_in_meta_yml_provides
 	my $yaml = $_[0]->_load_meta_yml( 'META.yml' );
 
 	return unless exists $yaml->{provides};
-	
+
 	my $provides = $yaml->{provides};
 
 	my @modules = ();
@@ -980,19 +980,19 @@ sub parse_meta_files
 	$logger->trace( sub { get_caller_info } );
 
 	my $self = shift;
-	
+
 	$logger->debug( 'Parsing META.yml for ' . $self->dist_info( 'dist_basename' ) );
 	$logger->debug( 'Working directory is ' . cwd() );
-	
+
 	my $generated_meta_file = eval{ $self->make_meta_file };
 	$logger->error( $@ ) if $@;
 	$logger->debug( "generated META is file $generated_meta_file" );
-	
+
 	my( $meta_file ) = grep { -e } ( 'META.yml', $generated_meta_file );
 	$logger->info( "Using META file $meta_file for " . $self->dist_info( 'dist_basename' ) );
 	$self->set_dist_info( 'meta_file', $meta_file );
 	$self->set_dist_info( 'generated_meta_file', $generated_meta_file );
-	
+
 	if( defined $meta_file )
 		{
 		my $yaml = $self->_load_meta_yml( $meta_file );
@@ -1004,17 +1004,17 @@ sub parse_meta_files
 		{
 		$logger->info( "Did not find a META.yml for " . $self->dist_info( 'dist_basename' ) );
 		}
-	
+
 	return;
 	}
 
 sub _path_yaml_base { # We might not need this anymore
 	my $self = shift;
-	
+
 	local *YAML::Base::die = sub {
 		my $yaml = shift;
 		require YAML::Error;
-	
+
 		my $code  = shift || 'unknown error';
 		my $error = YAML::Error->new(code => $code);
 		$error->line($yaml->line) if $yaml->can('line');
@@ -1023,7 +1023,7 @@ sub _path_yaml_base { # We might not need this anymore
 		$error->type('Error');
 
 		my $warning = $error->format_message;
-		
+
 		$logger->warn( $warning );
 		$self->set_run_info( 'parse_meta_files_yaml_error', $warning );
 		};
@@ -1031,9 +1031,9 @@ sub _path_yaml_base { # We might not need this anymore
 
 sub _load_meta_yml { $_[0]->_try_utf8( $_[1] ) || $_[0]->_try_latin1( $_[1] ) }
 
-sub _try_utf8 { 
+sub _try_utf8 {
 	$_[0]->_load_yaml( $_[0]->_load_file( 'utf8', $_[1] ) ) }
-	
+
 sub _try_latin1 {
 	require Encode;
 	Encode::from_to( my $utf8 = $_[0]->_load_file( 'bytes', $_[1] ), 'latin1', 'utf8' );
@@ -1043,14 +1043,14 @@ sub _try_latin1 {
 sub _load_file {
 	require Encoding::FixLatin;
 	$logger->debug( "Trying to load $_[2] as $_[1]" );
-	local $/; open my $f, "<:$_[1]", $_[2]; 
+	local $/; open my $f, "<:$_[1]", $_[2];
 	my $content = scalar <$f>;
 	}
-	
+
 sub _load_yaml {
 	require YAML::XS;
-	my( $caller ) = ( caller(1) )[3]; 
-	my $yaml = eval { YAML::Syck::Load( $_[1] ) } or 
+	my( $caller ) = ( caller(1) )[3];
+	my $yaml = eval { YAML::Syck::Load( $_[1] ) } or
 		$logger->error( "$caller: $@" );
 	$yaml;
 	}
@@ -1159,7 +1159,7 @@ sub run_build_file
 
 =item choose_build_file
 
-Guess what the build file for the distribution is, using 
+Guess what the build file for the distribution is, using
 C<Distribution::Guess::BuildSystem>.
 
 Sets these items in dist_info:
@@ -1233,19 +1233,17 @@ sub run_build
 	$logger->trace( sub { get_caller_info } );
 
 	my $guesser = $_[0]->dist_info( 'build_system_guess' );
-	
+
 	$logger->debug( "Guesser is [" . Dumper( $guesser ) . "]" );
-	my $build_command = join " ",
-		$guesser->preferred_build_command,
-		$guesser->preferred_build_file;
+	my $build_command = $guesser->preferred_build_command;
 
 	$logger->debug( "preferred build command is [$build_command]" );
 
 	$_[0]->run_something( $build_command, 'build_output' );
-	
+
 	my( $runner ) = grep { -e } qw( ./Build Makefile );
 	$logger->debug( "runner is [$runner]" );
-		
+
 	$_[0]->run_something( $runner, 'build_modules_output' ) if $runner;
 
 	return 1;
@@ -1253,7 +1251,7 @@ sub run_build
 
 =item make_meta_file
 
-Run the build file (Build.PL, Makefile) to create the META.yml file. 
+Run the build file (Build.PL, Makefile) to create the META.yml file.
 Run C<setup_build> first.
 
 Sets these items in dist_info:
@@ -1275,10 +1273,10 @@ sub make_meta_file
 		}
 
 	$_[0]->run_build_target( 'distdir' );
-		
-	my @meta_files = glob( "*/META.yml" );	
+
+	my @meta_files = glob( "*/META.yml" );
 	$logger->debug( "Found META.ymls at [@meta_files]" );
-	
+
 	return $meta_files[0];
 	}
 
@@ -1297,16 +1295,16 @@ sub run_something
 	my( $self, $command, $info_key ) = @_;
 
 	$self->set_dist_info( "${info_key}_command", $command );
-	
+
 	require IPC::Open3;
 	my $pid = IPC::Open3::open3( my( $in_fh, $out_fh, $err_fh ), $command );
 	$logger->debug( "command [$command] starts as pid $pid" );
-	
+
 	close $in_fh;
 
 	$logger->debug( "err_fh is defined before reading out_fh" )
 		if defined $err_fh;
-	
+
 	$logger->debug( "Getting standard output" );
 	my $output = $self->_get_output( $out_fh, 1024 );
 	$logger->debug( "command [$command] outputs [$$output]" );
@@ -1317,7 +1315,7 @@ sub run_something
 	$logger->debug( "Getting standard error" );
 	my $error  = $self->_get_output( $err_fh, 1024 );
 	$logger->debug( "command [$command] outputs error [$$error]" );
-	
+
 	$self->set_dist_info( $info_key, $$output );
 	$self->set_dist_info( "${info_key}_error", $$error );
 	waitpid $pid, 0;
@@ -1327,17 +1325,17 @@ sub _get_output
 	{
 	my( $self, $fh, $byte_limit ) = @_;
 	return \ '' unless defined $fh; # why is stderr undef?
-	
+
 	$byte_limit ||= 2048;
 	$logger->warn( "filehandle is not defined!" ) unless defined $fh;
-	
+
 	my $output;
 	while( ! eof( $fh ) and length $output < $byte_limit )
 		{
 		my $bytes_read = read $fh, my $buffer, 4096;
 		$output .= $buffer;
 		}
-	
+
 	if( ! eof $fh )
 		{
 		$logger->warn( "Output exceeded [$byte_limit] bytes. Truncating and closing" );
@@ -1347,7 +1345,7 @@ sub _get_output
 
 	return \$output;
 	}
-	
+
 =item run_build_target( TARGET )
 
 Run the shell command and record the output in the dist_info for KEY. This
@@ -1361,16 +1359,16 @@ sub run_build_target
 	$logger->trace( sub { get_caller_info } );
 
 	my( $self, $target ) = @_;
-	
+
 	$self->run_build;
-	
+
 	my $guesser = $self->dist_info( 'build_system_guess' );
-	
+
 	my $command = join ' ',
 		$guesser->preferred_build_command,
 		$target;
 
-	$self->run_something( $command, "build_target_${target}_output"  );		
+	$self->run_something( $command, "build_target_${target}_output"  );
 
 	return 1;
 	}
@@ -1388,13 +1386,13 @@ sub run_perl_program
 	$logger->trace( sub { get_caller_info } );
 
 	my( $self, $program, $key ) = @_;
-	
+
 	my $coordinator = $self->get_coordinator;
 	my $config      = $coordinator->get_config;
 
 	my $perl = $config->perl || $^X;
 
-	$self->run_something( "$perl $program", $key );		
+	$self->run_something( "$perl $program", $key );
 
 	return 1;
 	}
@@ -1504,26 +1502,26 @@ sub get_package_name_from_filename
 	( my $module = $file ) =~ s|.*(?:blib\b.)?lib\b.||g;
 	$module =~ s/\.pm\z//;
 	$module =~ s|[\\/]|::|g;
-	
+
 	$module;
 	}
-	
+
 sub guess_primary_package
 	{
 	my( $self, $packages, $file ) = @_;
 
 	# ignore packages that start with an underscore
 	@$packages = grep { ! /\b_/ } @$packages;
-	
+
 	my $module = $self->get_package_name_from_filename( $file );
-	
+
 	my @matches = grep { $_ eq $module } @$packages;
 
 	my $primary_package = $matches[0] || $packages->[0];
 
-	return $primary_package;	
+	return $primary_package;
 	}
-	
+
 sub extract_module_version
 	{
 	my( $self, $file, $hash ) = @_;
@@ -1734,13 +1732,13 @@ sub get_caller_info
 sub get_md5_of_file_contents
 	{
 	my( $self, $file ) = @_;
-	
+
 	require Digest::MD5;
 
 	my $context = Digest::MD5->new;
-	
+
 	open my $fh, '<', $file or return;
-	
+
 	$context->addfile( $fh );
 	lc $context->hexdigest;
 	}

@@ -68,34 +68,34 @@ sub get_task
 	my $config  = $self->get_config;
 
 	my $coordinator = $self->get_coordinator;
-	
+
 	my $indexer = $coordinator->get_component( 'indexer' );
 
 	$logger->debug( "Worker class is " . __PACKAGE__ );
 	$logger->debug( "Indexer class is " . $indexer->class );
-	
+
 	my $child_task = sub {
 		my $dist = shift;
 
 		my $dist_basename = basename( $dist );
-		
+
 		my $basename = $coordinator->get_reporter->check_for_previous_successful_result( $dist );
 		$logger->debug( "Found successful report for $dist_basename" ) unless $basename;
-		return bless { 
+		return bless {
 			dist_info => {
 				dist_path     => $dist,
 				dist_basename => $dist_basename
 				},
-			skipped => 1, 
+			skipped => 1,
 			}, $indexer->class unless $basename;
 
 		my $previous_error_basename = $coordinator->get_reporter->check_for_previous_error_result( $dist ) || '';
 		$logger->debug( "Error report returned [$previous_error_basename]" );
 		$logger->debug( "Found error report for $dist_basename" ) if $previous_error_basename;
-		
+
 		# we used to handle this by just deleting all the old error
 		# reports in setup_dirs over in MyCPAN::App::BackPAN::Indexer
-		# deleting all the reports before we got started made it 
+		# deleting all the reports before we got started made it
 		# impossible to get a list of error reports to retry
 		if( $previous_error_basename and ! $config->retry_errors )
 			{
@@ -113,10 +113,10 @@ sub get_task
 			# if we are re-trying errors and there is already a report
 			# unlink the previous report
 			my $report_full_path =  $coordinator->get_reporter->get_error_report_path( $dist );
-			
+
 			$logger->debug( "Trying to unlink $report_full_path" );
 			my $rc = unlink $report_full_path;
-			$logger->debug( ($rc ? 'unlinked ' : 'failed to unlink ') . $report_full_path );		
+			$logger->debug( ($rc ? 'unlinked ' : 'failed to unlink ') . $report_full_path );
 			}
 
 		$logger->info( "Starting Worker for $dist_basename\n" );
@@ -140,14 +140,14 @@ sub get_task
 		local $SIG{CHLD} = 'IGNORE';
 		alarm( $config->alarm || 15 );
 		$logger->debug( "Examining $dist_basename" );
-		
+
 		my $info = do {
-			unless( -e $dist ) 
+			unless( -e $dist )
 				{
 				$logger->warn( "Dist $dist does not exist" );
 				undef;
 				}
-			elsif( ! -s $dist ) 
+			elsif( ! -s $dist )
 				{
 				$logger->warn( "Dist $dist has zero size" );
 				my $info = bless {}, $self->get_config->indexer_class;
@@ -157,14 +157,14 @@ sub get_task
 				$info->set_run_info( qw(completed 1) );
 				$info;
 				}
-			else 
+			else
 				{
 				$logger->warn( "Indexing $dist" );
 				eval { $indexer->run( $dist ) };
 				}
-			
+
 			};
-			
+
 		$logger->debug( "Done examining $dist_basename" );
 		my $at = $@; chomp $at;
 		alarm 0;
@@ -187,34 +187,34 @@ sub get_task
 			}
 
 		$self->_add_run_info( $info );
-		
+
 		$coordinator->get_note('reporter')->( $info );
 
 		$logger->debug( "Worker for $dist_basename done" );
 
         # some things hang anyway, so just to be careful we'll cleanup
         # everything here.
-		$self->_cleanup_children; 
-		
+		$self->_cleanup_children;
+
 		$logger->debug( "Cleaned up, returning..." );
 		$info;
 		};
 
 	$coordinator->set_note( 'child_task', $child_task );
-	
+
 	1;
 	}
 
 sub _cleanup_children
 	{
 	$logger->warn( "Cleaning up after $$" );
-	
+
 	my %children =
 		map  { $_->{pid}, 1 }
 		grep { $_->{'ppid'} == $$ }
 		@{ Proc::ProcessTable->new->table };
 	$logger->debug( "Child processes are @{[keys %children]}" );
-		
+
 	my @grandchildren =
 		map  { $_->{pid} }
 		grep { exists $children{ $_->{'ppid'} } }
@@ -228,7 +228,7 @@ sub _cleanup_children
 	$logger->debug( "Preparing to kill" );
 
 	kill 9, @processes;
-	
+
 	return;
 	}
 
@@ -239,12 +239,12 @@ sub _copy_bad_dist
 	my $config  = $self->get_config;
 	my $bad_dist_dir = $config->copy_bad_dists;
 	return unless $bad_dist_dir;
-	
+
 	unless( -d $bad_dist_dir and mkdir $bad_dist_dir ) {
 		$logger->error( "Could not make dist dir [$bad_dist_dir]: $!" );
 		return;
 		}
-	
+
 	my $dist_file = $info->dist_info( 'dist_file' );
 	my $basename  = $info->dist_info( 'dist_basename' );
 	my $new_name  = catfile( $bad_dist_dir, $basename );

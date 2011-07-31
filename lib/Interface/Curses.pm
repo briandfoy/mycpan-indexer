@@ -56,7 +56,7 @@ sub do_interface
 
 	$self->set_note( 'curses', {} );
 	my $curses = $self->get_note( 'curses' );
-	
+
 	$curses->{rows} = LINES();
 	$curses->{cols} = COLS();
 
@@ -126,7 +126,7 @@ sub _update_labels
 	#print "Calling _update_screen\n";
 
 	my $curses = $self->get_note( 'curses' );
-	
+
 	foreach my $key ( keys %$labels )
 		{
 		my $tuple = $labels->{$key};
@@ -223,9 +223,9 @@ sub _update_values
 			$headers->{Processing}[2],
 			' ' x ( COLS() - $headers->{Processing}[2] - 1 )
 			);
-			
+
 		my $recent = $self->get_note( 'recent' );
-		
+
 		addstr(
 			$curses->{windows}{PID},
 			$i + 1,

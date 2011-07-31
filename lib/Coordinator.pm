@@ -23,21 +23,21 @@ MyCPAN::Indexer::Coordinator - Provide a way for the various components to commu
 
 	my $componentA   = MyCPAN::Indexer::ComponentA->new;
 	my $componentB   = MyCPAN::Indexer::ComponentB->new;
-	
+
 	my $coordinator = MyCPAN::Indexer::Coordinator->new;
-	
+
 	# each component gets a reference
 	$componentA->set_coordinator( $coordinator );
 	$componentB->set_coordinator( $coordinator );
-	
+
 	# the coordinator knows about all of the components
 	$coordinator->set_component( 'A', $componentA );
 	$coordinator->set_component( 'B', $componentB );
-	
+
 	$componentA->set_note( 'cat', 'Buster' );
-	
+
 	my $cat = $componentB->get_note( 'cat' );
-	
+
 	# Any component can find any other component
 	$componentB->get_coordinator->get_component( 'A' )->method_in_A;
 
@@ -65,15 +65,15 @@ Create a new Coordinator object.
 sub new
 	{
 	my( $class ) = @_;
-	
+
 	require MyCPAN::Indexer::Notes;
-	
+
 	my $self = bless {
 		notes    => MyCPAN::Indexer::Notes->new,
 		info     => {},
 		config   => '',
 		}, $class;
-	
+
 	}
 
 =item get_component( NAME )
@@ -127,7 +127,7 @@ my @methods_to_dispatch_to_notes = qw(
 	set_note_unless_defined
 	);
 
-	
+
 foreach my $method ( @methods_to_dispatch_to_notes )
 	{
 	no strict 'refs';
@@ -141,7 +141,7 @@ foreach my $method ( @methods_to_dispatch_to_notes )
 
 =head2 Organic methods
 
-These methods are defined in this class and work to interact with some 
+These methods are defined in this class and work to interact with some
 of the things the coordinator is tracking.
 
 =over 4
@@ -156,7 +156,7 @@ Get or set the configuration objects.
 
 sub get_config { $_[0]->{config}         }
 sub set_config { $_[0]->{config} = $_[1] }
-	
+
 =item get_info
 
 =item set_info( INFO_OBJ )
@@ -180,17 +180,17 @@ BEGIN {
 	[qw( application activate      )],
 	[qw( collator    get_collator  )],
 	);
-	
+
 	foreach my $tuple ( @components )
 		{
 		my( $component, $required_method ) = @$tuple;
-		
+
 		no strict 'refs';
 		*{"get_${component}"} = sub { $_[0]->get_component( $component ) };
-		*{"set_${component}"} = sub { 
+		*{"set_${component}"} = sub {
 			die "$component must implement $required_method"
-				unless eval { $_[1]->can( $required_method ) }; 
-			$_[0]->set_component( $component, $_[1] ); 
+				unless eval { $_[1]->can( $required_method ) };
+			$_[0]->set_component( $component, $_[1] );
 			};
 		}
 	}

@@ -26,7 +26,7 @@ Use this in backpan_indexer.pl by specifying it as the queue class:
 =head1 DESCRIPTION
 
 This class returns a list of Perl distributions for the BackPAN
-indexer to process. It selects the distributions that had previous 
+indexer to process. It selects the distributions that had previous
 indexing errors by extracting the distribution path from the error
 report. If the distribution isn't in the same place it was during
 the original indexing, it won't be in the queue.
@@ -38,7 +38,7 @@ the original indexing, it won't be in the queue.
 sub _get_file_list
 	{
 	my( $self ) = @_;
-	
+
 	my $file = $self->get_config->distribution_list;
 	$logger->debug( "Taking dists from [$file]" );
 	$logger->error( "Distribution file [$file] does not exist" )
@@ -46,7 +46,7 @@ sub _get_file_list
 
 	chomp( my @files = do { local( @ARGV ) = $file; <> } );
 	$logger->debug( "Found " . @files . " error reports" );
-	
+
 	my @queue;
 	foreach my $file ( @files )
 		{
@@ -63,7 +63,7 @@ sub _get_file_list
 
 	return \@queue;
 	}
-	
+
 1;
 
 =back

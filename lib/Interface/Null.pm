@@ -57,7 +57,7 @@ sub do_interface
 
 		$self->get_note('interface_callback')->();
 		}
-	
+
 	my $collator = $self->get_coordinator->get_note( 'collator' );
 	$collator->() if ref $collator eq ref sub {};
 	}

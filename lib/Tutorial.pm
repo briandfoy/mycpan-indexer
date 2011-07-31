@@ -106,7 +106,7 @@ Creates in C<notes>:
 Expects in C<notes>:
 
 	nothing
-	
+
 To Do: The Queue class should really be an iterator of some sort. Instead
 of returning an array (which it can't change), return an iterator.
 
@@ -129,7 +129,7 @@ Creates in C<notes>
 Expects in C<notes>
 
 	nothing
-	
+
 To Do: There should be a storage class which the worker class hands
 the results to.
 
@@ -154,7 +154,7 @@ Expects in C<notes>:
 Expects in config:
 
 	nothing
-	
+
 =head2 The Dispatcher class
 
 The Dispatcher class implements the bits to hand out work to the

@@ -28,7 +28,7 @@ parts that you need.
 
 This is a base class for MyCPAN reporters. It mostly deals with file
 and directory names that it composes from configuration and run details.
-Most things should just use what is already there. 
+Most things should just use what is already there.
 
 There is one abstract method that a subclass must implement on its own.
 The C<get_report_file_extension> methods allows each reporter to have
@@ -59,7 +59,7 @@ You should probably leave this alone.
 sub get_report_path
 	{
 	my( $self, $info ) = @_;
-	
+
 	catfile(
 		map { $self->$_( $info ) } qw(
 			get_report_subdir
@@ -78,24 +78,24 @@ on the success of the indexing.
 sub get_report_subdir
 	{
 	my( $self, $info ) = @_;
-		
-	$logger->warn( "Argument doesn't know how to run_info!" ) 
+
+	$logger->warn( "Argument doesn't know how to run_info!" )
 		unless eval { $info->can( 'run_info' ) };
-	
+
 	my $config = $self->get_config;
-	
-	my $dir_key  = $info->run_info( 'completed' ) 
+
+	my $dir_key  = $info->run_info( 'completed' )
 			?
 		$self->get_success_report_subdir
 			:
 		$self->get_error_report_subdir;
 
-	$dir_key = $self->get_error_report_subdir 
+	$dir_key = $self->get_error_report_subdir
 		if grep { $info->run_info($_) } qw(error fatal_error);
-	
+
 	$config->get( "${dir_key}_report_subdir" );
 	}
-	
+
 =item get_report_filename
 
 Returns the filename portion of the report path based on the examined
@@ -104,7 +104,7 @@ distribution name.
 You should probably leave this alone.
 
 =cut
-	
+
 sub get_report_filename
 	{
 	my( $self, $arg ) = @_;
@@ -113,12 +113,12 @@ sub get_report_filename
 		if( ref $arg ) { $arg->{dist_info}{dist_file} }
 		elsif( defined $arg ) { $arg }
 		};
-	$logger->logcroak( "Did not get a distribution file name!" ) 
+	$logger->logcroak( "Did not get a distribution file name!" )
 		unless $dist_file;
-		
+
 	no warnings 'uninitialized';
 	( my $basename = basename( $dist_file ) ) =~ s/\.(tgz|tar\.gz|zip)$//;
-	
+
 	my $rel_path = $self->get_dist_report_subdir(
 		join '.', $basename, $self->get_report_file_extension
 		);
@@ -139,7 +139,7 @@ is F<-0.01.yml> (yep, there really is), the path is F<-/-0/-0.01.yml>.
 sub get_dist_report_subdir
 	{
 	my( $self, $filename ) = @_;
-	
+
 	catfile(
 		substr( $filename, 0, 1 ),
 		substr( $filename, 0, 2 ),
@@ -157,8 +157,8 @@ reporter to recognize their previous results.
 
 =cut
 
-sub get_report_file_extension 
-	{ 
+sub get_report_file_extension
+	{
 	$logger->logcroak(
 		'You must implement get_report_file_extension in a derived class!'
 		);
@@ -187,7 +187,7 @@ sub get_successful_report_path
 =item get_error_report_path( DIST )
 
 Returns the filename for a error report. This is slightly different
-from C<get_report_filename> which might also return the 
+from C<get_report_filename> which might also return the
 filename for an error report.
 
 =cut
@@ -203,7 +203,7 @@ sub get_error_report_path
 			)
 		);
 	}
-	
+
 =item get_success_report_subdir
 
 =item get_error_report_subdir
@@ -228,7 +228,7 @@ name and the report path.
 
 =cut
 
-sub get_success_report_dir 
+sub get_success_report_dir
 	{
 	catfile(
 		$_[0]->get_config->report_dir,
@@ -236,7 +236,7 @@ sub get_success_report_dir
 		);
 	}
 
-sub get_error_report_dir 
+sub get_error_report_dir
 	{
 	catfile(
 		$_[0]->get_config->report_dir,
@@ -255,10 +255,10 @@ it returns the filename it expected to find.
 sub check_for_previous_successful_result
 	{
 	my $self = shift;
-	
+
 	my $path = $self->get_successful_report_path( @_ );
 	return if -e $path;
-	
+
 	basename( $path );
 	}
 

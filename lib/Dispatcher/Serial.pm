@@ -50,7 +50,7 @@ sub get_dispatcher
 	{
 	my( $self ) = @_;
 
-	$self->get_coordinator->set_note( 
+	$self->get_coordinator->set_note(
 		'interface_callback',
 		$self->_make_interface_callback,
 		)
@@ -59,11 +59,11 @@ sub get_dispatcher
 sub _make_interface_callback
 	{
 	my( $self ) = @_;
-	
+
 	my $Notes = {};
 
 	$Notes->{$_}           = [] foreach qw(PID recent errors );
-	
+
 	$Notes->{Total}        = scalar @{ $self->get_note( 'queue' ) };
 	$Notes->{Left}         = $Notes->{Total};
 	$Notes->{Errors}       = 0;
@@ -97,7 +97,7 @@ sub _make_interface_callback
 
 		$self->increment_note( 'Done' );
 		$self->set_note('Left', $self->get_note('Total') - $self->get_note('Done') );
-		$logger->debug( 
+		$logger->debug(
 			sprintf "Total: %s Done: %s Left: %s Finished: %s",
 				map { $self->get_note( $_ ) } qw(Total Done Left Finished)
 			);
@@ -111,7 +111,7 @@ sub _make_interface_callback
 
 		$info;
 		};
-		
+
 	}
 
 BEGIN {
