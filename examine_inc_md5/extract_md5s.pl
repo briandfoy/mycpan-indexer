@@ -9,15 +9,21 @@ use YAML::XS qw(  );
 
 my @dirs = @ARGV;
 my $count;
+$|++;
+
+open my( $fh ), '>:encoding(UTF-8)', 'backpan_md5_internal.txt';
 
 DIR: while( my $dir = shift @dirs ) {
+	warn "Processing $dir: " . @dirs . " left\n";
 	opendir my $dh, $dir or warn "Could not open $dir: $!\n";
 	
 	FILE: while( my $file = readdir( $dh ) ) {
+		warn "Processing $file\n";
 		next if $file =~ /^\./;
 		next if $file =~ /\.yamlpm/;
 		my $path = catfile( $dir, $file );
 		if( -d $path ) {
+			warn "Putting $path into queue\n";
 			push @dirs, $path;
 			next FILE;
 			}
@@ -53,7 +59,8 @@ DIR: while( my $dir = shift @dirs ) {
 
 		foreach my $file ( @{ $yaml->{dist_info}{manifest_file_info} } ) {
 			no warnings 'uninitialized';
-			next if $file->{name} =~ m<(^|/)\.(git|svn)/>;
+			next if $file->{name} =~ m<(\A|/)\.(git|svn|CVS)/>;
+			next unless $file->{name} =~ m<\.p[ml]\z>;
 			
 			write_line(
 				{
@@ -98,6 +105,6 @@ sub write_line
 	my( $hash ) = shift;
 	no warnings 'uninitialized';
 	
-	say join "|",
+	say { $fh } join "|",
 		@{ $hash }{ qw(md5 name blib bytesize primary_package version dist_file) };	
 	}
