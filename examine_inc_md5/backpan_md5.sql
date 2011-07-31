@@ -1,4 +1,4 @@
-CREATE TABLE backpan_md5 (
+CREATE TABLE IF NOT EXISTS backpan_md5 (
 	md5             text,
 	filename        text,
 	blib            int,
@@ -7,3 +7,6 @@ CREATE TABLE backpan_md5 (
 	version         text,
 	dist_file       text
 	);
+DELETE FROM backpan_md5;
+.separator "|"
+.import backpan_md5_import.txt backpan_md5
