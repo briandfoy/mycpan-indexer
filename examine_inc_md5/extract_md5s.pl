@@ -37,27 +37,13 @@ DIR: while( my $dir = shift @dirs ) {
 			}
 			
 		$dist_file =~ s/.*authors.id.//;
-		
+
 		foreach my $module ( @{ $yaml->{dist_info}{module_info} } ) {
 			no warnings 'uninitialized';
-				
-			my $version = $module->{version_info}{value};
-			$version =~ s/^\s*|\s+$//g;
-
-			if( $version =~ m/[\000-\037]/ ) {
-				print STDERR "Found stupid v version... now is ";
-				my $hex = unpack 'H*', $version;
-				$version = 'v' . join '.', map { $_ + 0 } $hex =~ m/(..)/g;
-				print STDERR "$version\n";
-				}
-
-			if( $version =~ /[^0-9a-z_.-]/i ) {
-				warn "Strange version in $path for $module->{primary_package}: [$version]\n";
-				}
 
 			write_line(
 				{
-				version   => $version || '',
+				version   => handle_version( $module->{version_info}{value} ),
 				blib      => 1,
 				dist_file => $dist_file,
 				map {; $_ => $module->{$_} } qw(md5 name bytesize primary_package)
@@ -82,6 +68,29 @@ DIR: while( my $dir = shift @dirs ) {
 
 		}
 
+	}
+
+warn "Done processing, cleaning up...\n";
+exit;
+
+sub handle_version {
+	my( $version ) = @_;
+	return '' unless defined $version;
+
+	$version =~ s/^\s*|\s+$//g;
+
+	if( $version =~ m/[\000-\037]/ ) {
+		warn "Found stupid v version... now is ";
+		my $hex = unpack 'H*', $version;
+		$version = 'v' . join '.', map { $_ + 0 } $hex =~ m/(..)/g;
+		warn "$version\n";
+		}
+
+	if( $version =~ /[^0-9a-z_.-]/i ) {
+		warn "Strange version [$version]\n";
+		}
+
+	$version || '';
 	}
 
 sub write_line
