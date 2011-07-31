@@ -657,22 +657,58 @@ Sets these items in dist_info:
 
 =cut
 
-sub find_dist_dir
-	{
+sub find_dist_dir {
+	my( $self ) = @_;
+
 	$logger->trace( sub { get_caller_info } );
 
 	$logger->debug( "Cwd is " . $_[0]->dist_info( "unpack_dir" ) );
 
+	my $dist_dir;
+	foreach my $technique ( @{ $self->find_dist_dir_techniques } ) {
+		$dist_dir = $self->$technique();
+		next unless defined $dist_dir;
+		}
+
+	unless( defined $dist_dir ) {
+		$logger->debug( "Didn't find anything that looks like a module directory!" );
+		return;
+		}
+
+	$self->set_dist_info( 'dist_dir', $dist_dir );
+
+	return 1;
+	}
+
+sub find_dist_dir_techniques {
+	[ qw(
+		_try_unpack_dir
+		_try_lower_dirs
+		_try_module_at_top
+		)
+	];
+	}
+
+sub _try_unpack_dir {
+	my( $self ) = @_;
+
 	my @files = qw( MANIFEST Makefile.PL Build.PL META.yml );
 
-	if( grep { -e } @files )
-		{
-		$_[0]->set_dist_info( $_[0]->dist_info( "unpack_dir" ) );
-		return 1;
+	if( grep { -e } @files ) {
+		$logger->debug( "Found dist dir with _try_unpack_dir" );
+		return $self->dist_info( "unpack_dir" );
 		}
+
+	return;
+	}
+
+sub _try_lower_dirs {
+	my( $self ) = @_;
 
 	require File::Find::Closures;
 	require File::Find;
+
+	my @files = qw( MANIFEST Makefile.PL Build.PL META.yml );
 
 	$logger->debug( "Did not find dist directory at top level" );
 	my( $wanted, $reporter ) =
@@ -686,21 +722,44 @@ sub find_dist_dir
 
 	$logger->debug( "Found dist file at [$found[0]]" );
 
-	unless( $found[0] )
-		{
-		$logger->debug( "Didn't find anything that looks like a module directory!" );
+	unless( $found[0] ) {
+		$logger->debug( "_try_lower_dirs didn't find anything that looks like a module directory!" );
 		return;
 		}
 
-	if( chdir $found[0] )
-		{
-		$logger->debug( "Changed to $found[0]" );
-		$_[0]->set_dist_info( 'dist_dir', $found[0] );
-		return 1;
+	if( chdir $found[0] ) {
+		$logger->debug( "_try_lower_dirs found module directory at $found[0]" );
+		return $found[0];
 		}
 
-	exit;
 	return;
+	}
+
+sub _try_module_at_top {
+	my( $self ) = @_;
+
+	require File::Find::Closures;
+	require File::Find;
+	use File::Basename;
+
+	$logger->debug( "Did not find dist directory at top level" );
+	my( $wanted, $reporter ) =
+		File::Find::Closures::find_by_regex( qr/\.p[ml]\z/ );
+
+	File::Find::find( $wanted, $self->dist_info( "unpack_dir" ) );
+
+	# we want the shortest path
+	my @found = map { dirname($_) } sort { length $a <=> length $b } $reporter->();
+
+	if( $found[0] ) {
+		$logger->debug( "_try_module_at_top found $found[0]" );
+		return $found[0];
+		}
+	else {
+		$logger->debug( "_try_module_at_top did not find anything" );
+		return;
+		}
+
 	}
 
 =item get_file_list
@@ -712,19 +771,21 @@ Sets these items in dist_info:
 
 =cut
 
-sub get_file_list
-	{
+sub get_file_list {
 	$logger->trace( sub { get_caller_info } );
 
 	$logger->debug( "Cwd is " . cwd() );
 
-	unless( -e 'Makefile.PL' or -e 'Build.PL' )
-		{
+=pod
+
+	unless( -e 'MANIFEST' or -e 'MANIFEST.SKIP' ) {
 		$logger->error( "No Makefile.PL or Build.PL" );
 		$_[0]->set_dist_info( 'manifest', [] );
 
 		return;
 		}
+
+=cut
 
 	require ExtUtils::Manifest;
 
@@ -996,6 +1057,9 @@ sub parse_meta_files
 	if( defined $meta_file )
 		{
 		my $yaml = $self->_load_meta_yml( $meta_file );
+		unless( ref $yaml->{author} ) {
+			$yaml->{author} = [ $yaml->{author} ];
+			}
 		$logger->debug( "YAML author is $yaml->{author}[0]" );
 		$self->set_dist_info( 'META.yml', $yaml ) if $yaml;
 		return $yaml;
