@@ -42,7 +42,7 @@ other. The application starts up, creates a coordinator object, and
 stores it. The application gives a reference to the coordinator to
 every component.
 
-When the application creates components, it tells each of about the
+When the application creates components, it tells each about the
 coordinator. Each component can talk to the coordinator to get to
 parts of the application it doesn't directly know about. Each
 component tells the coordinator about itself so the coordinator can
