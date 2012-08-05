@@ -54,7 +54,7 @@ foreach my $dir ( @dirs )
 	FILE: while( my $file = glob( catfile( $dir, '*', '*', '*.yml' ) ) )
 		{
 		$count++;
-		my $contents = do { local $/; open my $fh, '<:utf8', $file; <$fh> };
+		my $contents = do { local $/; open my $fh, '<:encoding(UTF-8)', $file; <$fh> };
 		my $yaml = eval { Load( $contents ) };
 		unless( defined $yaml )
 			{
