@@ -27,13 +27,11 @@ die "Did not make $dist_dir\n" unless -d $dist_dir;
 my( $wanted, $reporter ) = File::Find::Closures::find_by_regex( qr/\.yml\z/ );
 find( $wanted, @dirs );
 
-FILE: foreach my $file ( $reporter->() )
-	{
+FILE: foreach my $file ( $reporter->() ) {
 	$count++;
 	my $contents = do { local $/; open my $fh, '<:utf8', $file; <$fh> };
 	my $yaml = eval { Load( $contents ) };
-	unless( defined $yaml )
-		{
+	unless( defined $yaml ) {
 		warn "$file did not parse correctly\n";
 		next FILE;
 		}
