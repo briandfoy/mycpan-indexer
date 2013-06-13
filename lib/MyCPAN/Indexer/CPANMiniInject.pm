@@ -158,6 +158,8 @@ sub _check_for_previous_result
 
 	my $Config = $self->get_config;
 
+	my $dist = $self->get_dist_info( 'filename' );
+
 	( my $basename = basename( $dist ) ) =~ s/\.(tgz|tar\.gz|zip)$//;
 
 	my $yml_dir        = catfile( $Config->report_dir, "meta"        );
