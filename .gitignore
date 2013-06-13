@@ -19,3 +19,9 @@ MyCPAN.bbproject
 Debian*
 *.sqlite
 *.yml
+MYMETA.json
+examine_inc_md5/backpan_md5.db
+examine_inc_md5/shas.txt
+examine_inc_md5/output.txtexamine_inc_md5/*.txt
+examine_inc_md5/backpan_md5_internal.txt
+examine_inc_md5/output.txt
