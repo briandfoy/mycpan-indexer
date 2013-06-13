@@ -23,7 +23,8 @@ BEGIN {
 
 use Test::More tests => scalar @classes;
 
-foreach my $class ( @classes )
-	{
+foreach my $class ( @classes ) {
+	next if $class =~ /::(?:Tk|Curses)/;
+	no warnings qw(redefine);
 	print "Bail out! $class did not compile\n" unless use_ok( $class );
 	}
