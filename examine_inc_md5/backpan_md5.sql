@@ -9,4 +9,6 @@ CREATE TABLE IF NOT EXISTS backpan_md5 (
 	);
 DELETE FROM backpan_md5;
 .separator "|"
-.import backpan_md5_import.txt backpan_md5
+.import backpan_md5_internal.txt backpan_md5
+DELETE FROM backpan_md5 WHERE filename LIKE 'inc/%';
+CREATE INDEX idx_md5 ON backpan_md5(md5);
