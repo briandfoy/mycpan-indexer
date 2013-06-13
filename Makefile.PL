@@ -6,20 +6,18 @@ eval "use Test::Manifest 1.21";
 
 my %optional = (
 	Curses  => {
-		'lib/Interface/Curses.pm' => '$(INST_LIBDIR)/Indexer/Interface/Curses.pm',
+		'lib/MyCPAN/Indexer/Interface/Curses.pm' => '$(INST_LIBDIR)/Indexer/Interface/Curses.pm',
 	
 		},
 	Tk      => {
-		'lib/Interface/Tk.pm' => '$(INST_LIBDIR)/Indexer/Interface/Tk.pm',
+		'lib/MyCPAN/Indexer/Interface/Tk.pm' => '$(INST_LIBDIR)/Indexer/Interface/Tk.pm',
 		},
 	);
 
-foreach my $module ( keys %optional )
-	{
+foreach my $module ( keys %optional ) {
 	my $available = eval "require $module; 1";
 	
-	unless( $available )
-		{
+	unless( $available ) {
 		print <<"HERE";
 $module not available. Skipping optional modules that use it.
 If you later want to use it, you'll have to reinstall MyCPAN.
