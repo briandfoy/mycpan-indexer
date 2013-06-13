@@ -1,4 +1,4 @@
-use ExtUtils::MakeMaker;
+use ExtUtils::MakeMaker 6.48;
 
 require 5.006;
 
@@ -64,14 +64,14 @@ WriteMakefile(
 		},
 
 	clean  => { FILES    => q|MyCPAN-Indexer-*| },
-    (
-    ( $ExtUtils::MakeMaker::VERSION ge '6.46' )
-        ? (META_MERGE => {
-            resources => {
-                homepage    => 'http://github.com/briandfoy/mycpan-indexer/tree/master',
-                repository  => 'git://github.com/briandfoy/mycpan-indexer.git',
-            }
-        })
-        : ()
-    )
+
+	META_MERGE => {
+		no_index => {
+			directory => [ qw(t inc corpus) ],
+			},
+		resources => {
+			homepage    => 'http://github.com/briandfoy/mycpan-indexer/tree/master',
+			repository  => 'git://github.com/briandfoy/mycpan-indexer.git',
+			},
+        },
 	);
