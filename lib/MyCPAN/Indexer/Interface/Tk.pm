@@ -23,6 +23,10 @@ $VERSION = '1.28_10';
 use Log::Log4perl;
 use Tk;
 
+BEGIN {
+	$logger = Log::Log4perl->get_logger( 'Interface' );
+	}
+
 =head1 NAME
 
 MyCPAN::Indexer::Interface::Tk - Index a Perl distribution
@@ -41,11 +45,6 @@ This class presents the information as the indexer runs, using Tk.
 =head2 Methods
 
 =over 4
-
-
-BEGIN {
-	$logger = Log::Log4perl->get_logger( 'Interface' );
-	}
 
 =item component_type
 
