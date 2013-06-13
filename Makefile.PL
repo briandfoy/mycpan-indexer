@@ -32,7 +32,7 @@ HERE
 WriteMakefile(
 	'NAME'	       => 'MyCPAN::Indexer',
 	'ABSTRACT'     => 'Index a Perl distribution',
-	'VERSION_FROM' => 'lib/Indexer.pm',
+	'VERSION_FROM' => 'lib/MyCPAN/Indexer.pm',
 	'LICENSE'      => 'perl',
 	'AUTHOR'       => 'brian d foy <bdfoy@cpan.org>',
 	
@@ -62,43 +62,6 @@ WriteMakefile(
 		'CPAN::Checksums'                  => '0',
 		'YAML::XS'                         => '0',
 		},
-
-	'PM'           => {
-		map( %$, values %optional ),
-		
-		'lib/Collator/Null.pm'       => '$(INST_LIBDIR)/Indexer/Collator/Null.pm',
-
-		'lib/Dispatcher/Parallel.pm' => '$(INST_LIBDIR)/Indexer/Dispatcher/Parallel.pm',
-		'lib/Dispatcher/Serial.pm'   => '$(INST_LIBDIR)/Indexer/Dispatcher/Serial.pm',
-
-		'lib/Indexers/TestCensus.pm'   => '$(INST_LIBDIR)/Indexer/TestCensus.pm',
-		'lib/Indexers/BackPANstats.pm' => '$(INST_LIBDIR)/Indexer/BackPANstats.pm',
-
-		'lib/Interface/Null.pm'      => '$(INST_LIBDIR)/Indexer/Interface/Null.pm',
-		'lib/Interface/ShowDist.pm'  => '$(INST_LIBDIR)/Indexer/Interface/ShowDist.pm',
-		'lib/Interface/Text.pm'      => '$(INST_LIBDIR)/Indexer/Interface/Text.pm',
-
-		'lib/Queue.pm'               => '$(INST_LIBDIR)/Indexer/Queue.pm',
-		'lib/Queue/ErrorReports.pm'  => '$(INST_LIBDIR)/Indexer/Queue/ErrorReports.pm',
-		'lib/Queue/NewFiles.pm'      => '$(INST_LIBDIR)/Indexer/Queue/NewFiles.pm',
-		'lib/Queue/FromList.pm'      => '$(INST_LIBDIR)/Indexer/Queue/FromList.pm',
-
-		'lib/Reporter/Base.pm'       => '$(INST_LIBDIR)/Indexer/Reporter/Base.pm',
-		'lib/Reporter/AsYAML.pm'     => '$(INST_LIBDIR)/Indexer/Reporter/AsYAML.pm',
-
-		'lib/Indexer.pm'             => '$(INST_LIBDIR)/Indexer.pm',
-		'lib/NullTester.pm'          => '$(INST_LIBDIR)/Indexer/NullTester.pm',
-		'lib/Tutorial.pm'            => '$(INST_LIBDIR)/Indexer/Tutorial.pm',
-		'lib/Coordinator.pm'         => '$(INST_LIBDIR)/Indexer/Coordinator.pm',
-		'lib/Component.pm'           => '$(INST_LIBDIR)/Indexer/Component.pm',
-		'lib/Notes.pm'               => '$(INST_LIBDIR)/Indexer/Notes.pm',
-
-		'lib/Worker.pm'              => '$(INST_LIBDIR)/Indexer/Worker.pm',
-		'lib/Worker/JustShowDist.pm' => '$(INST_LIBDIR)/Indexer/Worker/JustShowDist.pm',	
-		'lib/App/Indexer.pm'         => '$(INST_LIBDIR)/App/BackPAN/Indexer.pm',
-		},
-
-	'MAN3PODS'     => {},
 
 	clean  => { FILES    => q|MyCPAN-Indexer-*| },
     (

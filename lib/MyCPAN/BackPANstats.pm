@@ -6,7 +6,7 @@ no warnings;
 
 use subs qw(get_caller_info);
 use vars qw($VERSION $logger);
-use base qw(MyCPAN::Indexer MyCPAN::Indexer::Component);
+use base qw(MyCPAN::Indexer MyCPAN::Indexer::Component MyCPAN::Indexer::Reporter::Base);
 
 $VERSION = '1.28_10';
 
@@ -101,8 +101,7 @@ Most of this needs to move out of run and into this method.
 =cut
 
 use CPAN::DistnameInfo;
-sub collect_info
-	{
+sub collect_info {
 	my $self = shift;
 	my $d = CPAN::DistnameInfo->new( $self->{dist_info}{dist_file} );
 	$self->set_dist_info( 'dist_name', $d->dist );
@@ -163,20 +162,62 @@ sub final_words                          { sub { 1 } }
 
 sub get_reporter {
 	my $self = shift;
+	require JSON::XS;
+	use File::Basename qw(dirname);
+	use File::Path qw(make_path);
+use Clone qw(clone);
+use Data::Structure::Util qw(unbless);
+
+	my $jsonner = JSON::XS->new->pretty;
 
 	my $reporter = sub {
-		my( $info ) = shift;
+		my( $info ) = @_;
 
-		print join "\t", map { $info->{dist_info}{$_} }
-			qw(
-				dist_basename dist_name dist_date  yyyymmdd_gmt calendar_quarter
-				dist_size dist_author maturity dist_version
-				);
-		print "\n";
+		unless( defined $info ) {
+			$logger->error( "info is undefined!" );
+			return;
+			}
+
+		my $out_path = $self->get_report_path( $info );
+		my $dir = dirname( $out_path );
+		unless( -d $dir ) {
+			make_path( $dir ) or
+				$logger->fatal( "Could not create directory $dir: $!" );
+			}
+
+		open my($fh), ">:utf8", $out_path or
+			$logger->fatal( "Could not open $out_path: $!" );
+
+		{
+		# now that indexer is a component, it has references to all the other
+		# objects, making for a big dump. We don't want the keys starting
+		# with _
+		# Storable doesn't work because it can't handle the CODE refs
+		my $clone = clone( $info ); # hack until we get an info class
+		unbless( $clone );
+		delete $clone->{run_info};
+		my $dist = $clone->{dist_info}{dist_basename};
+
+		local $SIG{__WARN__} = sub {
+			$logger->warn( "Error writing to YAML output for $dist: @_" );
+			};
+
+		foreach my $key ( keys %$clone ) {
+			delete $clone->{$key} if $key =~ /^_/;
+			}
+
+		print { $fh } $jsonner->encode( $clone );
+		}
+
+		$logger->error( "$out_path is missing!" ) unless -e $out_path;
+
+		1;
 		};
 
-	$self->set_note( 'reporter', $reporter )
+	$self->set_note( 'reporter', $reporter );
 	}
+
+sub get_report_file_extension { 'json' }
 
 =back
 

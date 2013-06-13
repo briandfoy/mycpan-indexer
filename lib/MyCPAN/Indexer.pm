@@ -1,6 +1,8 @@
 package MyCPAN::Indexer;
 use strict;
 
+use v5.14;
+
 use warnings;
 no warnings;
 
@@ -483,7 +485,11 @@ my @refs = (
 	\ $Archive::TAR::WARN,
 	);
 
-sub _archive_extract_subclass { 'Archive::Extract::MyCPANpatch' }
+sub _archive_extract_subclass { 
+	my $class = 'Archive::Extract::Libarchive';
+	eval "use $class; 1";
+	$class;
+	}
 
 sub _patch_extractors
 	{
@@ -491,61 +497,7 @@ sub _patch_extractors
 
 	my( $self ) = @_;
 
-	foreach my $ref ( @refs ) {
-		$self->_set_stash( $ref );
-		}
-
-	$Archive::Extract::DEBUG      = $logger->is_debug;
-	$Archive::Extract::WARN       = $logger->is_warn;
-	$Archive::Tar::WARN           = $Archive::Extract::WARN; # sent in patch for this rt.cpan.org #40472
-	$Archive::Extract::PREFER_BIN = defined $ENV{PREFER_BIN} ? $ENV{PREFER_BIN} : 0;
-
-	foreach my $var ( qw( DEBUG WARN PREFER_BIN ) )
-		{
-		no strict 'refs';
-
-		$logger->debug( qq|\$Archive::Extract::$var is |, ${"Archive::Extract::$var"} );
-		}
-
-	{
-	package Archive::Extract::MyCPANpatch;
-	use parent qw(Archive::Extract);
-	sub debug { $MyCPAN::Indexer::logger->debug( $_[1] ) }
-	}
-
-	$self->_set_stash( \*Archive::Tar::_error, \&Archive::Tar::_error );
-
-	*Archive::Tar::_error = sub {
-		my @caller = caller(1);
-		$logger->debug( "Archive::Tar::_error called from @caller" );
-		my( $archivetar, $error ) = @_;
-		$logger->error(
-			sprintf "Archive::Tar complained about %s: %s",
-			$self->dist_info( 'dist_basename' ),
-			$error
-			);
-		$self->set_run_info( 'unpack_dist_archive_tar_error', $error );
-
-		if( ref $archivetar eq ref {} )
-			{
-			$archivetar->{_error}    = $error;
-			$archivetar->{_longmess} = Carp::longmess($error);
-			}
-
-		return;
-		};
-
-	Archive::Zip::setErrorHandler(
-		sub {
-			my( $error ) = shift;
-			$logger->error(
-				sprintf "Archive::Zip complained about %s: %s",
-				$self->dist_info( 'dist_basename' ),
-				$error
-				);
-			$self->set_run_info( 'unpack_dist_archive_zip_error', $error );
-			}
-		);
+	return;
 	}
 
 sub _unpatch_extractors
@@ -583,15 +535,6 @@ sub _create_extractor
 	my $extractor = eval { $subclass->new( archive => $dist ) };
 	my $error = $@;
 
-	if( $extractor->type eq 'gz' )
-		{
-		$logger->info( "Dist $dist claims to be a gz, so try .tgz instead" );
-
-		eval {
-			$extractor = $subclass->new( archive => $dist, type => 'tgz' );
-			} || ($error = $@);
-		}
-
 	unless( ref $extractor )
 		{
 		$logger->error( "Could not create Archive::Extract object for $dist [$error]" );
@@ -599,7 +542,9 @@ sub _create_extractor
 		return;
 		}
 
-	$self->set_dist_info( 'dist_archive_type', $extractor->type );
+	my $type = $dist =~ s/.*\.//r;
+
+	$self->set_dist_info( 'dist_archive_type', $type );
 
 	$extractor;
 	}
@@ -619,7 +564,7 @@ sub _extract
 	# I should fail here, but Archive::Extract 0.26 on Windows fails
 	# even when it succeeds, so just log the error and keep going
 	# if Windows reports a failure
-	unless( $rc or $^O =~ /Win32/ )
+	unless( $rc )
 		{
 		$self->set_dist_info( 'extraction_error', $extractor->error );
 		$logger->error( "Archive::Extract could not extract $dist" );
@@ -686,16 +631,17 @@ sub find_dist_dir {
 
 	$logger->trace( sub { get_caller_info } );
 
-	$logger->debug( "Cwd is " . $_[0]->dist_info( "unpack_dir" ) );
+	$logger->debug( "find_dist_dir cwd is " . $_[0]->dist_info( "unpack_dir" ) );
 
 	my $dist_dir;
 	foreach my $technique ( @{ $self->find_dist_dir_techniques } ) {
 		$dist_dir = $self->$technique();
-		next unless defined $dist_dir;
+		$logger->debug( "find_dist_dir technique [$technique] returned [$dist_dir]" );
+		last if defined $dist_dir;
 		}
 
 	unless( defined $dist_dir ) {
-		$logger->debug( "Didn't find anything that looks like a module directory!" );
+		$logger->debug( "find_dist_dir didn't find anything that looks like a module directory!" );
 		return;
 		}
 
@@ -734,7 +680,6 @@ sub _try_lower_dirs {
 
 	my @files = qw( MANIFEST Makefile.PL Build.PL META.yml );
 
-	$logger->debug( "Did not find dist directory at top level" );
 	my( $wanted, $reporter ) =
 		File::Find::Closures::find_by_directory_contains( @files );
 
@@ -742,9 +687,9 @@ sub _try_lower_dirs {
 
 	# we want the shortest path
 	my @found = sort { length $a <=> length $b } $reporter->();
-	$logger->debug( "Found files [@found]" );
+	$logger->debug( "_try_lower_dirs found files [@found]" );
 
-	$logger->debug( "Found dist file at [$found[0]]" );
+	$logger->debug( "_try_lower_dirs found dist file at [$found[0]]" );
 
 	unless( $found[0] ) {
 		$logger->debug( "_try_lower_dirs didn't find anything that looks like a module directory!" );
@@ -1329,10 +1274,16 @@ sub run_build
 
 	$_[0]->run_something( $build_command, 'build_output' );
 
+=pod
+
+# Why is this here and how is it different from what I just did?
+
 	my( $runner ) = grep { -e } qw( ./Build Makefile );
 	$logger->debug( "runner is [$runner]" );
 
 	$_[0]->run_something( $runner, 'build_modules_output' ) if $runner;
+
+=cut
 
 	return 1;
 	}
