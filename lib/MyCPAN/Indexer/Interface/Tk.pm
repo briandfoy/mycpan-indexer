@@ -9,10 +9,11 @@ BEGIN {
 
 		Tk->import;
 		Tk::ProgressBar->import;
-		1 };
+		1 
+		};
 
-	die "You need to install the Tk and Tk::ProgressBar modules ".
-		" to use MyCPAN::Indexer::Interface::Tk" if $@;
+	die "You need to install the Tk and Tk::ProgressBar modules " .
+		" to use MyCPAN::Indexer::Interface::Tk\n" unless $rc;
 }
 
 use base qw(MyCPAN::Indexer::Component);

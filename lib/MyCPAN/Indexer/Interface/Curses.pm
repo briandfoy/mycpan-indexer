@@ -5,7 +5,8 @@ use warnings;
 BEGIN {
 	my $rc = eval { require Curses; 1 };
 
-	die "You need to install the Curses module to use MyCPAN::Indexer::Interface::Curses";
+	die "You need to install the Curses module to use MyCPAN::Indexer::Interface::Curses\n"
+		unless $rc;
 	Curses->import;
 }
 
