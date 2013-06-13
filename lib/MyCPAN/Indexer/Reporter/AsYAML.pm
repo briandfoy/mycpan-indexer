@@ -2,7 +2,7 @@ package MyCPAN::Indexer::Reporter::AsYAML;
 use strict;
 use warnings;
 
-use base qw(MyCPAN::Indexer::Reporter::Base);
+use parent qw(MyCPAN::Indexer::Reporter::Base);
 use vars qw($VERSION $logger);
 $VERSION = '1.28_10';
 

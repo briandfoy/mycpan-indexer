@@ -2,7 +2,7 @@ package MyCPAN::Indexer::Worker::JustShowDist;
 use strict;
 use warnings;
 
-use base qw(MyCPAN::Indexer::Worker);
+use parent qw(MyCPAN::Indexer::Worker);
 use vars qw($VERSION $logger);
 $VERSION = '1.28_10';
 

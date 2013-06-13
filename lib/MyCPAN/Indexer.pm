@@ -6,7 +6,7 @@ use v5.14;
 use warnings;
 no warnings;
 
-use base qw(MyCPAN::Indexer::Component);
+use parent qw(MyCPAN::Indexer::Component);
 use subs qw(get_caller_info);
 use vars qw($VERSION $logger);
 

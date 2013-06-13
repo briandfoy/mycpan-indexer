@@ -2,7 +2,7 @@ package MyCPAN::Indexer::Queue::FromList;
 use strict;
 use warnings;
 
-use base qw(MyCPAN::Indexer::Queue);
+use parent qw(MyCPAN::Indexer::Queue);
 use vars qw($VERSION $logger);
 $VERSION = '1.28_10';
 

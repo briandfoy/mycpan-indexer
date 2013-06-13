@@ -2,7 +2,7 @@ package MyCPAN::Indexer::Dispatcher::Serial;
 use strict;
 use warnings;
 
-use base qw(MyCPAN::Indexer::Component);
+use parent qw(MyCPAN::Indexer::Component);
 use vars qw($VERSION $logger);
 $VERSION = '1.28_10';
 

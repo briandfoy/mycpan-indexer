@@ -2,7 +2,7 @@ package MyCPAN::Indexer::Interface::ANSIText;
 use strict;
 use warnings;
 
-use base qw(MyCPAN::Indexer::Interface::Text)
+use parent qw(MyCPAN::Indexer::Interface::Text);
 use vars qw($VERSION $logger);
 $VERSION = '1.28_10';
 

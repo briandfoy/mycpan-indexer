@@ -8,7 +8,7 @@ no warnings;
 
 use subs qw(get_caller_info);
 use vars qw($VERSION $logger);
-use base qw(MyCPAN::Indexer);
+use parent qw(MyCPAN::Indexer);
 
 $VERSION = '1.28_10';
 
