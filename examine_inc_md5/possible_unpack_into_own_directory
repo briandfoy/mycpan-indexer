@@ -1,0 +1,31 @@
+use v5.10;
+use Archive::Extract::Libarchive;
+use Data::Printer;
+use File::Spec::Functions;
+
+my %Seen;
+
+my $base = "/Volumes/Perl/BackPAN/authors/id";
+my $tmp = '/Users/brian/Desktop/tmp';
+my $count = 0;
+while( <> ) {
+	chomp;
+	my( $file, $dist ) = ( split /\|/ )[1,-1];
+	next unless $file =~ /\AMyCPAN-Indexer/;
+	$Seen{$dist}++;
+
+	my $path = catfile( $base, $dist );
+	
+	my $ae = Archive::Extract::Libarchive->new( 
+		archive => $path
+		);
+	
+	system "rm -rf $tmp";
+	mkdir $tmp unless -d $tmp;
+	my $ok = $ae->extract( to => $tmp );
+	my $files = $ae->files;
+	say "-" x 50;
+	say $path;
+	p $files;
+	last if ++$count > 10;
+	}
