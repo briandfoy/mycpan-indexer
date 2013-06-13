@@ -39,6 +39,7 @@ WriteMakefile(
 		'ConfigReader::Simple'             => '0',
 		'CPAN::Checksums'                  => '0',
 		'CPAN::PackageDetails'             => '0.21',
+		'Data::Structure::Util'            => '0',
 		'Data::UUID'                       => '0',
 		'Digest::MD5'                      => '0',
 		'Distribution::Guess::BuildSystem' => '0.11',
