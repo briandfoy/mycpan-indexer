@@ -1,5 +1,6 @@
 Changes
 examples/backpan_indexer.config.andya
+examples/backpan_indexer.config.backpan_stats
 examples/backpan_indexer.config.bdfoy
 examples/backpan_indexer.config.dist
 examples/backpan_indexer.config.dpan
@@ -25,6 +26,33 @@ lib/Interface/Null.pm
 lib/Interface/ShowDist.pm
 lib/Interface/Text.pm
 lib/Interface/Tk.pm
+lib/MyCPAN/App/BackPAN/Indexer.pm
+lib/MyCPAN/BackPANstats.pm
+lib/MyCPAN/Indexer.pm
+lib/MyCPAN/Indexer/Collator/Null.pm
+lib/MyCPAN/Indexer/Component.pm
+lib/MyCPAN/Indexer/Coordinator.pm
+lib/MyCPAN/Indexer/CPANMiniInject.pm
+lib/MyCPAN/Indexer/Dispatcher/Parallel.pm
+lib/MyCPAN/Indexer/Dispatcher/Serial.pm
+lib/MyCPAN/Indexer/Interface/ANSIText.pm
+lib/MyCPAN/Indexer/Interface/Curses.pm
+lib/MyCPAN/Indexer/Interface/Null.pm
+lib/MyCPAN/Indexer/Interface/ShowDist.pm
+lib/MyCPAN/Indexer/Interface/Text.pm
+lib/MyCPAN/Indexer/Interface/Tk.pm
+lib/MyCPAN/Indexer/Notes.pm
+lib/MyCPAN/Indexer/NullTester.pm
+lib/MyCPAN/Indexer/Queue.pm
+lib/MyCPAN/Indexer/Queue/ErrorReports.pm
+lib/MyCPAN/Indexer/Queue/FromList.pm
+lib/MyCPAN/Indexer/Queue/NewFiles.pm
+lib/MyCPAN/Indexer/Reporter/AsYAML.pm
+lib/MyCPAN/Indexer/Reporter/Base.pm
+lib/MyCPAN/Indexer/Tutorial.pm
+lib/MyCPAN/Indexer/Worker.pm
+lib/MyCPAN/Indexer/Worker/JustShowDist.pm
+lib/MyCPAN/TestCensus.pm
 lib/Notes.pm
 lib/NullTester.pm
 lib/Queue.pm
@@ -39,10 +67,13 @@ lib/Worker/JustShowDist.pm
 LICENSE
 Makefile.PL
 MANIFEST
+MYMETA.json
+MYMETA.yml
 README
 t/app/backpan.t
 t/app/defaults.t
 t/compile.t
+t/component/base.t
 t/extract_package_names.t
 t/guess_package_names.t
 t/load.t
@@ -52,3 +83,8 @@ t/reporter/base.t
 t/test_manifest
 test-corpus/Chemistry-Elements.pm
 test-corpus/Test-Pod.pm
+'YAML tools/memory-tester.pl'
+'YAML tools/yaml-utf8.pl'
+'YAML tools/yaml_convert.pl'
+'YAML tools/yaml_test.pl'
+'YAML tools/yamltest.pl'
