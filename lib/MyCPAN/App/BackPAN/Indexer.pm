@@ -1,8 +1,7 @@
 package MyCPAN::App::BackPAN::Indexer;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
+no warnings qw(uninitialized redefine);
 
 use vars qw($VERSION $Starting_dir $logger);
 
@@ -77,8 +76,7 @@ search the PATH to find the C<perl> binary.
 
 =cut
 
-sub remember_perl
-	{
+sub remember_perl {
 	require File::Which;
 
 	my $perl = do {
@@ -146,16 +144,14 @@ Load the configuration class, create the new object, and set the defaults.
 
 =cut
 
-sub init_config
-	{
+sub init_config {
 	my( $self, $file ) = @_;
 
 	eval "require " . $self->config_class . "; 1";
 
 	my $config = $self->config_class->new( defined $file ? $file : () );
 
-	foreach my $key ( $self->default_keys )
-		{
+	foreach my $key ( $self->default_keys ) {
 		next if $config->exists( $key );
 		$config->set( $key, $self->default( $key ) );
 		}
@@ -171,8 +167,7 @@ Set some defaults.
 
 =cut
 
-sub adjust_config
-	{
+sub adjust_config {
 	my( $application ) = @_;
 
 	my $coordinator = $application->get_coordinator;
@@ -187,14 +182,12 @@ sub adjust_config
 		# first argument on the command line
 		# config file
 		# current working directory
-	unless( $config->get( 'backpan_dir' ) )
-		{
+	unless( $config->get( 'backpan_dir' ) ) {
 		$config->set( 'backpan_dir', cwd() );
 		}
 
 	# in the config file, it's all a single line
-	if( $config->get( 'merge_dirs' ) )
-		{
+	if( $config->get( 'merge_dirs' ) ) {
 		my @dirs =
 			grep { length }
 			split /(?<!\\) /,
@@ -203,10 +196,8 @@ sub adjust_config
 		$config->set( 'merge_dirs', join "\x00", @dirs );
 		}
 
-	if( $config->exists( 'report_dir' ) )
-		{
-		foreach my $subdir ( qw(success error) )
-			{
+	if( $config->exists( 'report_dir' ) ) {
+		foreach my $subdir ( qw(success error) ) {
 			$config->set(
 				"${subdir}_report_subdir",
 				catfile( $config->get( 'report_dir' ), $subdir ),
@@ -233,8 +224,7 @@ sub adjust_config
 
 =cut
 
-sub new
-	{
+sub new {
 	my( $class, @args ) = @_;
 
 	bless { args => [ @args ] }, $class;
@@ -262,8 +252,7 @@ values:
 
 =cut
 
-sub process_options
-	{
+sub process_options {
 	my( $application ) = @_;
 
 	my $run_dir = dirname( $0 );
@@ -291,8 +280,7 @@ Set up the coordinator object and set its initial values.
 
 =cut
 
-sub setup_coordinator
-	{
+sub setup_coordinator {
 	my( $application ) = @_;
 
 	require MyCPAN::Indexer::Coordinator;
@@ -319,8 +307,7 @@ You can print the configuration and exit with the C<-c> option.
 
 =cut
 
-sub handle_config
-	{
+sub handle_config {
 	my( $application ) = @_;
 
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -331,12 +318,10 @@ sub handle_config
 	$application->adjust_config;
 
 	# If this is a dry run, just print the directives and exit
-	if( $application->get_option( 'c' ) )
-		{
+	if( $application->get_option( 'c' ) ) {
 		my @directives = $config->directives;
 		my $longest = max( map { length } @directives );
-		foreach my $directive ( sort @directives )
-			{
+		foreach my $directive ( sort @directives ) {
 			printf "%${longest}s   %-10s\n",
 				$directive,
 				$config->get( $directive );
@@ -352,8 +337,7 @@ Returns a list of the steps to run in C<activate>.
 
 =cut
 
-sub activate_steps
-	{
+sub activate_steps {
 	qw(
 	process_options
 	setup_coordinator
@@ -375,8 +359,7 @@ Start the process.
 
 =cut
 
-sub activate
-	{
+sub activate {
 	my( $class, @argv ) = @_;
 	use vars qw( %Options $Starting_dir);
 	$Starting_dir = cwd(); # remember this so we can change out of temp dirs in abnormal cleanup
@@ -384,8 +367,7 @@ sub activate
 
 	my $application = $class->new( @argv );
 
-	foreach my $step ( $application->activate_steps )
-		{
+	foreach my $step ( $application->activate_steps ) {
 		$application->$step();
 		}
 
@@ -398,8 +380,7 @@ Do the work.
 
 =cut
 
-sub run_components
-	{
+sub run_components {
 	my( $application ) = @_;
 
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -410,8 +391,7 @@ sub run_components
 
 	my $config     = $coordinator->get_config;
 
-	foreach my $tuple ( @components )
-		{
+	foreach my $tuple ( @components ) {
 		my( $component_type, $default_class, $method ) = @$tuple;
 
 		my $class = $config->get( "${component_type}_class" ) || $default_class;
@@ -437,8 +417,7 @@ Do stuff before we quit.
 
 =cut
 
-sub activate_end
-	{
+sub activate_end {
 	my( $application ) = @_;
 
 	$application->cleanup;
@@ -467,14 +446,12 @@ Some of the things we need are:
 
 =cut
 
-sub setup_environment
-	{
+sub setup_environment {
 	my %pass_through = map { $_, 1 } qw(
 		DISPLAY USER HOME PWD TERM
 		), grep { /\A(?:D|MYC)PAN_/ } keys %ENV;
 
-	foreach my $key ( keys %ENV )
-		{
+	foreach my $key ( keys %ENV ) {
 		delete $ENV{$key} unless exists $pass_through{$key}
 		}
 
@@ -506,33 +483,28 @@ The environment takes precedence.
 
 =cut
 
-sub setup_logging
-	{
+sub setup_logging {
 	my( $self ) = @_;
 
 	my $config   = $self->get_coordinator->get_config;
 
 	my $log_config = do {
 		no warnings 'uninitialized';
-		if( -e $ENV{MYCPAN_LOG4PERL_FILE} )
-			{
+		if( -e $ENV{MYCPAN_LOG4PERL_FILE} ) {
 			$ENV{MYCPAN_LOG4PERL_FILE};
 			}
-		elsif( -e $config->get( 'log4perl_file' ) )
-			{
+		elsif( -e $config->get( 'log4perl_file' ) ) {
 			$config->get( 'log4perl_file' );
 			}
 		};
 
-	if( defined $log_config )
-		{
+	if( defined $log_config ) {
 		Log::Log4perl->init_and_watch(
 			$log_config,
 			$self->get_coordinator->get_config->get( 'log_file_watch_time' )
 			);
 		}
-	else
-		{
+	else {
 		my %hash = (
 			DEBUG => $Log::Log4perl::DEBUG,
 			ERROR => $Log::Log4perl::ERROR,
@@ -558,8 +530,7 @@ sub reference onto the C<pre_logging_items> note.
 
 =cut
 
-sub post_setup_logging_tasks
-	{
+sub post_setup_logging_tasks {
 	my $application = shift;
 
 	# this stuff happened too early to set a pre_logging_items
@@ -569,8 +540,7 @@ sub post_setup_logging_tasks
 
 	my @items = $coordinator->get_note( 'pre_logging_items' );
 
-	foreach my $item ( @items )
-		{
+	foreach my $item ( @items ) {
 		next unless ref $item eq ref sub {};
 		$item->();
 		}
@@ -578,8 +548,7 @@ sub post_setup_logging_tasks
 	1;
 	}
 
-sub _log_perl
-	{
+sub _log_perl {
 	my( $application ) = @_;
 
 	my $coordinator = $application->get_coordinator;
@@ -605,8 +574,7 @@ Some of this stuff is a bit dangerous, maybe.
 
 =cut
 
-sub disable_the_missiles
-	{
+sub disable_the_missiles {
 	my( $self ) = @_;
 
 	$self->install_int_handler;
@@ -619,8 +587,7 @@ Catch INT signals so we can log it, clean up, and exit nicely.
 
 =cut
 
-sub install_int_handler
-	{
+sub install_int_handler {
 	#$SIG{__DIE__} = \&Carp::confess;
 
 	# If we catch an INT we're probably in one of the temporary directories
@@ -639,8 +606,7 @@ Make C<warn> go to C<Log4perl>.
 
 =cut
 
-sub install_warn_handler
-	{
+sub install_warn_handler {
 	$SIG{__WARN__} = sub {
 		$logger->warn( @_ );
 		};
@@ -654,8 +620,7 @@ the configuration.
 
 =cut
 
-sub components
-	{
+sub components {
 	(
 	[ qw( reporter   MyCPAN::Indexer::Reporter::AsYAML     get_reporter   ) ],
 	[ qw( queue      MyCPAN::Indexer::Queue                get_queue      ) ],
@@ -673,8 +638,7 @@ Clean up on the way out. We're already done with the run.
 
 =cut
 
-sub cleanup
-	{
+sub cleanup {
 	my( $self ) = @_;
 
 	require File::Path;
@@ -694,8 +658,7 @@ sub cleanup
 
 # I don't remember why I made an explicit exit. Was it to get
 # out of a Tk app or something?
-sub _exit
-	{
+sub _exit {
 	my( $self ) = @_;
 
 	$logger->info( "Exiting from ", __PACKAGE__ );
@@ -709,8 +672,7 @@ Setup the temporary directories, report directories, and so on, etc.
 
 =cut
 
-sub setup_dirs # XXX big ugly mess to clean up
-	{
+sub setup_dirs { # XXX big ugly mess to clean up
 	my( $self ) = @_;
 
 	my $config = $self->get_coordinator->get_config;
@@ -732,16 +694,14 @@ sub setup_dirs # XXX big ugly mess to clean up
 	mkpath( $temp_dir ) unless -d $temp_dir;
 	$logger->logdie( "temp_dir [$temp_dir] does not exist!" ) unless -d $temp_dir;
 
-	foreach my $key ( qw(report_dir success_report_subdir error_report_subdir) )
-		{
+	foreach my $key ( qw(report_dir success_report_subdir error_report_subdir) ) {
 		my $dir = $config->get( $key );
 
 		mkpath( $dir ) unless -d $dir;
 		$logger->logdie( "$key [$dir] does not exist!" ) unless -d $dir;
 		}
 
-	if( $config->retry_errors )
-		{
+	if( $config->retry_errors ) {
 		$logger->warn( 'retry_errors no longer deletes error reports, but the worker should skip them if the setting is false' );
 		}
 	}
@@ -752,8 +712,7 @@ Generate a unique identifier for this indexer run.
 
 =cut
 
-sub get_uuid
-	{
+sub get_uuid {
 	require Data::UUID;
 	my $ug = Data::UUID->new;
 	my $uuid = $ug->create;
