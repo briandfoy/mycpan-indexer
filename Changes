@@ -1,5 +1,8 @@
 # Changes for MyCPAN::Indexer
 
+1.28_11 - Wed Jun 26 11:46:11 2013
+	* Update Makefile.PL with no_index to ignore the test modules
+
 1.28_10 - Tue Feb 23 20:06:45 2010
 	* Fix the file MD5 comparison stuff
 
