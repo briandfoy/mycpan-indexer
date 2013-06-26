@@ -1,6 +1,5 @@
 use utf8;
 use strict;
-use warnings;
 
 use vars qw( @classes );
 
@@ -21,9 +20,11 @@ BEGIN {
 		} $reporter->();
 	}
 
-use Test::More tests => scalar @classes;
+use Test::More 0.95;
 
-foreach my $class ( @classes )
-	{
+foreach my $class ( @classes ) {
+	next if $class =~ /::(?:Tk|Curses|ANSIText)/;
 	print "Bail out! $class did not compile\n" unless use_ok( $class );
 	}
+
+done_testing();

@@ -3,7 +3,7 @@ log4perl.rootLogger               =    FATAL, Null
 
 log4perl.logger.backpan_indexer   =    DEBUG, File
 
-log4perl.logger.Indexer           =    DEBUG, File
+log4perl.logger.Indexer           =    DEBUG, Screen
 log4perl.logger.Worker            =    DEBUG, File
 
 log4perl.logger.Interface         =    DEBUG, File
