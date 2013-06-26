@@ -15,7 +15,7 @@ use Getopt::Std;
 use List::Util qw(max);
 use Log::Log4perl;
 
-$VERSION = '1.28_10';
+$VERSION = '1.28_11';
 
 =head1 NAME
 

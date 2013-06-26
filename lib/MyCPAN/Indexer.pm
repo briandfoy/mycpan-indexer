@@ -10,7 +10,7 @@ use parent qw(MyCPAN::Indexer::Component);
 use subs qw(get_caller_info);
 use vars qw($VERSION $logger);
 
-$VERSION = '1.28_10';
+$VERSION = '1.28_11';
 
 =head1 NAME
 

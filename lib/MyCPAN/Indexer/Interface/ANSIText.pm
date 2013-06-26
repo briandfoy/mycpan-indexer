@@ -4,11 +4,22 @@ use warnings;
 
 use parent qw(MyCPAN::Indexer::Interface::Text);
 use vars qw($VERSION $logger);
-$VERSION = '1.28_10';
+$VERSION = '1.28_11';
 
 use Log::Log4perl;
 use Term::ANSIColor qw(colored);
 
+BEGIN {
+	my $rc = eval {
+		require Term::ANSIColor;
+
+		Term::ANSIColor->import( colored BLUE GREEN RED RESET );
+		1 
+		};
+
+	die "You need to install the Term::ANSIColor module " .
+		" to use MyCPAN::Indexer::Interface::ANSIText\n" unless $rc;
+}
 =head1 NAME
 
 MyCPAN::Indexer::Interface::ANSIText - Present the run info as colored text
