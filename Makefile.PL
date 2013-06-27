@@ -66,7 +66,7 @@ WriteMakefile(
 
 	META_MERGE => {
 		no_index => {
-			directory => [ qw(t inc corpus) ],
+			directory => [ qw(t inc corpus test-corpus) ],
 			},
 		resources => {
 			homepage    => 'http://github.com/briandfoy/mycpan-indexer/tree/master',
