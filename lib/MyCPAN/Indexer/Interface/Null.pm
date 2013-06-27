@@ -6,7 +6,7 @@ use Log::Log4perl;
 
 use parent qw(MyCPAN::Indexer::Component);
 use vars qw($VERSION $logger);
-$VERSION = '1.28_11';
+$VERSION = '1.28_12';
 
 BEGIN {
 	$logger = Log::Log4perl->get_logger( 'Interface' );

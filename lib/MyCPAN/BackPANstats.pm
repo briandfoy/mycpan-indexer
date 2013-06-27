@@ -8,7 +8,7 @@ use subs qw(get_caller_info);
 use vars qw($VERSION $logger);
 use parent qw(MyCPAN::Indexer MyCPAN::Indexer::Component MyCPAN::Indexer::Reporter::Base);
 
-$VERSION = '1.28_11';
+$VERSION = '1.28_12';
 
 =head1 NAME
 

@@ -7,7 +7,7 @@ use vars qw($VERSION);
 use Carp         qw( croak );
 use Scalar::Util qw( weaken );
 
-$VERSION = '1.28_11';
+$VERSION = '1.28_12';
 
 =head1 NAME
 
