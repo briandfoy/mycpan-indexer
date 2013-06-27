@@ -1,5 +1,8 @@
 # Changes for MyCPAN::Indexer
 
+1.28_12 - Thu Jun 27 09:52:06 2013
+	* Adjust no index (RT #86051)
+
 1.28_11 - Wed Jun 26 11:46:11 2013
 	* Update Makefile.PL with no_index to ignore the test modules
 
