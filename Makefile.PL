@@ -69,8 +69,12 @@ WriteMakefile(
 			directory => [ qw(t inc corpus test-corpus) ],
 			},
 		resources => {
+			'meta-spec' => { version => 2 },
 			homepage    => 'http://github.com/briandfoy/mycpan-indexer/tree/master',
-			repository  => 'git://github.com/briandfoy/mycpan-indexer.git',
+			repository  => {
+				type => 'git',
+				url  => 'git://github.com/briandfoy/mycpan-indexer.git',
+				web  => 'https://github.com/briandfoy/mycpan-indexer',
 			},
         },
 	);
