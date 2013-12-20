@@ -34,7 +34,8 @@ WriteMakefile(
 	'LICENSE'      => 'perl',
 	'AUTHOR'       => 'brian d foy <bdfoy@cpan.org>',
 	
-	'PREREQ_PM'    => { 
+	'PREREQ_PM'    => {
+		'Archive::Zip'                     => '0',
 		'Archive::Extract::Libarchive'     => '0',
 		'ConfigReader::Simple'             => '0',
 		'CPAN::Checksums'                  => '0',
@@ -75,6 +76,7 @@ WriteMakefile(
 				type => 'git',
 				url  => 'git://github.com/briandfoy/mycpan-indexer.git',
 				web  => 'https://github.com/briandfoy/mycpan-indexer',
-			},
+				},
+        	},
         },
 	);
