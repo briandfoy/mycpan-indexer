@@ -1,3 +1,4 @@
+backpan_indexer.log
 Changes
 examples/backpan_indexer.config.andya
 examples/backpan_indexer.config.backpan_stats
@@ -11,21 +12,6 @@ examples/backpan_indexer.pl
 examples/time_summary.pl
 indexing-errors/errors_no_alarm.txt
 indexing-errors/minicpan-failures
-lib/App/Indexer.pm
-lib/Collator/Null.pm
-lib/Component.pm
-lib/Coordinator.pm
-lib/Dispatcher/Parallel.pm
-lib/Dispatcher/Serial.pm
-lib/Indexer.pm
-lib/Indexers/BackPANstats.pm
-lib/Indexers/TestCensus.pm
-lib/Interface/ANSIText.pm
-lib/Interface/Curses.pm
-lib/Interface/Null.pm
-lib/Interface/ShowDist.pm
-lib/Interface/Text.pm
-lib/Interface/Tk.pm
 lib/MyCPAN/App/BackPAN/Indexer.pm
 lib/MyCPAN/BackPANstats.pm
 lib/MyCPAN/Indexer.pm
@@ -53,22 +39,10 @@ lib/MyCPAN/Indexer/Tutorial.pm
 lib/MyCPAN/Indexer/Worker.pm
 lib/MyCPAN/Indexer/Worker/JustShowDist.pm
 lib/MyCPAN/TestCensus.pm
-lib/Notes.pm
-lib/NullTester.pm
-lib/Queue.pm
-lib/Queue/ErrorReports.pm
-lib/Queue/FromList.pm
-lib/Queue/NewFiles.pm
-lib/Reporter/AsYAML.pm
-lib/Reporter/Base.pm
-lib/Tutorial.pm
-lib/Worker.pm
-lib/Worker/JustShowDist.pm
 LICENSE
 Makefile.PL
 MANIFEST
-MYMETA.json
-MYMETA.yml
+MANIFEST.SKIP
 README
 t/app/backpan.t
 t/app/defaults.t
@@ -83,8 +57,3 @@ t/reporter/base.t
 t/test_manifest
 test-corpus/Chemistry-Elements.pm
 test-corpus/Test-Pod.pm
-'YAML tools/memory-tester.pl'
-'YAML tools/yaml-utf8.pl'
-'YAML tools/yaml_convert.pl'
-'YAML tools/yaml_test.pl'
-'YAML tools/yamltest.pl'
