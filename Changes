@@ -14,7 +14,7 @@
 	directories to find distros in
 	* organize_dists now copies instead of renames, to work across
 	mounts and partitions.
-	
+
 1.28_06 - Thu Feb 18 13:56:09 2010
 	* Added prefer_bin configuration so you can use /bin/tar over Archive::Tar
 	* Made the -c config dump output a little nicer.
@@ -32,7 +32,7 @@
 	better.
 
 1.28_01 - Sun Nov 29 14:13:37 2009
-	* Fix the path inspection in Queue.pm. In a fit of 
+	* Fix the path inspection in Queue.pm. In a fit of
 	laziness I didn't use portable paths.
 
 1.28 - Fri Nov 20 05:38:26 2009
@@ -79,19 +79,19 @@
 	The exit() shouldn't be called from an embedded use.
 
 1.17_09 - Thu Nov 13 06:29:41 2008
-	* Fixed a problem where the final processing in dpan started 
-	before the last child process was finished - this left a 
+	* Fixed a problem where the final processing in dpan started
+	before the last child process was finished - this left a
 	module out of 02packages
 
 1.17_08 - Tue Nov 11 20:53:03 2008
-	* Fixups to config processing and lots of refactoring. 
+	* Fixups to config processing and lots of refactoring.
 
 1.17_04 - Fri Oct 31 07:49:42 2008
 	* Fixes to the chdir and tempdir mess, and many fixes for Windows
 
 1.17_02 - Wed Oct 29 16:48:30 2008
 	* Fixed the missing UUIDs in the reports. It was just a
-	programming mixup. 
+	programming mixup.
 
 1.17_01
 	* It's easier to write applications now. You can override
@@ -99,19 +99,19 @@
 	return just the part of the process that you want to do.
 	For instance, if you don't want to run build files, don't
 	return an item for 'run_build_files'.
-	
+
 1.16_02 - Wed Oct 15 17:12:58 2008
 	* Broke out the logging into categories so that you can
 	target the components that you want to inspect.
 
 0.15_01 - Mon Sep  8 23:25:15 2008
 	* Big changes to where everything is. I've decouple several
-	components into separate, pluggable classes. If you don't 
+	components into separate, pluggable classes. If you don't
 	like the classes that backpan_indexer.pl uses, change them
 	in the config file. Look in MyCPAN::Indexer::Tutorial for
 	an explanation of the different classes. Docs are weak at
 	the moment, but getting better.
-	* This version also uses a Tk interface. That's fine for 
+	* This version also uses a Tk interface. That's fine for
 	right now, but eventually that should be an optional thing.
 
 0.11_01 - Fri Aug 29 10:26:47 2008
