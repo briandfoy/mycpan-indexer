@@ -25,16 +25,31 @@ HERE
 		}
 	}
 	
-my $github    = 'https://github.com/briandfoy/';
-my $main_file = 'lib/MyCPAN/Indexer.pm/';
+use File::Spec::Functions qw(catfile);
+
+my $module    = 'MyCPAN::Indexer';
+my $github    = 'https://github.com/briandfoy/mycpan-indexer';
+my $main_file = catfile( 'lib', split /::/, "$module.pm" );
 
 my %WriteMakefile = (
-	'NAME'	        => 'MyCPAN::Indexer',
+	'NAME'	        => $module,
 	'ABSTRACT_FROM' => $main_file,
 	'VERSION_FROM'  => $main_file,
 	'LICENSE'       => 'perl',
 	'AUTHOR'        => 'brian d foy <bdfoy@cpan.org>',
-	
+
+	'CONFIGURE_REQUIRES' => {
+		'ExtUtils::MakeMaker' => '6.64',
+		},
+
+	'BUILD_REQUIRES' => {
+		},
+
+	'TEST_REQUIRES' => {
+		'Test::More'   => '0.94',
+		'Test::Output' => '0.13',
+		},
+
 	'PREREQ_PM'    => {
 		'Archive::Zip'                     => '0',
 		'Archive::Extract::Libarchive'     => '0',
@@ -57,29 +72,30 @@ my %WriteMakefile = (
 		'Parallel::ForkManager'            => '0',
 		'Probe::Perl'                      => '0',
 		'Proc::ProcessTable'               => '0',
-		'Test::More'                       => '0.95',
-		'Test::Output'                     => '0.13',
 		'YAML::Syck'                       => '0',
 		'YAML::XS'                         => '0',
 		'YAML'                             => '0',
 		},
 
-	clean  => { FILES    => q|MyCPAN-Indexer-*| },
-
-	META_MERGE => {
+	'META_MERGE' => {
+		'meta-spec' => { version => 2 },
+		resources => {
+			repository => {
+				type => 'git',
+				url  => "$github.git",
+				web  => $github,
+				},
+			bugtraker => {
+				web    => "$github/issues",
+				},
+			homepage => $github,
+			},
 		no_index => {
 			directory => [ qw(t inc corpus test-corpus) ],
 			},
-		resources => {
-			'meta-spec' => { version => 2 },
-			homepage    => 'http://github.com/briandfoy/mycpan-indexer/tree/master',
-			repository  => {
-				type => 'git',
-				url  => 'git://github.com/briandfoy/mycpan-indexer.git',
-				web  => 'https://github.com/briandfoy/mycpan-indexer',
-				},
-        	},
-        },
+		},
+
+	clean  => { FILES    => q|MyCPAN-Indexer-*| },
 	);
 
 sub arguments { \%WriteMakefile }
