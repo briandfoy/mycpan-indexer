@@ -1,4 +1,6 @@
 use v5.14.2;
+
+package MyCPAN::Indexer;
 use strict;
 use warnings;
 
@@ -27,7 +29,7 @@ HERE
 	
 use File::Spec::Functions qw(catfile);
 
-my $module    = 'MyCPAN::Indexer';
+my $module    = __PACKAGE__;
 my $github    = 'https://github.com/briandfoy/mycpan-indexer';
 my $main_file = catfile( 'lib', split /::/, "$module.pm" );
 
@@ -39,7 +41,8 @@ my %WriteMakefile = (
 	'AUTHOR'        => 'brian d foy <bdfoy@cpan.org>',
 
 	'CONFIGURE_REQUIRES' => {
-		'ExtUtils::MakeMaker' => '6.64',
+		'ExtUtils::MakeMaker'   => '6.64',
+		'File::Spec::Functions' => '0',
 		},
 
 	'BUILD_REQUIRES' => {
