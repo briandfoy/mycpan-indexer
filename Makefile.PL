@@ -28,6 +28,8 @@ HERE
 use File::Spec::Functions qw(catfile);
 
 my $module    = 'MyCPAN::Indexer';
+( my $dist = $module ) =~ s/::/-/g;
+
 my $github    = 'https://github.com/briandfoy/mycpan-indexer';
 my $main_file = catfile( 'lib', split /::/, "$module.pm" );
 
