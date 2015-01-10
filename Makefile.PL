@@ -1,4 +1,6 @@
 use v5.14.2;
+
+package MyCPAN::Indexer;
 use strict;
 use warnings;
 
@@ -27,7 +29,7 @@ HERE
 	
 use File::Spec::Functions qw(catfile);
 
-my $module    = 'MyCPAN::Indexer';
+my $module    = __PACKAGE__;
 ( my $dist = $module ) =~ s/::/-/g;
 
 my $github    = 'https://github.com/briandfoy/mycpan-indexer';
