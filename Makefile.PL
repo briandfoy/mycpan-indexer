@@ -98,7 +98,7 @@ my %WriteMakefile = (
 			},
 		},
 
-	clean  => { FILES    => q|MyCPAN-Indexer-*| },
+	clean => { FILES => "$dist-*" },
 	);
 
 sub arguments { \%WriteMakefile }
