@@ -1801,15 +1801,6 @@ sub getppid
 
 =back
 
-=head1 TO DO
-
-=over 4
-
-=item Count the lines in the files
-
-=item Code stats? Lines of code, lines of pod, lines of comments
-
-=back
 
 =head1 SOURCE AVAILABILITY
 
