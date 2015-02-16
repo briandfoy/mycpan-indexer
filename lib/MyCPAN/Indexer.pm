@@ -1705,20 +1705,18 @@ directly.
 
 Removes the unpack_dir. You probably don't need this if C<File::Temp>
 cleans up its own files.
+In the case you have to override this method, you probably want to
+clean up directories as follows:
+	eval {
+		no warnings;
+		File::Path::rmtree [@dirs];
+	     };
 
 =cut
 
 sub cleanup
 	{
 	$logger->trace( sub { get_caller_info } );
-
-	return 1;
-	File::Path::rmtree(
-		[
-		$_[0]->run_info( 'unpack_dir' )
-		],
-		0, 0
-		);
 
 	return 1;
 	}
