@@ -1636,6 +1636,9 @@ sub get_test_info
 
 =item count_lines( FILE )
 
+Counts the lines of the specified file. Please note that for this method to work
+properly the module C<SourceCode::LineCounter::Perl> has to be installed, otherwise
+=an undef value will be returned.
 =cut
 
 sub count_lines
@@ -1668,7 +1671,9 @@ sub count_lines
 =item file_magic( FILE )
 
 Guesses and returns the MIME type for the file.
-
+Please note that for this method to work properly the
+C<File::MMagic> module has to be installed, or an undef
+will always be returned.
 =cut
 
 sub file_magic
@@ -1708,7 +1713,6 @@ sub cleanup
 	$logger->trace( sub { get_caller_info } );
 
 	return 1;
-
 	File::Path::rmtree(
 		[
 		$_[0]->run_info( 'unpack_dir' )
