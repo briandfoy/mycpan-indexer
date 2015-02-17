@@ -119,15 +119,15 @@ sub examine_dist_steps
 	{
 	my @methods = (
 		#    method                error message                  fatal
-		[ 'unpack_dist',        "Could not unpack distribution!",    1 ],
-		[ 'find_dist_dir',      "Did not find distro directory!",    1 ],
+		[ 'unpack_dist',        'Could not unpack distribution!',    1 ],
+		[ 'find_dist_dir',      'Did not find distro directory!',    1 ],
 		[ 'get_file_list',      'Could not get file list',           1 ],
-		[ 'run_build_file',     "Could not run build file!",         0 ],
-		[ 'parse_meta_files',   "Could not parse META.yml!",         0 ],
-		[ 'find_modules',       "Could not find modules!",           1 ],
-		[ 'examine_modules',    "Could not process modules!",        0 ],
-		[ 'find_tests',         "Could not find tests!",             0 ],
-		[ 'examine_tests',      "Could not process tests!",          0 ],
+		[ 'run_build_file',     'Could not run build file!',         0 ],
+		[ 'parse_meta_files',   'Could not parse META.yml!',         0 ],
+		[ 'find_modules',       'Could not find modules!',           1 ],
+		[ 'examine_modules',    'Could not process modules!',        0 ],
+		[ 'find_tests',         'Could not find tests!',             0 ],
+		[ 'examine_tests',      'Could not process tests!',          0 ],
 		);
 	}
 
@@ -167,7 +167,7 @@ sub examine_dist
 				}
 			else
 				{
-				$logger->error( $error_msg . " [" . $self->dist_info( 'dist_basename' ) . "]" );
+				$logger->error( $error_msg . ' [' . $self->dist_info( 'dist_basename' ) . ']' );
 				}
 			}
 		}
@@ -665,7 +665,7 @@ sub _try_unpack_dir {
 	my @files = qw( MANIFEST Makefile.PL Build.PL META.yml );
 
 	if( grep { -e } @files ) {
-		$logger->debug( "Found dist dir with _try_unpack_dir" );
+		$logger->debug( 'Found dist dir with _try_unpack_dir' );
 		return $self->dist_info( "unpack_dir" );
 		}
 
@@ -715,7 +715,7 @@ sub _try_module_at_top {
 	my( $wanted, $reporter ) =
 		File::Find::Closures::find_by_regex( qr/\.p[ml]\z/ );
 
-	File::Find::find( $wanted, $self->dist_info( "unpack_dir" ) );
+	File::Find::find( $wanted, $self->dist_info( 'unpack_dir' ) );
 
 	# we want the shortest path
 	my @found = map { dirname($_) } sort { length $a <=> length $b } $reporter->();
@@ -725,7 +725,7 @@ sub _try_module_at_top {
 		return $found[0];
 		}
 	else {
-		$logger->debug( "_try_module_at_top did not find anything" );
+		$logger->debug( '_try_module_at_top did not find anything' );
 		return;
 		}
 
@@ -743,7 +743,7 @@ Sets these items in dist_info:
 sub get_file_list {
 	$logger->trace( sub { get_caller_info } );
 
-	$logger->debug( "Cwd is " . cwd() );
+	$logger->debug( 'Cwd is ' . cwd() );
 
 =pod
 
@@ -759,7 +759,7 @@ sub get_file_list {
 	require ExtUtils::Manifest;
 
 	my $manifest = [ sort keys %{ ExtUtils::Manifest::manifind() } ];
-	$logger->debug( "manifest is [ ", join( "|", @$manifest ), " ]" );
+	$logger->debug( 'manifest is [ ', join( '|', @$manifest ), ' ]' );
 	$_[0]->set_dist_info( 'manifest', [ @$manifest ] );
 
 	my @file_info = map {

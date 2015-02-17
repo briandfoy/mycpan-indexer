@@ -57,9 +57,9 @@ Most of this needs to move out of run and into this method.
 {
 my @methods = (
 	#    method                error message                  fatal
-	[ 'unpack_dist',        "Could not unpack distribtion!",     1 ],
-	[ 'find_dist_dir',      "Did not find distro directory!",    1 ],
-	[ 'find_tests',         "Could not find tests!",             0 ],
+	[ 'unpack_dist',        'Could not unpack distribtion!',     1 ],
+	[ 'find_dist_dir',      'Did not find distro directory!',    1 ],
+	[ 'find_tests',         'Could not find tests!',             0 ],
 	);
 
 sub examine_dist
@@ -207,7 +207,7 @@ sub get_reporter
 
 sub final_words
 	{
-	$logger->debug( "Final words from the Reporter" );
+	$logger->debug( 'Final words from the Reporter' );
 
 	our %DBM;
 	dbmopen %DBM, "/Users/brian/Desktop/test_use", undef;
