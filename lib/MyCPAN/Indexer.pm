@@ -2,7 +2,7 @@ package MyCPAN::Indexer;
 use strict;
 
 use v5.14;
-
+use File::stat;
 use warnings;
 no warnings;
 
@@ -328,7 +328,7 @@ sub setup_dist_info
 	$self->set_dist_info( 'dist_file',     $dist                   );
 	$self->set_dist_info( 'dist_size',     -s $dist                );
 	$self->set_dist_info( 'dist_basename', basename($dist)         );
-	$self->set_dist_info( 'dist_date',    (stat($dist))[9]         );
+	$self->set_dist_info( 'dist_date',    (stat $dist )->mtime     );
 	$self->set_dist_info( 'dist_md5',     $self->get_md5_of_file_contents( $dist )  );
 	$logger->debug( "dist size " . $self->dist_info( 'dist_size' ) .
 		" dist date " . $self->dist_info( 'dist_date' )
@@ -792,7 +792,7 @@ sub get_file_info
 	$hash->{md5} = $self->get_md5_of_file_contents( $file );
 
 	# mtime
-	$hash->{mtime} = ( stat $file )[9];
+	$hash->{mtime} = ( stat $file )->mtime;
 
 	# file size
 	$hash->{bytesize} = -s _;
