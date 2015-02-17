@@ -146,29 +146,20 @@ sub examine_dist
 		local $@;
 		unless( eval { $self->$method() } )
 			{
-			my $at = $@;
-			$logger->error( "Error from [$method]: $at" );
-			if( $die_on_error ) # only if failure is fatal
-				{
-				$self->set_run_info( 'fatal_error', $error_msg );
-				$logger->error( "Fatal error, stopping: $error_msg" );
-				return;
-				}
-			elsif( $at =~ /Alarm rang/i )
-				{
-				$logger->error( $at );
-				$self->set_run_info( 'alarm_error', $error_msg );
-				return;
-				}
-			elsif( $at )
-				{
-				$logger->error( "Program error! stopping: $at" );
-				return;
-				}
-			else
-				{
-				$logger->error( $error_msg . ' [' . $self->dist_info( 'dist_basename' ) . ']' );
-				}
+			    my $at = $@;
+			    $logger->error( "Error from [$method]: $at" );
+			    
+			    if ( ! $at )
+			       {
+			        $logger->error( $error_msg . ' [' . $self->dist_info( 'dist_basename' ) . ']' );
+			       }
+			    else
+			       {
+				   $self->set_run_info( 'fatal_error', $error_msg ) if ( $die_on_error );				                         $self->set_run_info( 'alarm_error', $error_msg ) if ( $at =~ /Alarm rang/i );
+				   $logger->error( "Stopping: $at" );
+				   return;
+			       }
+
 			}
 		}
 
