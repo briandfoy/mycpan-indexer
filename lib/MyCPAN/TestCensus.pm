@@ -3,8 +3,12 @@
 package MyCPAN::Indexer::TestCensus;
 use strict;
 
+
 use warnings;
 no warnings;
+
+use File::Spec;
+use File::HomeDir;
 
 use subs qw(get_caller_info);
 use vars qw($VERSION $logger);
@@ -173,7 +177,7 @@ sub get_reporter
 
 	my( $self ) = @_;
 
-	unlink "/Users/brian/Desktop/test_use";
+	unlink _database_file_name();
 
 	my $reporter = sub {
 
@@ -181,7 +185,7 @@ sub get_reporter
 
 		my $test_files = $info->{dist_info}{test_info};
 
-		dbmopen my %DBM, "/Users/brian/Desktop/test_use", 0755 or die "$!";
+		dbmopen my %DBM, _database_file_name(), 0755 or die "$!";
 
 		foreach my $test_file ( @$test_files )
 			{
@@ -205,12 +209,17 @@ sub get_reporter
 
 }
 
+sub _database_file_name {
+    my $desktop_path = File::HomeDir->my_desktop || File::HomeDir->my_home;
+    return File::Spec->catfile( $desktop_path, 'test_use' ); 
+}
+
 sub final_words
 	{
 	$logger->debug( 'Final words from the Reporter' );
 
 	our %DBM;
-	dbmopen %DBM, "/Users/brian/Desktop/test_use", undef;
+	dbmopen %DBM, _database_file_name(), undef;
 
 	print "Found modules:\n";
 

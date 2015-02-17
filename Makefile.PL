@@ -101,6 +101,7 @@ my %WriteMakefile = (
 		'ExtUtils::MakeMaker'              => '6.48',
 		'File::Find::Closures'             => '0',
 		'File::Find'                       => '0',
+		'File::HomeDir'                    => '0.07',
 		'File::Which'                      => '0',
 		'List::Util'                       => '0',
 		'Log::Log4perl'                    => '0',
