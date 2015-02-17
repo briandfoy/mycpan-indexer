@@ -543,7 +543,7 @@ sub _create_extractor
 		return;
 		}
 
-	my $type = $dist =~ s/.*\.//r;
+	my $type = $dist =~ s/.*[.]//r;
 
 	$self->set_dist_info( 'dist_archive_type', $type );
 
