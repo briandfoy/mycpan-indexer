@@ -486,7 +486,7 @@ my @refs = (
 	\ $Archive::TAR::WARN,
 	);
 
-sub _archive_extract_subclass { 
+sub _archive_extract_subclass {
 	my $class = 'Archive::Extract::Libarchive';
 	eval "use $class; 1";
 	$class;
