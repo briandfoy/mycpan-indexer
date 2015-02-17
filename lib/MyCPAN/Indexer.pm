@@ -357,9 +357,10 @@ sub check_dist_size
 	my( $self ) = @_;
 
         unless( $self->dist_info( 'dist_size' ) )
-                {
-                $logger->error( "Dist size was 0!" );
-                $self->set_run_info( 'fatal_error', "Dist size was 0!" );
+	        {
+	        my $msg = 'Dist size was 0!';
+                $logger->error( $msg );
+                $self->set_run_info( 'fatal_error', $msg );
                 return;
                 }
 
