@@ -2,7 +2,7 @@ package MyCPAN::Indexer;
 use strict;
 
 use v5.14;
-
+use File::stat;
 use warnings;
 no warnings;
 
@@ -119,15 +119,15 @@ sub examine_dist_steps
 	{
 	my @methods = (
 		#    method                error message                  fatal
-		[ 'unpack_dist',        "Could not unpack distribution!",    1 ],
-		[ 'find_dist_dir',      "Did not find distro directory!",    1 ],
+		[ 'unpack_dist',        'Could not unpack distribution!',    1 ],
+		[ 'find_dist_dir',      'Did not find distro directory!',    1 ],
 		[ 'get_file_list',      'Could not get file list',           1 ],
-		[ 'run_build_file',     "Could not run build file!",         0 ],
-		[ 'parse_meta_files',   "Could not parse META.yml!",         0 ],
-		[ 'find_modules',       "Could not find modules!",           1 ],
-		[ 'examine_modules',    "Could not process modules!",        0 ],
-		[ 'find_tests',         "Could not find tests!",             0 ],
-		[ 'examine_tests',      "Could not process tests!",          0 ],
+		[ 'run_build_file',     'Could not run build file!',         0 ],
+		[ 'parse_meta_files',   'Could not parse META.yml!',         0 ],
+		[ 'find_modules',       'Could not find modules!',           1 ],
+		[ 'examine_modules',    'Could not process modules!',        0 ],
+		[ 'find_tests',         'Could not find tests!',             0 ],
+		[ 'examine_tests',      'Could not process tests!',          0 ],
 		);
 	}
 
@@ -146,29 +146,20 @@ sub examine_dist
 		local $@;
 		unless( eval { $self->$method() } )
 			{
-			my $at = $@;
-			$logger->error( "Error from [$method]: $at" );
-			if( $die_on_error ) # only if failure is fatal
-				{
-				$self->set_run_info( 'fatal_error', $error_msg );
-				$logger->error( "Fatal error, stopping: $error_msg" );
-				return;
-				}
-			elsif( $at =~ /Alarm rang/i )
-				{
-				$logger->error( $at );
-				$self->set_run_info( 'alarm_error', $error_msg );
-				return;
-				}
-			elsif( $at )
-				{
-				$logger->error( "Program error! stopping: $at" );
-				return;
-				}
-			else
-				{
-				$logger->error( $error_msg . " [" . $self->dist_info( 'dist_basename' ) . "]" );
-				}
+			    my $at = $@;
+			    $logger->error( "Error from [$method]: $at" );
+			    
+			    if ( ! $at )
+			       {
+			        $logger->error( $error_msg . ' [' . $self->dist_info( 'dist_basename' ) . ']' );
+			       }
+			    else
+			       {
+				   $self->set_run_info( 'fatal_error', $error_msg ) if ( $die_on_error );				                         $self->set_run_info( 'alarm_error', $error_msg ) if ( $at =~ /Alarm rang/i );
+				   $logger->error( "Stopping: $at" );
+				   return;
+			       }
+
 			}
 		}
 
@@ -328,7 +319,7 @@ sub setup_dist_info
 	$self->set_dist_info( 'dist_file',     $dist                   );
 	$self->set_dist_info( 'dist_size',     -s $dist                );
 	$self->set_dist_info( 'dist_basename', basename($dist)         );
-	$self->set_dist_info( 'dist_date',    (stat($dist))[9]         );
+	$self->set_dist_info( 'dist_date',    (stat $dist )->mtime     );
 	$self->set_dist_info( 'dist_md5',     $self->get_md5_of_file_contents( $dist )  );
 	$logger->debug( "dist size " . $self->dist_info( 'dist_size' ) .
 		" dist date " . $self->dist_info( 'dist_date' )
@@ -357,9 +348,10 @@ sub check_dist_size
 	my( $self ) = @_;
 
         unless( $self->dist_info( 'dist_size' ) )
-                {
-                $logger->error( "Dist size was 0!" );
-                $self->set_run_info( 'fatal_error', "Dist size was 0!" );
+	        {
+	        my $msg = 'Dist size was 0!';
+                $logger->error( $msg );
+                $self->set_run_info( 'fatal_error', $msg );
                 return;
                 }
 
@@ -485,7 +477,7 @@ my @refs = (
 	\ $Archive::TAR::WARN,
 	);
 
-sub _archive_extract_subclass { 
+sub _archive_extract_subclass {
 	my $class = 'Archive::Extract::Libarchive';
 	eval "use $class; 1";
 	$class;
@@ -542,7 +534,7 @@ sub _create_extractor
 		return;
 		}
 
-	my $type = $dist =~ s/.*\.//r;
+	my $type = $dist =~ s/.*[.]//r;
 
 	$self->set_dist_info( 'dist_archive_type', $type );
 
@@ -665,7 +657,7 @@ sub _try_unpack_dir {
 	my @files = qw( MANIFEST Makefile.PL Build.PL META.yml );
 
 	if( grep { -e } @files ) {
-		$logger->debug( "Found dist dir with _try_unpack_dir" );
+		$logger->debug( 'Found dist dir with _try_unpack_dir' );
 		return $self->dist_info( "unpack_dir" );
 		}
 
@@ -715,7 +707,7 @@ sub _try_module_at_top {
 	my( $wanted, $reporter ) =
 		File::Find::Closures::find_by_regex( qr/\.p[ml]\z/ );
 
-	File::Find::find( $wanted, $self->dist_info( "unpack_dir" ) );
+	File::Find::find( $wanted, $self->dist_info( 'unpack_dir' ) );
 
 	# we want the shortest path
 	my @found = map { dirname($_) } sort { length $a <=> length $b } $reporter->();
@@ -725,7 +717,7 @@ sub _try_module_at_top {
 		return $found[0];
 		}
 	else {
-		$logger->debug( "_try_module_at_top did not find anything" );
+		$logger->debug( '_try_module_at_top did not find anything' );
 		return;
 		}
 
@@ -743,7 +735,7 @@ Sets these items in dist_info:
 sub get_file_list {
 	$logger->trace( sub { get_caller_info } );
 
-	$logger->debug( "Cwd is " . cwd() );
+	$logger->debug( 'Cwd is ' . cwd() );
 
 =pod
 
@@ -759,7 +751,7 @@ sub get_file_list {
 	require ExtUtils::Manifest;
 
 	my $manifest = [ sort keys %{ ExtUtils::Manifest::manifind() } ];
-	$logger->debug( "manifest is [ ", join( "|", @$manifest ), " ]" );
+	$logger->debug( 'manifest is [ ', join( '|', @$manifest ), ' ]' );
 	$_[0]->set_dist_info( 'manifest', [ @$manifest ] );
 
 	my @file_info = map {
@@ -792,7 +784,7 @@ sub get_file_info
 	$hash->{md5} = $self->get_md5_of_file_contents( $file );
 
 	# mtime
-	$hash->{mtime} = ( stat $file )[9];
+	$hash->{mtime} = ( stat $file )->mtime;
 
 	# file size
 	$hash->{bytesize} = -s _;
@@ -1636,6 +1628,9 @@ sub get_test_info
 
 =item count_lines( FILE )
 
+Counts the lines of the specified file. Please note that for this method to work
+properly the module C<SourceCode::LineCounter::Perl> has to be installed, otherwise
+=an undef value will be returned.
 =cut
 
 sub count_lines
@@ -1668,7 +1663,9 @@ sub count_lines
 =item file_magic( FILE )
 
 Guesses and returns the MIME type for the file.
-
+Please note that for this method to work properly the
+C<File::MMagic> module has to be installed, or an undef
+will always be returned.
 =cut
 
 sub file_magic
@@ -1700,21 +1697,18 @@ directly.
 
 Removes the unpack_dir. You probably don't need this if C<File::Temp>
 cleans up its own files.
+In the case you have to override this method, you probably want to
+clean up directories as follows:
+	eval {
+		no warnings;
+		File::Path::rmtree [@dirs];
+	     };
 
 =cut
 
 sub cleanup
 	{
 	$logger->trace( sub { get_caller_info } );
-
-	return 1;
-
-	File::Path::rmtree(
-		[
-		$_[0]->run_info( 'unpack_dir' )
-		],
-		0, 0
-		);
 
 	return 1;
 	}
@@ -1797,15 +1791,6 @@ sub getppid
 
 =back
 
-=head1 TO DO
-
-=over 4
-
-=item Count the lines in the files
-
-=item Code stats? Lines of code, lines of pod, lines of comments
-
-=back
 
 =head1 SOURCE AVAILABILITY
 

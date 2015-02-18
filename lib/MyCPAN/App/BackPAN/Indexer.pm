@@ -256,7 +256,7 @@ sub process_options {
 	my( $application ) = @_;
 
 	my $run_dir = dirname( $0 );
-	( my $script  = basename( $0 ) ) =~ s/\.\w+$//;
+	( my $script  = basename( $0 ) ) =~ s/[.]\w+$//;
 
 	local @ARGV = @{ $application->{args} };
 	getopts( 'cl:f:', \ my %Options );

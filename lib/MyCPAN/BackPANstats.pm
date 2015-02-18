@@ -79,7 +79,7 @@ sub examine_dist_steps
 	{
 	my @methods = (
 		#    method         error message           fatal
-		[ 'collect_info',  "Could not get info!",    1 ],
+		[ 'collect_info',  'Could not get info!',    1 ],
 		);
 	}
 
@@ -174,7 +174,7 @@ use Data::Structure::Util qw(unbless);
 		my( $info ) = @_;
 
 		unless( defined $info ) {
-			$logger->error( "info is undefined!" );
+			$logger->error( 'info is undefined!' );
 			return;
 			}
 
