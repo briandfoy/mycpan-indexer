@@ -1679,7 +1679,8 @@ sub count_lines
 
 =item file_magic( FILE )
 
-Guesses and returns the MIME type for the file.
+Guesses and returns the MIME type for the file, using File::MMagic if
+it's available. If that module is not available, it returns nothing.
 
 =cut
 
