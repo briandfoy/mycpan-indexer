@@ -1636,6 +1636,18 @@ sub get_test_info
 
 =item count_lines( FILE )
 
+Counts the lines in a file and categorizes them as code, comment, documentation, or blank.
+
+This returns a hash:
+
+	{
+	total         => ...,
+	code          => ...,
+	comment       => ...,
+	documentation => ...,
+	blank         => ...,
+	}
+
 =cut
 
 sub count_lines
