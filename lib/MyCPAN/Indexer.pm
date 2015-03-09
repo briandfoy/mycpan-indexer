@@ -1814,7 +1814,7 @@ sub getppid
 
 =over 4
 
-=item Count the lines in the files
+=item Count the lines in the files. I think this is currently broken.
 
 =item Code stats? Lines of code, lines of pod, lines of comments
 
