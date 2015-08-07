@@ -12,6 +12,7 @@ examples/backpan_indexer.pl
 examples/time_summary.pl
 indexing-errors/errors_no_alarm.txt
 indexing-errors/minicpan-failures
+INSTALL.SKIP
 lib/MyCPAN/App/BackPAN/Indexer.pm
 lib/MyCPAN/BackPANstats.pm
 lib/MyCPAN/Indexer.pm
