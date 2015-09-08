@@ -17,6 +17,8 @@ use Log::Log4perl;
 
 $VERSION = '1.28_12';
 
+=encoding utf8
+
 =head1 NAME
 
 MyCPAN::App::BackPAN::Indexer - The BackPAN indexer application

@@ -9,6 +9,8 @@ use Scalar::Util qw( weaken );
 
 $VERSION = '1.28_12';
 
+=encoding utf8
+
 =head1 NAME
 
 MyCPAN::Indexer::Component - base class for MyCPAN components

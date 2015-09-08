@@ -14,6 +14,8 @@ use MyCPAN::Indexer;
 use Proc::ProcessTable;
 use YAML;
 
+=encoding utf8
+
 =head1 NAME
 
 MyCPAN::Indexer::Worker - Do the indexing

@@ -10,6 +10,8 @@ use parent qw(MyCPAN::Indexer MyCPAN::Indexer::Component MyCPAN::Indexer::Report
 
 $VERSION = '1.28_12';
 
+=encoding utf8
+
 =head1 NAME
 
 MyCPAN::Indexer::BackPANstats - Collect various stats about BackPAN activity

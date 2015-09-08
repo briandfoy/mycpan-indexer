@@ -15,6 +15,8 @@ BEGIN {
 	$logger = Log::Log4perl->get_logger( 'Reporter' );
 	}
 
+=encoding utf8
+
 =head1 NAME
 
 MyCPAN::Indexer::Coordinator - Provide a way for the various components to communicate

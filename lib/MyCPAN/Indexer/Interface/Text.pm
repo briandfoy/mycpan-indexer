@@ -8,6 +8,8 @@ use parent qw(MyCPAN::Indexer::Component);
 use vars qw($VERSION $logger);
 $VERSION = '1.28_12';
 
+=encoding utf8
+
 =head1 NAME
 
 MyCPAN::Indexer::Interface::Text - Present the run info as plain text

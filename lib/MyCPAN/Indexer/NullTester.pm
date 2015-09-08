@@ -12,6 +12,8 @@ BEGIN {
 	$logger = Log::Log4perl->get_logger( __PACKAGE__ );
 	}
 
+=encoding utf8
+
 =head1 NAME
 
 MyCPAN::Indexer::NullTester - Do nothing components

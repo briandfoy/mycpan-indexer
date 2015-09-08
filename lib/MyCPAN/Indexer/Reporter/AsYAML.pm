@@ -18,6 +18,8 @@ BEGIN {
 	$logger = Log::Log4perl->get_logger( 'Reporter' );
 	}
 
+=encoding utf8
+
 =head1 NAME
 
 MyCPAN::Indexer::Reporter::AsYAML - Save the result as a YAML file

@@ -15,6 +15,8 @@ BEGIN {
 	$logger = Log::Log4perl->get_logger( 'Reporter' );
 	}
 
+=encoding utf8
+
 =head1 NAME
 
 MyCPAN::Indexer::Reporter::Base - Common bits for MyCPAN reporter classes

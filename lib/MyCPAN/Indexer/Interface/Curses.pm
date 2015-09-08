@@ -13,6 +13,8 @@ BEGIN {
 use vars qw($VERSION $logger);
 $VERSION = '1.28_12';
 
+=encoding utf8
+
 =head1 NAME
 
 MyCPAN::Indexer::Interface::Curses - Present the run info in a terminal

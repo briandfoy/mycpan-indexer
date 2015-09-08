@@ -12,6 +12,8 @@ use Log::Log4perl;
 use MyCPAN::Indexer;
 use YAML;
 
+=encoding utf8
+
 =head1 NAME
 
 MyCPAN::Indexer::CPANMiniInject - Do the indexing, and put the dists in a MiniCPAN

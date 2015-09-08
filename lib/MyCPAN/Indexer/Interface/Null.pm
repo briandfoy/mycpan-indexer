@@ -12,6 +12,8 @@ BEGIN {
 	$logger = Log::Log4perl->get_logger( 'Interface' );
 	}
 
+=encoding utf8
+
 =head1 NAME
 
 MyCPAN::Indexer::Interface::Null - Don't show anything

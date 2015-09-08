@@ -6,6 +6,8 @@ use warnings;
 use vars qw($VERSION);
 $VERSION = '1.28_12';
 
+=encoding utf8
+
 =head1 NAME
 
 MyCPAN::Indexer::Notes - Tiny class for MyCPAN component note passing

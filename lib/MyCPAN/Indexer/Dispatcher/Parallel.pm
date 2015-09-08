@@ -30,6 +30,8 @@ BEGIN {
 	}
 
 
+=encoding utf8
+
 =head1 NAME
 
 MyCPAN::Indexer::Dispatcher::Parallel - Pass out work to sub-processes

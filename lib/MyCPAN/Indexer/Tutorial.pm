@@ -5,6 +5,8 @@ use warnings;
 use vars qw($VERSION);
 $VERSION = '1.28_12';
 
+=encoding utf8
+
 =head1 NAME
 
 MyCPAN::Indexer::Tutorial - How the backpan_indexer.pl pieces fit together

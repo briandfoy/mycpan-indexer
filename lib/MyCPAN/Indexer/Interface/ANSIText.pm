@@ -14,12 +14,15 @@ BEGIN {
 		require Term::ANSIColor;
 
 		Term::ANSIColor->import( colored BLUE GREEN RED RESET );
-		1 
+		1
 		};
 
 	die "You need to install the Term::ANSIColor module " .
 		" to use MyCPAN::Indexer::Interface::ANSIText\n" unless $rc;
 }
+
+=encoding utf8
+
 =head1 NAME
 
 MyCPAN::Indexer::Interface::ANSIText - Present the run info as colored text

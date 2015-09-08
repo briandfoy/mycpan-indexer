@@ -16,6 +16,8 @@ BEGIN {
 	$logger = Log::Log4perl->get_logger( 'Collator' );
 	}
 
+=encoding utf8
+
 =head1 NAME
 
 MyCPAN::Indexer::Collator::Null - A No-op reports processor

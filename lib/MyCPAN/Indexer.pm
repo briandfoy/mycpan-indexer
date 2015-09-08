@@ -12,6 +12,8 @@ use vars qw($VERSION $logger);
 
 $VERSION = '1.28_12';
 
+=encoding utf8
+
 =head1 NAME
 
 MyCPAN::Indexer - Index a Perl distribution
@@ -485,7 +487,7 @@ my @refs = (
 	\ $Archive::TAR::WARN,
 	);
 
-sub _archive_extract_subclass { 
+sub _archive_extract_subclass {
 	my $class = 'Archive::Extract::Libarchive';
 	eval "use $class; 1";
 	$class;

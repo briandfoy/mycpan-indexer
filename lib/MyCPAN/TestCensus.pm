@@ -12,6 +12,8 @@ use parent qw(MyCPAN::Indexer);
 
 $VERSION = '1.28_12';
 
+=encoding utf8
+
 =head1 NAME
 
 MyCPAN::Indexer::TestCensus - Count the Test modules used in test suites

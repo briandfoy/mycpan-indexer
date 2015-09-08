@@ -9,7 +9,7 @@ BEGIN {
 
 		Tk->import;
 		Tk::ProgressBar->import;
-		1 
+		1
 		};
 
 	die "You need to install the Tk and Tk::ProgressBar modules " .
@@ -26,6 +26,8 @@ use Tk;
 BEGIN {
 	$logger = Log::Log4perl->get_logger( 'Interface' );
 	}
+
+=encoding utf8
 
 =head1 NAME
 

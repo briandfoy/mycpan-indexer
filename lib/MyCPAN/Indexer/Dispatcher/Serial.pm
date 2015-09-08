@@ -12,6 +12,8 @@ BEGIN {
 	$logger = Log::Log4perl->get_logger( 'Dispatcher' );
 	}
 
+=encoding utf8
+
 =head1 NAME
 
 MyCPAN::Indexer::Dispatcher::Serial - Pass out work in the same process

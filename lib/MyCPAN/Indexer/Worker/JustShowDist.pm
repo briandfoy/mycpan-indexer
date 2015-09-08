@@ -9,6 +9,8 @@ $VERSION = '1.28_12';
 use File::Basename qw(basename);
 use Log::Log4perl;
 
+=encoding utf8
+
 =head1 NAME
 
 MyCPAN::Indexer::Worker::JustShowDist - Do nothing except show what the task is
