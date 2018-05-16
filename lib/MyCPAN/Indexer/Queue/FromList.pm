@@ -4,7 +4,7 @@ use warnings;
 
 use parent qw(MyCPAN::Indexer::Queue);
 use vars qw($VERSION $logger);
-$VERSION = '1.281';
+$VERSION = '1.282';
 
 use Log::Log4perl;
 

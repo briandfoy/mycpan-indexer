@@ -7,7 +7,7 @@ use vars qw($VERSION);
 use Carp         qw( croak );
 use Scalar::Util qw( weaken );
 
-$VERSION = '1.281';
+$VERSION = '1.282';
 
 =encoding utf8
 

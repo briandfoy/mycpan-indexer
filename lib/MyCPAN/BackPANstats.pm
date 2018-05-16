@@ -8,7 +8,7 @@ use subs qw(get_caller_info);
 use vars qw($VERSION $logger);
 use parent qw(MyCPAN::Indexer MyCPAN::Indexer::Component MyCPAN::Indexer::Reporter::Base);
 
-$VERSION = '1.281';
+$VERSION = '1.282';
 
 =encoding utf8
 
