@@ -1,3 +1,7 @@
+# brian's standard Travis CI config for Perl 5 modules
+# https://github.com/briandfoy/brians_perl_modules_travis_config
+# This file is licensed under the Artistic License 2.0
+
 sudo: false
 
 language: perl
@@ -16,6 +20,7 @@ before_install:
 
 install:
     - cpanm --quiet --installdeps --notest .
+    - cpanm --quiet --notest Devel::Cover
     - cpanm --quiet --notest Devel::Cover::Report::Coveralls
 
 script:
