@@ -1,4 +1,5 @@
 Changes
+CONTRIBUTING.md
 examples/backpan_indexer.config.andya
 examples/backpan_indexer.config.backpan_stats
 examples/backpan_indexer.config.bdfoy
@@ -58,3 +59,5 @@ t/test_manifest
 test-corpus/Chemistry-Elements.pm
 test-corpus/Test-Pod.pm
 xt/changes.t
+xt/pod.t
+xt/pod_coverage.t
