@@ -3,7 +3,7 @@ use strict;
 use warnings;
 
 use vars qw($VERSION $logger);
-$VERSION = '1.28_12';
+$VERSION = '1.281';
 
 use Carp;
 use File::Basename;

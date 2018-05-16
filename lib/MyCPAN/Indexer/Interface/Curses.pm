@@ -11,7 +11,7 @@ BEGIN {
 }
 
 use vars qw($VERSION $logger);
-$VERSION = '1.28_12';
+$VERSION = '1.281';
 
 =encoding utf8
 
