@@ -52,8 +52,6 @@ t/component/base.t
 t/extract_package_names.t
 t/guess_package_names.t
 t/load.t
-t/pod.t
-t/pod_coverage.t
 t/reporter/base.t
 t/test_manifest
 test-corpus/Chemistry-Elements.pm
