@@ -2,6 +2,16 @@
 
 =encoding utf8
 
+=for HTML <a href="https://travis-ci.org/briandfoy/mycpan-indexer"><img src="https://travis-ci.org/briandfoy/mycpan-indexer.svg?branch=master" /></a>
+
+=for HTML <a href='https://ci.appveyor.com/project/briandfoy/mycpan-indexer'><img src='https://ci.appveyor.com/api/projects/status/ifgrin4w8jgj7bg2' /></a>
+
+=for HTML <a href='https://coveralls.io/github/briandfoy/mycpan-indexer?branch=master'><img src='https://coveralls.io/repos/github/briandfoy/mycpan-indexer/badge.svg?branch=master' alt='Coverage Status' /></a>
+
+=for HTML <a href="https://github.com/briandfoy/mycpan-indexer/blob/master/LICENSE"><img src="https://img.shields.io/cpan/l/MyCPAN-Indexer.svg" /></a>
+
+=for HTML <a href="http://www.metacpan.org/module/MyCPAN::Indexer"><img src="https://img.shields.io/cpan/v/MyCPAN-Indexer.svg" /></A>
+
 =head1 The MyCPAN::Indexer module
 
 This is the I<README> for the L<MyCPAN::Indexer> Perl module. You're probably 
