@@ -1,5 +1,9 @@
 Revision history for Perl module MyCPAN::Indexer
 
+1.281 2018-05-16T17:41:58Z
+	* Change to the Artistic License 2.0.
+	* Various distro updates - no change to the code
+
 1.28_12 - 2013-06-27
 	* Adjust no index (RT #86051)
 
