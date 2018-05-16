@@ -1,5 +1,8 @@
 Revision history for Perl module MyCPAN::Indexer
 
+1.282 2018-05-16T17:44:07Z
+	* Fix the manifest file
+
 1.281 2018-05-16T17:41:58Z
 	* Change to the Artistic License 2.0.
 	* Various distro updates - no change to the code
