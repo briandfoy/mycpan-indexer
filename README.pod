@@ -32,17 +32,8 @@ name instead of the file location:
 
 	% perldoc MyCPAN::Indexer
 
-You can read the documentation and inspect the meta data on one of the
-CPAN web interfaces, such as L<CPAN Search|http://search.cpan.org/dist/MyCPAN-Indexer> or
-L<MetaCPAN|http://www.metacpan.org/module/MyCPAN::Indexer>:
-
-=over 4
-
-=item *	L<http://search.cpan.org/dist/MyCPAN-Indexer>
-
-=item *	L<http://www.metacpan.org/module/MyCPAN::Indexer>
-
-=back
+You can read the documentation and inspect the meta data at
+L<MetaCPAN|http://www.metacpan.org/module/MyCPAN::Indexer>.
 
 The standard module documentation has example uses in the SYNOPSIS
 section, but you can also look in the I<examples/> directory (if it's
