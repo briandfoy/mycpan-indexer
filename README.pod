@@ -10,7 +10,7 @@
 
 =for HTML <a href="https://github.com/briandfoy/mycpan-indexer/blob/master/LICENSE"><img src="https://img.shields.io/cpan/l/MyCPAN-Indexer.svg" /></a>
 
-=for HTML <a href="http://www.metacpan.org/module/MyCPAN::Indexer"><img src="https://img.shields.io/cpan/v/MyCPAN-Indexer.svg" /></A>
+=for HTML <a href="https://metacpan.org/pod/MyCPAN::Indexer"><img src="https://img.shields.io/cpan/v/MyCPAN-Indexer.svg" /></A>
 
 =head1 The MyCPAN::Indexer module
 
@@ -23,7 +23,7 @@ for any Perl module.
 
 To read about L<MyCPAN::Indexer>, look at the embedded documentation
 in the module itself. Inside the distribution, you can format it
-with L<perldoc|http://perldoc.perl.org/perldoc.html>:
+with L<perldoc|https://perldoc.perl.orgperldoc.html>:
 
 	% perldoc lib/MyCPAN/Indexer.pm
 
@@ -33,7 +33,7 @@ name instead of the file location:
 	% perldoc MyCPAN::Indexer
 
 You can read the documentation and inspect the meta data at
-L<MetaCPAN|http://www.metacpan.org/module/MyCPAN::Indexer>.
+L<MetaCPAN|https://metacpan.org/pod/MyCPAN::Indexer>.
 
 The standard module documentation has example uses in the SYNOPSIS
 section, but you can also look in the I<examples/> directory (if it's
