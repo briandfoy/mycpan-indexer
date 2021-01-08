@@ -48,3 +48,4 @@ inc/
 indexer_reports
 nytprof.out
 pm_to_blib
+*.icould
