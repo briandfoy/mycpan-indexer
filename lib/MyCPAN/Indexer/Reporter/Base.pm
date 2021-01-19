@@ -284,7 +284,7 @@ sub check_for_previous_error_result
 
 This code is in Github:
 
-	git://github.com/briandfoy/mycpan-indexer.git
+	https://github.com/briandfoy/mycpan-indexer.git
 
 =head1 AUTHOR
 

@@ -131,7 +131,7 @@ MyCPAN::Indexer
 
 This code is in Github:
 
-	git://github.com/briandfoy/mycpan-indexer.git
+	https://github.com/briandfoy/mycpan-indexer.git
 
 =head1 AUTHOR
 

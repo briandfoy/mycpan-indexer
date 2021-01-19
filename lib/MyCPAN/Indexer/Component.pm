@@ -240,7 +240,7 @@ sub is_worker_type     { $_[0]->is_type( $_[1], $_[0]->worker_type     ) }
 
 This code is in Github:
 
-	git://github.com/briandfoy/mycpan-indexer.git
+	https://github.com/briandfoy/mycpan-indexer.git
 
 =head1 AUTHOR
 
