@@ -3,16 +3,14 @@ require v5.14;
 package MyCPAN::Indexer;
 use strict;
 
-use v5.14;
-
 use warnings;
 no warnings;
 
 use parent qw(MyCPAN::Indexer::Component);
 use subs qw(get_caller_info);
-use vars qw($VERSION $logger);
+use vars qw($logger);
 
-$VERSION = '1.282';
+our $VERSION = '1.282';
 
 =encoding utf8
 

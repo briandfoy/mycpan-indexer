@@ -7,10 +7,10 @@ use warnings;
 no warnings;
 
 use subs qw(get_caller_info);
-use vars qw($VERSION $logger);
+use vars qw($logger);
 use parent qw(MyCPAN::Indexer);
 
-$VERSION = '1.282';
+our $VERSION = '1.282';
 
 =encoding utf8
 

@@ -12,8 +12,8 @@ BEGIN {
 	Curses->import;
 }
 
-use vars qw($VERSION $logger);
-$VERSION = '1.282';
+use vars qw($logger);
+our $VERSION = '1.282';
 
 =encoding utf8
 

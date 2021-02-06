@@ -5,7 +5,7 @@ package MyCPAN::App::BackPAN::Indexer;
 use strict;
 no warnings qw(uninitialized redefine);
 
-use vars qw($VERSION $Starting_dir $logger);
+use vars qw($Starting_dir $logger);
 
 use Carp;
 use Cwd qw(cwd);
@@ -17,7 +17,7 @@ use Getopt::Std;
 use List::Util qw(max);
 use Log::Log4perl;
 
-$VERSION = '1.282';
+our $VERSION = '1.282';
 
 =encoding utf8
 

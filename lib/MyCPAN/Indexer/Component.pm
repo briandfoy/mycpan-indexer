@@ -4,12 +4,10 @@ package MyCPAN::Indexer::Component;
 use strict;
 use warnings;
 
-use vars qw($VERSION);
-
 use Carp         qw( croak );
 use Scalar::Util qw( weaken );
 
-$VERSION = '1.282';
+our $VERSION = '1.282';
 
 =encoding utf8
 

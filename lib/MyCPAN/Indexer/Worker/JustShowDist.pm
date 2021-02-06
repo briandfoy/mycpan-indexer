@@ -5,8 +5,8 @@ use strict;
 use warnings;
 
 use parent qw(MyCPAN::Indexer::Worker);
-use vars qw($VERSION $logger);
-$VERSION = '1.282';
+use vars qw($logger);
+our $VERSION = '1.282';
 
 use File::Basename qw(basename);
 use Log::Log4perl;

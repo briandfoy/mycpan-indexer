@@ -5,8 +5,8 @@ use strict;
 use warnings;
 
 use parent qw(MyCPAN::Indexer::Queue);
-use vars qw($VERSION $logger);
-$VERSION = '1.282';
+use vars qw($logger);
+our $VERSION = '1.282';
 
 use File::Basename;
 use File::Find;

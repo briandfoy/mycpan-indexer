@@ -4,8 +4,7 @@ package MyCPAN::Indexer::Tutorial;
 use strict;
 use warnings;
 
-use vars qw($VERSION);
-$VERSION = '1.282';
+our $VERSION = '1.282';
 
 =encoding utf8
 
