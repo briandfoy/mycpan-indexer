@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+require v5.14;
 
 package MyCPAN::Indexer::TestCensus;
 use strict;

@@ -1,3 +1,5 @@
+require v5.14;
+
 package MyCPAN::Indexer::Interface::Null;
 use strict;
 use warnings;

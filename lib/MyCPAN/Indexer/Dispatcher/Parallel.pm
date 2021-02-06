@@ -1,3 +1,5 @@
+require v5.14;
+
 package MyCPAN::Indexer::Dispatcher::Parallel;
 use strict;
 use warnings;

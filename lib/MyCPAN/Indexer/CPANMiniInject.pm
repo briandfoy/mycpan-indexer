@@ -1,3 +1,5 @@
+require v5.14;
+
 package MyCPAN::Indexer::CPANMiniInject;
 use strict;
 use warnings;
