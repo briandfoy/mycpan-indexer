@@ -1,4 +1,3 @@
-#!perl
 use strict;
 use warnings;
 
@@ -26,20 +25,20 @@ foreach my $test ( @tests )
 	{
 	my $file = catfile( 'test-corpus', shift @$test );
 	ok( -e $file, "$file exists" );
-	
+
 	my $hash = {};
 	$indexer->$method( $file, $hash );
-	
+
 	ok( exists $hash->{packages}, "'packages' key is in the result hash" );
 	is( ref $hash->{packages}, ref [], "'packages' value is an array ref" );
 
 	ok( exists $hash->{primary_package}, "'primary_package' key is in the result hash" );
 	is( $hash->{primary_package}, $test->[0], "'primary_package' value is has the right value [$test->[0]]" );
-	
-	}
-	
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+	}
+
+
+done_testing();
 
 __END__
 
