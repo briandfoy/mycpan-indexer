@@ -66,8 +66,7 @@ Create a new Coordinator object.
 
 =cut
 
-sub new
-	{
+sub new {
 	my( $class ) = @_;
 
 	require MyCPAN::Indexer::Notes;
@@ -132,8 +131,7 @@ my @methods_to_dispatch_to_notes = qw(
 	);
 
 
-foreach my $method ( @methods_to_dispatch_to_notes )
-	{
+foreach my $method ( @methods_to_dispatch_to_notes ) {
 	no strict 'refs';
 	*{$method} = sub {
 		my $self = shift;
@@ -185,8 +183,7 @@ BEGIN {
 	[qw( collator    get_collator  )],
 	);
 
-	foreach my $tuple ( @components )
-		{
+	foreach my $tuple ( @components ) {
 		my( $component, $required_method ) = @$tuple;
 
 		no strict 'refs';
