@@ -27,5 +27,5 @@ jobs:
               env:
                 ALIEN_LIBARCHIVE: 'share'
               run: |
-                cpanm Alien::Libarchive
-                cpanm Archive::Extract::Libarchive
+                cpan -M https://www.cpan.org/ Alien::Libarchive
+                cpan -M https://www.cpan.org/ Archive::Extract::Libarchive
