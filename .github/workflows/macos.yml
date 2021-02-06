@@ -1,0 +1,50 @@
+name: macos
+
+on:
+    push:
+        branches:
+            - '*'
+        tags-ignore:
+            - 'release-*'
+        paths-ignore:
+            - '.appveyor.yml'
+            - '.github/**'
+            - '.gitignore'
+            - '.releaserc'
+            - 'Changes'
+            - 'LICENSE'
+            - 'README.pod'
+        pull_request:
+
+jobs:
+    perl:
+        runs-on: macOS-latest
+
+        steps:
+            - uses: actions/checkout@v2
+            - name: Platform check
+              run: uname -a
+            - name: Set up Perl
+              run: brew install perl
+            - name: Perl version check
+              run: perl -V
+            - name: Prepare cpan
+              run: |
+                openssl version
+                cpan IO::Socket::SSL
+                cpan -M https://www.cpan.org -T ExtUtils::MakeMaker
+            - name: Install dependencies
+              run: |
+                cpan -M https://www.cpan.org -T .
+            - name: Run tests
+              run: |
+                perl Makefile.PL
+                make test
+            - name: Run parallel tests
+              run: |
+                perl Makefile.PL
+                HARNESS_OPTION=j10 make test
+            - name: Run dist tests
+              run: |
+                perl Makefile.PL
+                make disttest
