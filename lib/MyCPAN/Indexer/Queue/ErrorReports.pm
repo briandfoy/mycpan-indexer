@@ -6,7 +6,7 @@ use warnings;
 
 use parent qw(MyCPAN::Indexer::Queue);
 use vars qw($logger);
-our $VERSION = '1.282';
+our $VERSION = '1.283';
 
 use File::Find;
 use Log::Log4perl;

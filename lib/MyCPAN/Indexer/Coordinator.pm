@@ -5,7 +5,7 @@ use strict;
 use warnings;
 
 use vars qw($logger);
-our $VERSION = '1.282';
+our $VERSION = '1.283';
 
 use Carp;
 use File::Basename;

@@ -17,7 +17,7 @@ use Getopt::Std;
 use List::Util qw(max);
 use Log::Log4perl;
 
-our $VERSION = '1.282';
+our $VERSION = '1.283';
 
 =encoding utf8
 

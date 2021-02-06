@@ -6,7 +6,7 @@ use warnings;
 
 use parent qw(MyCPAN::Indexer::Component);
 use vars qw($logger);
-our $VERSION = '1.282';
+our $VERSION = '1.283';
 
 use Carp qw(croak confess);
 use File::Basename qw(basename);

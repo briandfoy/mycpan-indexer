@@ -7,7 +7,7 @@ use warnings;
 use Carp         qw( croak );
 use Scalar::Util qw( weaken );
 
-our $VERSION = '1.282';
+our $VERSION = '1.283';
 
 =encoding utf8
 

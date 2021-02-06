@@ -8,7 +8,7 @@ use Log::Log4perl;
 
 use parent qw(MyCPAN::Indexer::Component);
 use vars qw($logger);
-our $VERSION = '1.282';
+our $VERSION = '1.283';
 
 =encoding utf8
 
