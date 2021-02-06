@@ -24,6 +24,8 @@ jobs:
             - uses: actions/checkout@v2
             - name: Platform check
               run: uname -a
+            - name: Install libarchive
+              run: brew install libarchive
             - name: Set up Perl
               run: brew install perl
             - name: Perl version check
