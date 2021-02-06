@@ -57,8 +57,7 @@ value of the C<pause_id> configuration to create the path.
 
 =cut
 
-sub _get_file_list
-	{
+sub _get_file_list {
 	my( $self ) = @_;
 
 	my @dirs = $self->get_coordinator->get_component( 'reporter' )->get_error_report_dir;
@@ -74,18 +73,15 @@ sub _get_file_list
 	$logger->debug( "Found " . @files . " error reports" );
 
 	my @queue;
-	foreach my $file ( @files )
-		{
+	foreach my $file ( @files ) {
 		$logger->debug( "Trying to read $file" );
 		my $yaml = LoadFile( $file );
 		my $dist_file = $yaml->{dist_info}{dist_file};
 		$logger->debug( "Dist file is $dist_file" );
-		if( -e $dist_file )
-			{
+		if( -e $dist_file ) {
 			push @queue, $dist_file;
 			}
-		else
-			{
+		else {
 			$logger->error( "Could not find $dist_file" );
 			}
 		}
