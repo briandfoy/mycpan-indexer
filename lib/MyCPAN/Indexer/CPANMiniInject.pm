@@ -68,8 +68,7 @@ BEGIN {
 
 sub component_type { $_[0]->worker_type }
 
-sub get_task
-	{
+sub get_task {
 	my( $self ) = @_;
 
 	my $child_task = sub {
@@ -84,8 +83,7 @@ sub get_task
 
 		my $indexer = $self->get_coordinator->get_component( 'indexer' );
 
-		unless( chdir $Config->temp_dir )
-			{
+		unless( chdir $Config->temp_dir ) {
 			$logger->error( "Could not change to " . $Config->temp_dir . " : $!\n" );
 			exit 255;
 			}
@@ -94,13 +92,11 @@ sub get_task
 		alarm( $Config->alarm || 15 );
 		my $info = eval { $indexer->run( $dist ) };
 
-		unless( defined $info )
-			{
+		unless( defined $info ) {
 			$logger->error( "run failed: $@" );
 			return;
 			}
-		elsif( ! eval { $info->run_info( 'completed' ) } )
-			{
+		elsif( ! eval { $info->run_info( 'completed' ) } ) {
 			$logger->error( "$basename did not complete\n" );
 			$self->_copy_bad_dist( $info ) if $Config->copy_bad_dists;
 			}
@@ -119,32 +115,27 @@ sub get_task
 	$self->set_note( 'child_task', $child_task );
 	}
 
-sub _copy_bad_dist
-	{
+sub _copy_bad_dist {
 	my( $self, $info ) = @_;
 
 	my $config = $self->get_config;
 
-	if( my $bad_dist_dir = $config->copy_bad_dists )
-		{
+	if( my $bad_dist_dir = $config->copy_bad_dists ) {
 		my $dist_file = $info->dist_info( 'dist_file' );
 		my $basename  = $info->dist_info( 'dist_basename' );
 		my $new_name  = catfile( $bad_dist_dir, $basename );
 
-		unless( -e $new_name )
-			{
+		unless( -e $new_name ) {
 			$logger->debug( "Copying bad dist" );
 
 			my( $in, $out );
 
-			unless( open $in, "<", $dist_file )
-				{
+			unless( open $in, "<", $dist_file ) {
 				$logger->fatal( "Could not open bad dist to $dist_file: $!" );
 				return;
 				}
 
-			unless( open $out, ">", $new_name )
-				{
+			unless( open $out, ">", $new_name ) {
 				$logger->fatal( "Could not copy bad dist to $new_name: $!" );
 				return;
 				}
@@ -156,8 +147,7 @@ sub _copy_bad_dist
 		}
 	}
 
-sub _check_for_previous_result
-	{
+sub _check_for_previous_result {
 	my( $self ) = @_;
 
 	my $Config = $self->get_config;
@@ -172,8 +162,7 @@ sub _check_for_previous_result
 	my $yml_path       = catfile( $yml_dir,       "$basename.yml" );
 	my $yml_error_path = catfile( $yml_error_dir, "$basename.yml" );
 
-	if( my @path = grep { -e } ( $yml_path, $yml_error_path ) )
-		{
+	if( my @path = grep { -e } ( $yml_path, $yml_error_path ) ) {
 		$logger->debug( "Found run output for $basename in $path[0]. Skipping...\n" );
 		return;
 		}
@@ -181,8 +170,7 @@ sub _check_for_previous_result
 	return $basename;
 	}
 
-sub _add_run_info
-	{
+sub _add_run_info {
 	my( $self, $info ) = @_;
 
 	my $Config = $self->get_config;
