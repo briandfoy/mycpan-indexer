@@ -11,7 +11,7 @@ jobs:
         strategy:
           matrix:
             os:
-                - ubuntu-18.04
+                - macos-latest
             perl-version:
                 - 'latest'
 
@@ -21,11 +21,10 @@ jobs:
             - uses: actions/checkout@v2
             - name: Platform check
               run: uname -a
-            - name: libarchive
+            - name: Install libarchive
               run: |
-                apt-get update -y
-                apt-get install -y libarchive-dev
-                apt-get install -y libarchive-tools
+                brew install libarchive
+                ls -lR /opt/local/include
             - name: Perl version check
               run: perl -V
             - name: Install cpanm and multiple modules
