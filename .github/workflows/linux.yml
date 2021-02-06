@@ -45,6 +45,7 @@ jobs:
               run: uname -a
             - name: libarchive
               run: |
+                apt-get update -y
                 apt-get install -y libarchive-dev
                 apt-get install -y libarchive-tools
             - name: Perl version check
