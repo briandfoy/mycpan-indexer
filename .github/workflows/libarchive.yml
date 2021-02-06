@@ -21,7 +21,7 @@ jobs:
             - name: Install libarchive
               run: |
                 brew install libarchive
-                ls -lR /usr/local/opt/libarchive
+                ls -lR /usr/local/opt/Cellar/libarchive
             - name: Perl version check
               run: perl -V
             - name: Install cpanm and multiple modules
