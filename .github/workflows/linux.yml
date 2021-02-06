@@ -8,7 +8,7 @@ on:
             - 'release-*'
         paths-ignore:
             - '.appveyor.yml'
-            - '.github/**'
+            #- '.github/**'
             - '.gitignore'
             - '.releaserc'
             - 'Changes'
@@ -47,7 +47,7 @@ jobs:
               run: |
                 apt-get update -y
                 apt-get install -y libarchive-dev
-                apt-get install -y libarchive-tools
+                apt-get install -y libarchive-extract-perl
             - name: Perl version check
               run: perl -V
             - name: Install cpanm and multiple modules
