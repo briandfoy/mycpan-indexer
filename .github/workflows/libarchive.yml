@@ -18,13 +18,14 @@ jobs:
             - uses: actions/checkout@v2
             - name: Platform check
               run: uname -a
-            - name: Install libarchive
-              run: |
-                brew install libarchive
-                ls -lR /usr/local/opt/Cellar/libarchive
             - name: Perl version check
               run: perl -V
             - name: Install cpanm and multiple modules
               run: |
                 curl -L https://cpanmin.us | perl - App::cpanminus
+            - name: Install libarchive
+              env:
+                ALIEN_LIBARCHIVE: 'share'
+              run: |
+                cpanm Alien::Libarchive
                 cpanm Archive::Extract::Libarchive

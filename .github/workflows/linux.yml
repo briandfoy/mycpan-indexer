@@ -43,19 +43,22 @@ jobs:
             - uses: actions/checkout@v2
             - name: Platform check
               run: uname -a
-            - name: libarchive
-              run: |
-                apt-get update -y
-                apt-get install -y libarchive-dev
-                apt-get install -y libarchive-extract-perl
             - name: Perl version check
-              run: perl -V
+              run: |
+                which perl
+                perl -V
             - name: Install cpanm and multiple modules
               run: |
                 curl -L https://cpanmin.us | perl - App::cpanminus
                 cpanm --notest IO::Socket::SSL
                 cpanm --notest App::Cpan
                 cpan -M https://www.cpan.org -T ExtUtils::MakeMaker
+            - name: Install libarchive
+              env:
+                ALIEN_LIBARCHIVE: 'share'
+              run: |
+                cpanm Alien::Libarchive
+                cpanm Archive::Extract::Libarchive
             - name: Install dependencies
               run: |
                 cpan -M https://www.cpan.org -T .
