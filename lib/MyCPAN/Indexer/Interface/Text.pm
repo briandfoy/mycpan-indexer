@@ -108,7 +108,8 @@ sub do_interface
 		}
 	print "\n";
 
-	my $collator = $self->get_coordinator->get_note( 'collator' );
+	my $collator_type = $self->get_coordinator->get_component( 'indexer' )->collator_type;
+	my $collator = $self->get_coordinator->get_note( $collator_type );
 	$collator->() if ref $collator eq ref sub {};
 	}
 
