@@ -49,7 +49,7 @@ foreach my $module ( keys %optional ) {
 	my $available = eval "require $module; 1";
 
 	unless( $available ) {
-		print <<"HERE";
+		print <<"HERE" unless caller();
 $module not available. Skipping optional modules that use it.
 If you later want to use it, you'll have to reinstall MyCPAN.
 HERE
