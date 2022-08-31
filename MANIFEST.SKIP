@@ -88,3 +88,4 @@ sub-projects/
 \.icloud$
 \A\.github\b
 
+\.gitattributes\b
