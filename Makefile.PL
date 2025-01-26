@@ -90,6 +90,7 @@ my %WriteMakefile = (
 
 	'PREREQ_PM'    => {
 		'Archive::Zip'                     => '0',
+		'Archive::Extract'                 => '0',
 		'Archive::Extract::Libarchive'     => '0',
 		'ConfigReader::Simple'             => '0',
 		'CPAN::Checksums'                  => '0',
