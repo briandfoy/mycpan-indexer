@@ -87,6 +87,9 @@ jobs:
                 perl -v | perl -0777 -ne 'm/(v5\.\d+)/ && print "PERL_VERSION=$1"' >> $GITHUB_ENV
 # Some older versions of Perl have trouble with hostnames in certs. I
 # haven't figured out why.
+            - name: install local packages
+              run: |
+                apt-get install curl ${{ vars.UBUNTU_EXTRA_APT_GET }}
             - name: Setup environment
               run: |
                 echo "PERL_LWP_SSL_VERIFY_HOSTNAME=0" >> $GITHUB_ENV
