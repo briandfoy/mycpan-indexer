@@ -89,6 +89,7 @@ jobs:
 # haven't figured out why.
             - name: install local packages
               run: |
+                apt-get update
                 apt-get install curl ${{ vars.UBUNTU_EXTRA_APT_GET }}
             - name: Setup environment
               run: |
