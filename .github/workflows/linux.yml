@@ -90,7 +90,7 @@ jobs:
             - name: install local packages
               run: |
                 apt-get update
-                apt-get install curl ${{ vars.UBUNTU_EXTRA_APT_GET }}
+                apt-get -y install curl ${{ vars.UBUNTU_EXTRA_APT_GET }}
             - name: Setup environment
               run: |
                 echo "PERL_LWP_SSL_VERIFY_HOSTNAME=0" >> $GITHUB_ENV
