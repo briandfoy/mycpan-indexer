@@ -101,6 +101,7 @@ jobs:
               run: uname -a
             - name: setup platform
               run: |
+                apt-get update
                 apt-get upgrade
                 apt-get -y install curl ${{ vars.UBUNTU_EXTRA_APT_GET }}
             - name: Perl version check
