@@ -89,3 +89,5 @@ sub-projects/
 \A\.github\b
 
 \.gitattributes\b
+
+.downstream.json
